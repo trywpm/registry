@@ -1,0 +1,35 @@
+/*
+.env
+.astro
+.wrangler
+dist
+node_modules
+docker/certs
+worker-types.d.ts
+
+# files
+!.gitignore
+!bun.lock
+!package.json
+!wrangler.json
+!tsconfig.json
+!.editorconfig
+!.oxfmtrc.json
+!.oxlintrc.json
+!astro.config.ts
+!components.json
+!docker-compose.yml
+
+# directories
+!bin
+!web
+!www
+!server
+!public
+!.vscode
+!.github
+!packages
+!registry
+!internal
+!cloudflare
+!migrations
