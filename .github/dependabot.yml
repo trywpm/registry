@@ -1,0 +1,35 @@
+version: 2
+enable-beta-ecosystems: true
+updates:
+  - package-ecosystem: bun
+    directory: '/'
+    schedule:
+      interval: weekly
+      day: saturday
+    labels:
+      - 'bun'
+      - 'dependencies'
+    groups:
+      aws:
+        patterns:
+          - '@aws-sdk/*'
+      oxc:
+        patterns:
+          - 'ox*'
+      types:
+        patterns:
+          - '@types/*'
+    versioning-strategy: increase
+
+  - package-ecosystem: github-actions
+    directory: '/'
+    schedule:
+      interval: weekly
+      day: saturday
+    groups:
+      actions:
+        patterns:
+          - 'actions/*'
+    labels:
+      - 'dependencies'
+      - 'github-actions'
