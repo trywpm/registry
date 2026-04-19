@@ -1,0 +1,22 @@
+---
+import Layout from "@/layout/index.astro";
+
+const canonical = new URL(Astro.url.pathname, Astro.site);
+---
+
+<Layout
+	title="Terms of Service"
+	canonicalUrl={canonical.href}
+	description="Read the terms of service for using wpm Registry."
+>
+	<main
+		class="flex min-h-screen w-full items-center justify-center p-6 md:p-10"
+	>
+		<div class="flex flex-col items-center gap-4 text-center">
+			<p class="font-mono">Terms of Service</p>
+			<h1 class="text-3xl sm:text-5xl">
+				Our Terms of Service are coming soon.
+			</h1>
+		</div>
+	</main>
+</Layout>

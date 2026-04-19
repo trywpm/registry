@@ -1,0 +1,308 @@
+---
+export const prerender = false;
+
+import { Package } from "lucide-react";
+import { env } from "cloudflare:workers";
+
+import {
+	Hero,
+	HeroActions,
+	HeroHeading,
+	HeroDescription,
+} from "@/components/hero";
+import {
+	Card,
+	CardTitle,
+	CardHeader,
+	CardContent,
+	CardDescription,
+} from "@/components/ui/card";
+import {
+	Pagination,
+	PaginationItem,
+	PaginationLink,
+	PaginationNext,
+	PaginationContent,
+	PaginationPrevious,
+	PaginationEllipsis,
+} from "@/components/ui/pagination";
+import Layout from "@/layout/index.astro";
+import { Badge } from "@/components/ui/badge";
+import { readableTimeDiff } from "@/lib/datetime";
+import { Separator } from "@/components/ui/separator";
+import { PackageSort } from "@/components/package-sort";
+import { buttonVariants } from "@/components/ui/button";
+import { allowedSorts, buildPackagesQuery } from "@/lib/d1";
+
+const url = new URL(Astro.request.url);
+const currentPage = Number(url.searchParams.get("page")) || 1;
+
+let sort = url.searchParams.get("sort") || "popularity";
+if (!(sort in allowedSorts)) {
+	sort = "popularity";
+}
+
+const perPage = 12;
+const totalPages = 1125; // Hard-coded to avoid extra query for now
+
+const getPageUrl = (p: number) => {
+	const newUrl = new URL(url);
+	if (p === 1) {
+		newUrl.searchParams.delete("page");
+	} else {
+		newUrl.searchParams.set("page", p.toString());
+	}
+	return newUrl.href;
+};
+
+const pageNumbers = (() => {
+	if (totalPages <= 7) {
+		return Array.from({ length: totalPages }, (_, i) => i + 1);
+	}
+	if (currentPage <= 3) {
+		return [1, 2, 3, "...", totalPages - 1, totalPages];
+	}
+	if (currentPage >= totalPages - 2) {
+		return [1, 2, "...", totalPages - 2, totalPages - 1, totalPages];
+	}
+	return [
+		1,
+		"...",
+		currentPage - 1,
+		currentPage,
+		currentPage + 1,
+		"...",
+		totalPages,
+	];
+})();
+
+const canonicalUrl =
+	currentPage === 1
+		? new URL(url.pathname, Astro.site!).href
+		: getPageUrl(currentPage);
+
+// @todo: add canonical link to head
+
+const session = env.registry_search.withSession("first-unconstrained");
+const query = buildPackagesQuery(
+	session,
+	"theme",
+	currentPage,
+	sort as keyof typeof allowedSorts,
+);
+
+const packages = await query.all<{
+	id: string;
+	name: string;
+	type: string;
+	version: string;
+	downloads: number;
+	description: string | null;
+	tags: string | null;
+	license: string | null;
+	package_published: string;
+	score: number;
+}>();
+
+if (!packages.success) {
+	return new Response(null, { status: 500 });
+}
+
+packages.results.forEach((pkg) => {
+	pkg.tags = pkg.tags ? JSON.parse(pkg.tags) : [];
+});
+---
+
+<Layout
+	hasHero
+	title="Themes"
+	canonicalUrl={canonicalUrl}
+	description="Discover and manage WordPress themes with wpm."
+>
+	<Hero grid>
+		<HeroHeading>WordPress Themes</HeroHeading>
+		<HeroDescription>
+			Discover and manage WordPress themes with wpm.
+		</HeroDescription>
+	</Hero>
+
+	<section class="my-8">
+		<div class="container">
+			<PackageSort isPlugins={false} client:load />
+
+			<div class="text-sm text-muted-foreground">
+				{`${totalPages * perPage} themes available`}
+			</div>
+		</div>
+	</section>
+
+	<section class="mb-8">
+		<div class="container">
+			{
+				packages.results.length > 0 ? (
+					<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+						{packages.results.map((pkg) => (
+							<Card>
+								{/* Header */}
+								<CardHeader>
+									<div class="flex items-center gap-3">
+										<div class="p-2 bg-muted rounded-lg flex items-center justify-center w-9 h-9">
+											<Package className="h-5 w-5 text-primary" />
+										</div>
+										<div class="min-w-0 flex-1">
+											<CardTitle>
+												<a
+													href={`/package/${pkg.name}`}
+													class="hover:text-primary transition-colors"
+												>
+													{pkg.name}
+												</a>
+											</CardTitle>
+											<CardDescription className="flex items-center gap-2">
+												<span>{pkg.version}</span>
+												<span>•</span>
+												<span>
+													{readableTimeDiff(
+														new Date(
+															pkg.package_published,
+														),
+													)}
+												</span>
+											</CardDescription>
+										</div>
+									</div>
+								</CardHeader>
+
+								<Separator className="bg-border/50" />
+
+								{/* Content */}
+								<CardContent className="space-y-4">
+									<p class="text-sm text-muted-foreground line-clamp-2">
+										{pkg.description}
+									</p>
+
+									<div class="flex flex-wrap gap-1">
+										{(pkg.tags as unknown as string[])
+											.slice(0, 3)
+											.map((keyword: string) => (
+												<Badge
+													key={keyword}
+													variant="secondary"
+													className="text-xs"
+												>
+													{keyword}
+												</Badge>
+											))}
+										{(pkg.tags as unknown as string[])
+											.length > 3 && (
+											<Badge
+												variant="secondary"
+												className="text-xs"
+											>
+												+
+												{(
+													pkg.tags as unknown as string[]
+												).length - 3}
+											</Badge>
+										)}
+									</div>
+								</CardContent>
+							</Card>
+						))}
+					</div>
+				) : (
+					<div class="text-center py-12">
+						<Package className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+						<h3 class="text-lg font-semibold mb-2">
+							No plugins found
+						</h3>
+						<p class="text-muted-foreground">
+							Try adjusting your search terms or filters to find
+							what you're looking for.
+						</p>
+					</div>
+				)
+			}
+		</div>
+	</section>
+
+	{
+		totalPages > 1 && (
+			<section class="mb-8">
+				<div class="container">
+					<Pagination>
+						<PaginationContent>
+							<PaginationItem>
+								<PaginationPrevious
+									href={
+										currentPage > 1
+											? getPageUrl(currentPage - 1)
+											: undefined
+									}
+									className={
+										currentPage === 1
+											? "pointer-events-none opacity-50"
+											: undefined
+									}
+									rel="prev"
+								/>
+							</PaginationItem>
+
+							{pageNumbers.map((num, i) => (
+								<PaginationItem key={i}>
+									{num === "..." ? (
+										<PaginationEllipsis />
+									) : (
+										<PaginationLink
+											href={getPageUrl(num as number)}
+											isActive={currentPage === num}
+											className="w-auto min-w-9 px-2"
+										>
+											{num}
+										</PaginationLink>
+									)}
+								</PaginationItem>
+							))}
+
+							<PaginationItem>
+								<PaginationNext
+									href={
+										currentPage < totalPages
+											? getPageUrl(currentPage + 1)
+											: undefined
+									}
+									className={
+										currentPage === totalPages
+											? "pointer-events-none opacity-50"
+											: undefined
+									}
+									rel="next"
+								/>
+							</PaginationItem>
+						</PaginationContent>
+					</Pagination>
+				</div>
+			</section>
+		)
+	}
+
+	<Hero grid preFooter>
+		<HeroHeading level={2} className="text-foreground"
+			>Start building with wpm</HeroHeading
+		>
+		<HeroDescription className="text-muted-foreground">
+			Experience a workflow that keeps pace with your mind..
+		</HeroDescription>
+		<HeroActions>
+			<a href="/waitlist" class={buttonVariants({ size: "lg" })}>
+				Join Waitlist
+			</a>
+			<a
+				href="mailto:contact@wpm.com"
+				class={buttonVariants({ variant: "outline", size: "lg" })}
+			>
+				Contact Us
+			</a>
+		</HeroActions>
+	</Hero>
+</Layout>

@@ -1,0 +1,34 @@
+{
+  "name": "wpm-www",
+  "main": "@astrojs/cloudflare/entrypoints/server",
+  "compatibility_date": "2026-01-23",
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+  "assets": {
+    "binding": "ASSETS",
+    "directory": "./dist"
+  },
+  "observability": {
+    "enabled": true
+  },
+  "r2_buckets": [
+    {
+      "binding": "readme",
+      "bucket_name": "wpm-readme-storage",
+      "remote": true
+    }
+  ],
+  "d1_databases": [
+    {
+      "binding": "registry_search",
+      "database_name": "registry_search_db",
+      "database_id": "488343ab-bac0-43a5-b700-5ae45f39df45",
+      "remote": true
+    }
+  ],
+  "routes": [
+    {
+      "pattern": "wpm.so",
+      "custom_domain": true
+    }
+  ]
+}

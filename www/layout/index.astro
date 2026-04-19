@@ -1,0 +1,205 @@
+---
+import "../styles/globals.css";
+
+interface Props {
+	title: string;
+	hasHero?: boolean;
+	homepage?: boolean;
+	description: string;
+	canonicalUrl: string;
+	ogImage?: string;
+	manifest?: {
+		name: string;
+		description?: string;
+		version?: string;
+		license?: string;
+	};
+}
+
+import { SEO } from "astro-seo";
+
+import { Footer } from "@/components/footer";
+import { Navbar } from "@/components/navbar";
+
+const {
+	ogImage,
+	manifest,
+	description,
+	canonicalUrl,
+	hasHero = false,
+	homepage = false,
+	title: originalTitle,
+} = Astro.props;
+const ogImgAlt = originalTitle.replace(" - wpm", "");
+const title = homepage ? originalTitle : `${originalTitle} - wpm`;
+---
+
+<html lang="en">
+	<head>
+		<script is:inline>
+			const getTheme = () =>
+				"undefined" !== typeof localStorage &&
+				localStorage.getItem("theme")
+					? localStorage.getItem("theme")
+					: window.matchMedia("(prefers-color-scheme: dark)").matches
+						? "dark"
+						: "light";
+			("dark" === getTheme()
+				? document.documentElement.classList.add("dark")
+				: document.documentElement.classList.remove("dark"),
+				document.addEventListener("astro:after-swap", () => {
+					"dark" === getTheme() &&
+						document.documentElement.classList.add("dark");
+				}));
+		</script>
+		<SEO
+			charset="utf-8"
+			title={title}
+			description={description}
+			canonical={canonicalUrl}
+			openGraph={{
+				basic: {
+					title,
+					type: "website",
+					image: ogImage ?? "https://wpm.so/og.png",
+					url: canonicalUrl,
+				},
+				image: {
+					url: ogImage ?? "https://wpm.so/og.png",
+					alt: ogImgAlt,
+					type: "image/png",
+					width: 1200,
+					height: 630,
+				},
+				optional: {
+					description,
+					locale: "en_US",
+					siteName: "wpm",
+				},
+			}}
+			twitter={{
+				image: ogImage ?? "https://wpm.so/og.png",
+				imageAlt: ogImgAlt,
+				title,
+				description,
+				site: "@trywpm",
+				card: "summary_large_image",
+				creator: "@thelovekesh",
+			}}
+			extend={{
+				link: [
+					{
+						rel: "icon",
+						type: "image/svg+xml",
+						href: "https://wpm.so/favicon.svg",
+					},
+				],
+				meta: [
+					{
+						name: "viewport",
+						content: "width=device-width, initial-scale=1",
+					},
+					{
+						name: "theme-color",
+						content: "#ffffff",
+						media: "(prefers-color-scheme: light)",
+					},
+					{
+						name: "theme-color",
+						content: "#09090b",
+						media: "(prefers-color-scheme: dark)",
+					},
+				],
+			}}
+		/>
+		{
+			homepage && (
+				<script
+					is:inline
+					type="application/ld+json"
+					set:html={JSON.stringify({
+						"@context": "https://schema.org",
+						"@id": "https://wpm.so/#website",
+						"@type": "WebSite",
+						name: "wpm",
+						url: "https://wpm.so/",
+						description:
+							"Discover, install, and manage WordPress packages like never before.",
+						publisher: {
+							"@type": "Organization",
+							name: "wpm",
+							url: "https://wpm.so/",
+							logo: {
+								"@type": "ImageObject",
+								url: "https://wpm.so/favicon.svg",
+							},
+						},
+						sameAs: ["https://twitter.com/trywpm"],
+						potentialAction: {
+							"@type": "SearchAction",
+							target: "https://wpm.so/search?q={search_term_string}",
+							"query-input": "required name=search_term_string",
+						},
+					})}
+				/>
+			)
+		}
+		{
+			manifest && (
+				<script
+					is:inline
+					type="application/ld+json"
+					set:html={JSON.stringify({
+						"@context": "https://schema.org",
+						"@id": canonicalUrl + "#software",
+						"@type": "SoftwareApplication",
+						name: manifest.name,
+						applicationCategory: "DeveloperApplication",
+						operatingSystem: "Any",
+						url: canonicalUrl,
+						description: manifest.description ?? description,
+						softwareVersion: manifest.version,
+						license: manifest.license ?? "UNLICENSED",
+						image: ogImage,
+						isAccessibleForFree: true,
+						publisher: {
+							"@type": "Organization",
+							name: "wpm",
+							url: "https://wpm.so/",
+						},
+						isPartOf: {
+							"@id": "https://wpm.so/#website",
+						},
+					})}
+				/>
+			)
+		}
+		{
+			!homepage && !manifest && (
+				<script
+					is:inline
+					type="application/ld+json"
+					set:html={JSON.stringify({
+						"@context": "https://schema.org",
+						"@id": canonicalUrl + "#webpage",
+						"@type": "WebPage",
+						name: title,
+						url: canonicalUrl,
+						description,
+						isPartOf: {
+							"@type": "WebSite",
+							name: "wpm",
+							url: "https://wpm.so/",
+							"@id": "https://wpm.so/#website",
+						},
+					})}
+				/>
+			)
+		}
+	</head>
+	<body class="antialiased [--header-height:--spacing(14)]">
+		<Navbar hasHero={hasHero} client:load />
+		<slot />
+		<Footer hasHero={hasHero} />
+	</body>
+</html>

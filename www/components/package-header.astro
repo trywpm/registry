@@ -1,0 +1,62 @@
+---
+import { Package } from "lucide-react";
+
+import { Badge } from "@/components/ui/badge";
+import { readableTimeDiff } from "@/lib/datetime";
+
+interface Props {
+	name: string;
+	type: string;
+	version: string;
+	tags: string[];
+	visibility: string;
+	description: string;
+	created: string;
+}
+
+const { name, type, version, tags, visibility, description, created } =
+	Astro.props;
+---
+
+<div class="space-y-4">
+	{/* Header Row */}
+	<div class="flex items-center gap-4 mb-4">
+		<div class="p-3 bg-white dark:bg-muted rounded-lg shadow-xs">
+			<Package className="w-12 h-12 text-orange-500" />
+		</div>
+		<div>
+			<div class="flex items-center gap-2">
+				<h1 class="text-2xl font-bold text-gray-900 dark:text-white">
+					{name}
+				</h1>
+				<Badge
+					variant="secondary"
+					className="text-xs px-2 py-0.5 capitalize"
+				>
+					{type}
+				</Badge>
+			</div>
+			<p
+				class="text-gray-600 dark:text-gray-400 mt-1"
+				title={new Date(created).toLocaleString()}
+			>
+				{version} &#8226; {visibility} &#8226; Published
+				{readableTimeDiff(new Date(created))}
+			</p>
+		</div>
+	</div>
+	{/* Description Row */}
+	<p class="text-base sm:text-lg text-muted-foreground leading-relaxed mt-2">
+		{description}
+	</p>
+	{/* Tags Row */}
+	<div class="flex flex-wrap gap-2">
+		{
+			tags.map((keyword: string) => (
+				<Badge key={keyword} variant="outline" className="text-xs">
+					{keyword}
+				</Badge>
+			))
+		}
+	</div>
+</div>

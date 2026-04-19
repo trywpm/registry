@@ -1,0 +1,143 @@
+---
+export const prerender = false;
+
+import { env } from "cloudflare:workers";
+
+import {
+	ImgHandler,
+	EmbedsState,
+	EmbedHandler,
+	LinksHandler,
+	ElementHandler,
+	ShortcodeHandler,
+	ScreenshotHandler,
+	EnqueuedEmbedAsset,
+} from "@/lib/html-writer";
+import Layout from "@/layout/index.astro";
+import type { Package } from "@cf/publish-worker/zod";
+import { Card, CardContent } from "@/components/ui/card";
+import PackageTabs from "@/components/package-tabs.astro";
+import { PackageSidebar } from "@/components/package-sidebar";
+import PackageHeader from "@/components/package-header.astro";
+
+import { getR2ObjectWithCache } from "@/lib/utils";
+
+const { name } = Astro.params;
+
+if (!name) {
+	return new Response(null, { status: 404 });
+}
+
+const manifestPromise = fetch(`https://registry.wpm.so/${name}/latest`);
+const readmePromise = getR2ObjectWithCache(
+	`${name}.html`,
+	env.readme,
+	Astro.locals.cfContext,
+);
+
+const [req, readme] = await Promise.all([manifestPromise, readmePromise]);
+
+if (!req.ok) {
+	return new Response(null, { status: 404 });
+}
+
+const manifest = await req.json<
+	Package & {
+		created: string;
+	}
+>();
+
+const embedsState = new EmbedsState();
+const ssHandler = new ScreenshotHandler(manifest.name);
+
+const rewriter = new HTMLRewriter()
+	.on("img", ssHandler)
+	.on("a", ssHandler)
+	.on("p", new ShortcodeHandler(embedsState))
+	.on("a[href]", new EmbedHandler(embedsState))
+	.on("*", new ElementHandler())
+	.on("img", new ImgHandler())
+	.on("a", new LinksHandler())
+	.on("*", new EnqueuedEmbedAsset(embedsState));
+
+const canonical = new URL(Astro.url.pathname, Astro.site);
+const ogImage = `https://usercontent.wpm.so/og/${manifest.name}`;
+---
+
+<Layout
+	ogImage={ogImage}
+	title={`${manifest.name}`}
+	canonicalUrl={canonical.href}
+	description={manifest.description
+		? manifest.description
+		: `View ${manifest.name} on the wpm package registry with version details, dependency info, and installation instructions.`}
+>
+	<script is:inline>
+		// prettier-ignore
+		(()=>{const t=["png","jpg","gif"];document.addEventListener("error",(e=>{const s=e.target;"IMG"===s.tagName&&s.closest("#package-readme")&&function(e){const s=e.src,n=s.match(/\.(png|jpg|gif)(\?.*)?$/i);if(!n){return;}const i=n[1].toLowerCase();e.dataset.triedExtensions||(e.dataset.triedExtensions=JSON.stringify([i]));const a=JSON.parse(e.dataset.triedExtensions),r=t.find((t=>!a.includes(t)));r?(a.push(r),e.dataset.triedExtensions=JSON.stringify(a),e.src=s.replace(new RegExp(`\\.${i}(?=\\?|$)`,"i"),`.${r}`)):e.style.display="none"}(s)}),!0)})();
+	</script>
+	<div class="min-h-screen bg-background">
+		<main class="container py-6 sm:py-8">
+			<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+				{/* Main Content Area */}
+				<div class="lg:col-span-2 space-y-6 sm:space-y-8">
+					{/* Package Header */}
+					<PackageHeader
+						name={manifest.name}
+						type={manifest.type}
+						version={manifest.version}
+						tags={manifest.tags ?? []}
+						visibility={manifest.visibility}
+						description={manifest.description ||
+							"No description provided."}
+						created={manifest.created}
+					/>
+
+					{/* Tabs and Readme Section */}
+					<div class="flex flex-col gap-2 space-y-4">
+						<PackageTabs name={name} active="overview" />
+
+						<article aria-labelledby="package-readme">
+							<Card>
+								<CardContent className="py-6">
+									{
+										readme?.body ? (
+											<div
+												id="package-readme"
+												class="prose prose-neutral dark:prose-invert max-w-none wrap-break-word"
+												set:html={rewriter.transform(
+													readme,
+												)}
+											/>
+										) : (
+											<div
+												id="package-readme"
+												class="prose prose-neutral dark:prose-invert max-w-none wrap-break-word"
+											>
+												<p>No README found.</p>
+											</div>
+										)
+									}
+								</CardContent>
+							</Card>
+						</article>
+					</div>
+				</div>
+
+				{/* Sidebar Area */}
+				<PackageSidebar
+					client:load
+					name={name}
+					version={manifest.version}
+					license={manifest.license ?? "UNLICENSED"}
+					homepage={manifest.homepage || ""}
+					totalFiles={manifest.dist.totalFiles}
+					unpackedSize={manifest.dist.unpackedSize}
+					registryHost="https://registry.wpm.so"
+					publishedDate={manifest.created}
+					collaborators={[]}
+				/>
+			</div>
+		</main>
+	</div>
+</Layout>
