@@ -1,0 +1,27 @@
+{
+  "name": "wpm",
+  "private": true,
+  "workspaces": {
+    "packages": [
+      "www",
+      "registry",
+      "packages/*"
+    ],
+    "catalog": {
+      "@types/semver": "^7.7.1",
+      "semver": "^7.7.4",
+      "wrangler": "^4.83.0",
+      "zod": "^4.3.6"
+    }
+  },
+  "scripts": {
+    "fmt": "oxfmt",
+    "lint": "oxlint",
+    "dev:www": ""
+  },
+  "devDependencies": {
+    "oxfmt": "^0.45.0",
+    "oxlint": "^1.60.0",
+    "typescript": "^6.0.3"
+  }
+}
