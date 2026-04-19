@@ -1,0 +1,35 @@
+{
+  "plugins": ["typescript", "import"],
+  "categories": {
+    "suspicious": "warn",
+    "correctness": "error"
+  },
+  "overrides": [
+    {
+      "files": ["**/*.astro"],
+      "rules": {
+        "no-unused-expressions": "off"
+      }
+    }
+  ],
+  "rules": {
+    "no-var": "error",
+    "no-empty": "warn",
+    "no-debugger": "error",
+    "prefer-const": "error",
+    "curly": ["error", "all"],
+    "eqeqeq": ["error", "always"],
+    "no-console": [
+      "warn",
+      {
+        "allow": ["warn", "error"]
+      }
+    ],
+    "import/no-unassigned-import": [
+      "error",
+      {
+        "allow": ["**/*.css", "**/*.scss"]
+      }
+    ]
+  }
+}
