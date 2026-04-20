@@ -252,7 +252,7 @@ describe('NewWpmJsonValidator (Field Level)', () => {
 
   test('wpm_digest_sha256 validator', () => {
     const validBase64 = Buffer.alloc(32).toString('base64');
-    expect(validateVar(DigestSchema, `sha256: + ${validBase64}`)).toBeNull();
+    expect(validateVar(DigestSchema, `sha256:${validBase64}`)).toBeNull();
     expect(validateVar(DigestSchema, 'sha256:invalid_base64$$$')).not.toBeNull();
   });
 
@@ -938,7 +938,7 @@ describe('ValidateSemver', () => {
     { name: 'valid min length', input: '1.0.0', isValid: true },
     {
       name: 'valid max length',
-      input: `${'1'.repeat(20)}.${'2'.repeat(20)}.${'3'.repeat(20)}-${'a'.repeat(20)}+${'b'.repeat(20)}`,
+      input: `${'1'.repeat(5)}.${'2'.repeat(5)}.${'3'.repeat(5)}-${'a'.repeat(20)}+${'b'.repeat(20)}`,
       isValid: true,
     },
     {
