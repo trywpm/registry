@@ -8,7 +8,7 @@
     "prefix": "",
     "cssVariables": true,
     "baseColor": "neutral",
-    "css": "styles/globals.css"
+    "css": "src/styles/globals.css"
   },
   "iconLibrary": "lucide",
   "aliases": {
