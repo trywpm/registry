@@ -2,14 +2,12 @@
   "extends": "../tsconfig.base.json",
   "compilerOptions": {
     "jsx": "react-jsx",
-    "lib": ["ESNext", "DOM", "DOM.Iterable"],
     "jsxImportSource": "react",
-    "types": ["astro/client"],
     "paths": {
-      "@/*": ["./*"]
+      "@/*": ["./src/*"]
     }
   },
-  "include": ["**/*.ts", "**/*.tsx", "**/*.astro", ".astro/types.d.ts"],
   "exclude": ["node_modules", "dist"],
-  "references": []
+  "references": [{ "path": "../packages/util" }],
+  "include": ["src/**/*", ".astro/types.d.ts", "worker-types.d.ts"]
 }
