@@ -26,8 +26,6 @@
   "scripts": {
     "fmt": "vp fmt",
     "lint": "vp lint",
-    "typecheck": "tsc --build",
-    "typecheck:force": "tsc --build --force",
     "typegen": "bun run --filter '*' typegen"
   },
   "devDependencies": {
