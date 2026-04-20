@@ -9,7 +9,10 @@
     "directory": "./dist"
   },
   "observability": {
-    "enabled": true
+    "enabled": true,
+    "traces": {
+      "enabled": true
+    }
   },
   "r2_buckets": [
     {
