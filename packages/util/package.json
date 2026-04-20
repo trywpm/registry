@@ -4,5 +4,8 @@
   "exports": {
     "./datetime": "./src/datetime.ts",
     "./html-rewriter": "./src/html-rewriter.ts"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "catalog:"
   }
 }
