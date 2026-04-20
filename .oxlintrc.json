@@ -150,6 +150,9 @@
       "plugins": ["react", "jsx-a11y", "react-perf"],
       "env": {
         "browser": true
+      },
+      "rules": {
+        "react/react-in-jsx-scope": "off"
       }
     }
   ]
