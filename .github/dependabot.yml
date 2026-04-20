@@ -9,6 +9,8 @@ updates:
     labels:
       - 'bun'
       - 'dependencies'
+    ignore:
+      - dependency-name: '@cloudflare/workers-types'
     groups:
       aws:
         patterns:
