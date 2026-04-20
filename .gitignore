@@ -21,6 +21,7 @@ worker-types.d.ts
 !components.json
 !docker-compose.yml
 !tsconfig.base.json
+!.git-blame-ignore-revs
 
 # directories
 !bin
