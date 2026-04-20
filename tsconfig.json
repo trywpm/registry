@@ -1,4 +1,4 @@
 {
   "files": [],
-  "references": [{ "path": "www" }, { "path": "registry" }]
+  "references": [{ "path": "www" }, { "path": "registry" }, { "path": "packages/util" }]
 }
