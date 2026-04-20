@@ -5,7 +5,6 @@ import tailwindcss from '@tailwindcss/vite';
 import cloudflare from '@astrojs/cloudflare';
 
 export default defineConfig({
-  srcDir: '.',
   site: 'https://wpm.so',
   trailingSlash: 'never',
   build: { format: 'file' },
