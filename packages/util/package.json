@@ -1,0 +1,7 @@
+{
+  "name": "@wpm/util",
+  "private": true,
+  "exports": {
+    "./datetime": "./src/datetime.ts"
+  }
+}
