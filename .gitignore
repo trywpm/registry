@@ -15,6 +15,7 @@ worker-types.d.ts
 !.oxfmtrc.json
 !.oxlintrc.json
 !.gitattributes
+!vite.config.ts
 !docker-compose.yml
 !tsconfig.base.json
 !.git-blame-ignore-revs
