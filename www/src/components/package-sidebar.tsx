@@ -1,9 +1,10 @@
 import * as React from 'react';
 import { Copy, Check, Download, ExternalLink, User } from 'lucide-react';
 
+import { readableTimeDiff } from '@wpm/util/datetime';
+
 import { humanSize } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import { readableTimeDiff } from '@/lib/datetime';
 import { Separator } from '@/components/ui/separator';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
