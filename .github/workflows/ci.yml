@@ -26,9 +26,6 @@ jobs:
           cache: true
           node-version: 24
 
-      - name: install dependencies
-        run: vp install --frozen-lockfile --ignore-scripts
-
       - name: generate types
         run: vp run typegen
 
@@ -46,9 +43,6 @@ jobs:
       - uses: voidzero-dev/setup-vp@8ecb39174989ce55af90f45cf55b02738599831d # v1.6.0
         with:
           cache: true
-
-      - name: install dependencies
-        run: vp install --frozen-lockfile --ignore-scripts
 
       - name: run tests
         run: vp test
