@@ -19,6 +19,7 @@ worker-types.d.ts
 !astro.config.ts
 !components.json
 !docker-compose.yml
+!tsconfig.base.json
 
 # directories
 !bin
