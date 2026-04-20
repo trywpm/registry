@@ -16,6 +16,7 @@ worker-types.d.ts
 !.editorconfig
 !.oxfmtrc.json
 !.oxlintrc.json
+!.gitattributes
 !astro.config.ts
 !components.json
 !docker-compose.yml

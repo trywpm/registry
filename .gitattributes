@@ -1,0 +1,7 @@
+# Vendored
+www/src/public/fonts/** linguist-vendored
+www/src/public/js/lite-yt.js linguist-vendored
+
+# Generated.
+www/worker-types.d.ts linguist-generated
+www/src/components/ui/** linguist-generated
