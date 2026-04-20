@@ -4,21 +4,17 @@
 .wrangler
 dist
 node_modules
-docker/certs
 worker-types.d.ts
 
 # files
 !.gitignore
 !bun.lock
 !package.json
-!wrangler.json
 !tsconfig.json
 !.editorconfig
 !.oxfmtrc.json
 !.oxlintrc.json
 !.gitattributes
-!astro.config.ts
-!components.json
 !docker-compose.yml
 !tsconfig.base.json
 !.git-blame-ignore-revs
@@ -26,13 +22,7 @@ worker-types.d.ts
 # directories
 !bin
 !web
-!web
-!server
-!public
 !.vscode
 !.github
 !packages
 !registry
-!internal
-!cloudflare
-!migrations
