@@ -1,4 +1,17 @@
 {
   "name": "@wpm/registry",
-  "private": true
+  "private": true,
+  "scripts": {
+    "start": "wrangler dev",
+    "prestart": "wrangler types worker-types.d.ts"
+  },
+  "dependencies": {
+    "@wpm/manifest": "workspace:*",
+    "@wpm/util": "workspace:*",
+    "hono": "catalog:"
+  },
+  "devDependencies": {
+    "typescript": "catalog:",
+    "wrangler": "catalog:"
+  }
 }
