@@ -6,6 +6,7 @@
   },
   "options": {
     "typeAware": true,
+    "typeCheck": true,
     "reportUnusedDisableDirectives": "error"
   },
   "ignorePatterns": [
