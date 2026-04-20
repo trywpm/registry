@@ -1,4 +1,9 @@
 ---
+import { SEO } from "astro-seo";
+
+import { Navbar } from "@/components/navbar";
+import { Footer } from "@/components/footer";
+
 import "../styles/globals.css";
 
 type Props = {
@@ -14,12 +19,7 @@ type Props = {
 		version?: string;
 		license?: string;
 	};
-}
-
-import { SEO } from "astro-seo";
-
-import { Footer } from "@/components/footer";
-import { Navbar } from "@/components/navbar";
+};
 
 const {
 	ogImage,
@@ -37,7 +37,12 @@ const title = homepage ? originalTitle : `${originalTitle} - wpm`;
 <html lang="en">
 	<head>
 		<script is:inline>
-			const getTheme=()=>"undefined" !== typeof localStorage&&localStorage.getItem("theme")?localStorage.getItem("theme"):window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light";"dark"===getTheme()?document.documentElement.classList.add("dark"):document.documentElement.classList.remove("dark"),document.addEventListener("astro:after-swap",()=>{"dark"===getTheme()&&document.documentElement.classList.add("dark")});
+			/* oxlint-disable */
+			// prettier-ignore
+			const getTheme=()=>"undefined" !== typeof localStorage&&localStorage.getItem("theme")?localStorage.getItem("theme"):window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light";
+			// prettier-ignore
+			"dark"===getTheme()?document.documentElement.classList.add("dark"):document.documentElement.classList.remove("dark"),document.addEventListener("astro:after-swap",()=>{"dark"===getTheme()&&document.documentElement.classList.add("dark")});
+			/* oxlint-enable */
 		</script>
 		<SEO
 			charset="utf-8"

@@ -1,8 +1,8 @@
 ---
-export const prerender = false;
+import { env } from "cloudflare:workers";
 
 import { Package } from "lucide-react";
-import { env } from "cloudflare:workers";
+import { readableTimeDiff } from "@wpm/util/datetime";
 
 import {
 	Hero,
@@ -28,11 +28,12 @@ import {
 } from "@/components/ui/pagination";
 import Layout from "@/layout/index.astro";
 import { Badge } from "@/components/ui/badge";
-import { readableTimeDiff } from "@wpm/util/datetime";
 import { Separator } from "@/components/ui/separator";
 import { PackageSort } from "@/components/package-sort";
 import { buttonVariants } from "@/components/ui/button";
 import { allowedSorts, buildPackagesQuery } from "@/lib/d1";
+
+export const prerender = false;
 
 const url = new URL(Astro.request.url);
 const currentPage = Number(url.searchParams.get("page")) || 1;

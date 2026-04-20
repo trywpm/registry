@@ -12,8 +12,8 @@ export function ThemeToggle() {
 
   React.useEffect(() => {
     setMounted(true);
-    const savedTheme = localStorage.getItem('theme') as Theme | null;
-    if (savedTheme) {
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme === 'light' || savedTheme === 'dark' || savedTheme === 'system') {
       setThemeState(savedTheme);
     }
   }, []);

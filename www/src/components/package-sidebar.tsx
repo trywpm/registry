@@ -43,8 +43,8 @@ export function PackageSidebar({
 
   const [copied, setCopied] = React.useState(false);
 
-  function copyInstallCommand() {
-    navigator.clipboard.writeText(installCommand);
+  async function copyInstallCommand() {
+    await navigator.clipboard.writeText(installCommand);
     setCopied(true);
     setTimeout(() => setCopied(false), 1500);
   }

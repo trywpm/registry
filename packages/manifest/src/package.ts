@@ -39,7 +39,7 @@ export const SemverSchema = z
   .refine((v) => !v.startsWith('v'), {
     message: "version constraint cannot start with 'v'",
   })
-  .refine((v) => valid(v, { loose: false }) !== null, {
+  .refine((v) => valid(v, { loose: false }) != null, {
     message: 'version must be a valid semantic version',
   });
 
@@ -50,7 +50,7 @@ export const SemverConstraintSchema = z
   .refine((v) => !v.startsWith('v'), {
     message: "version constraint cannot start with 'v'",
   })
-  .refine((v) => validRange(v) !== null, {
+  .refine((v) => validRange(v) != null, {
     message: 'version constraint must be a valid semver range',
   });
 

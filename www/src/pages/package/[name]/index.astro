@@ -1,7 +1,7 @@
 ---
-export const prerender = false;
-
 import { env } from "cloudflare:workers";
+
+import { getR2ObjectWithCache } from "@/lib/utils";
 
 import {
 	ImgHandler,
@@ -20,7 +20,7 @@ import PackageTabs from "@/components/package-tabs.astro";
 import { PackageSidebar } from "@/components/package-sidebar";
 import PackageHeader from "@/components/package-header.astro";
 
-import { getR2ObjectWithCache } from "@/lib/utils";
+export const prerender = false;
 
 const { name } = Astro.params;
 

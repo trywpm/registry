@@ -1,10 +1,22 @@
 import { Buffer } from 'node:buffer';
 import { describe, expect, test } from 'bun:test';
 
-import { DigestSchema, SemverSchema, DistTagSchema, PackageSchema, PackageNameSchema, DANGEROUS_CHARS_REGEX, SemverConstraintSchema, DependencyVersionSchema } from './package';
+import type { ZodType } from 'zod/v4';
+
+import {
+  DigestSchema,
+  SemverSchema,
+  DistTagSchema,
+  PackageSchema,
+  PackageNameSchema,
+  DANGEROUS_CHARS_REGEX,
+  SemverConstraintSchema,
+  DependencyVersionSchema,
+} from './package';
+
 import type { Package } from './package';
 
-const validateVar = (schema: any, value: any) => {
+const validateVar = (schema: ZodType, value: unknown) => {
   const result = schema.safeParse(value);
   return result.success ? null : result.error;
 };
@@ -240,7 +252,7 @@ describe('NewWpmJsonValidator (Field Level)', () => {
 
   test('wpm_digest_sha256 validator', () => {
     const validBase64 = Buffer.alloc(32).toString('base64');
-    expect(validateVar(DigestSchema, 'sha256:' + validBase64)).toBeNull();
+    expect(validateVar(DigestSchema, `sha256: + ${validBase64}`)).toBeNull();
     expect(validateVar(DigestSchema, 'sha256:invalid_base64$$$')).not.toBeNull();
   });
 
@@ -262,7 +274,7 @@ describe('NewWpmJsonValidator (Field Level)', () => {
 });
 
 const getValidPackage = (): Package => {
-  const validDigest = 'sha256:' + Buffer.alloc(32).toString('base64');
+  const validDigest = `sha256:${Buffer.alloc(32).toString('base64')}`;
   return {
     name: 'my-valid-package',
     description: 'A valid description.',
@@ -331,7 +343,7 @@ describe('PackageValidation', () => {
   runTest(
     'missing required config name',
     (p) => {
-      // @ts-expect-error
+      // @ts-expect-error -- testing missing required field
       delete p.name;
     },
     true,
@@ -380,7 +392,7 @@ describe('PackageValidation', () => {
   runTest(
     'invalid package type',
     (p) => {
-      // @ts-expect-error
+      // @ts-expect-error -- testing invalid package type
       p.type = 'library';
     },
     true,
@@ -496,7 +508,7 @@ describe('PackageValidation', () => {
   runTest(
     'homepage url max length',
     (p) => {
-      p.homepage = 'https://' + 'a'.repeat(191);
+      p.homepage = `https://${'a'.repeat(191)}`;
     },
     false,
   );
@@ -504,7 +516,7 @@ describe('PackageValidation', () => {
   runTest(
     'homepage url too long',
     (p) => {
-      p.homepage = 'https://' + 'a'.repeat(193);
+      p.homepage = `https://${'a'.repeat(193)}`;
     },
     true,
   );
@@ -824,7 +836,6 @@ describe('PackageValidation', () => {
   runTest(
     'missing required meta tag',
     (p) => {
-      // @ts-expect-error
       p.tag = '';
     },
     true,
@@ -849,7 +860,7 @@ describe('PackageValidation', () => {
   runTest(
     'invalid visibility',
     (p) => {
-      // @ts-expect-error
+      // @ts-expect-error -- testing invalid visibility
       p.visibility = 'protected';
     },
     true,
@@ -927,28 +938,19 @@ describe('ValidateSemver', () => {
     { name: 'valid min length', input: '1.0.0', isValid: true },
     {
       name: 'valid max length',
-      input:
-        '1'.repeat(5) +
-        '.' +
-        '2'.repeat(5) +
-        '.' +
-        '3'.repeat(5) +
-        '-' +
-        'a'.repeat(20) +
-        '+' +
-        'b'.repeat(20),
+      input: `${'1'.repeat(20)}.${'2'.repeat(20)}.${'3'.repeat(20)}-${'a'.repeat(20)}+${'b'.repeat(20)}`,
       isValid: true,
     },
     {
       name: 'invalid max length',
-      input: '1'.repeat(20) + '.' + '2'.repeat(20) + '.' + '3'.repeat(19),
+      input: `${'1'.repeat(21)}.${'2'.repeat(20)}.${'3'.repeat(20)}`,
       isValid: false,
     },
     { name: 'invalid too short length', input: '1.0', isValid: false },
     { name: 'invalid just too short length', input: '1.2.', isValid: false },
     {
       name: 'invalid too long length',
-      input: '1'.repeat(22) + '.' + '2'.repeat(22) + '.' + '3'.repeat(22),
+      input: `${'1'.repeat(22)}.${'2'.repeat(22)}.${'3'.repeat(22)}`,
       isValid: false,
     },
     { name: 'invalid with v prefix', input: 'v1.2.3', isValid: false },
@@ -1033,22 +1035,22 @@ describe('ValidateDigest', () => {
   const validHash = Buffer.alloc(32).toString('base64');
 
   const cases = [
-    { name: 'valid digest with prefix', input: 'sha256:' + validHash, isValid: true },
+    { name: 'valid digest with prefix', input: `sha256:${validHash}`, isValid: true },
     {
       name: 'valid digest without prefix (invalid in strict schema)',
       input: validHash,
       isValid: false,
     },
-    { name: 'invalid prefix', input: 'sha512:' + validHash, isValid: false },
+    { name: 'invalid prefix', input: `sha512:${validHash}`, isValid: false },
     { name: 'invalid base64', input: 'sha256:not-valid-base64-$%^', isValid: false },
     {
       name: 'invalid hash length (short)',
-      input: 'sha256:' + Buffer.alloc(31).toString('base64'),
+      input: `sha256:${Buffer.alloc(31).toString('base64')}`,
       isValid: false,
     },
     {
       name: 'invalid hash length (long)',
-      input: 'sha256:' + Buffer.alloc(33).toString('base64'),
+      input: `sha256:${Buffer.alloc(33).toString('base64')}`,
       isValid: false,
     },
     { name: 'empty string', input: '', isValid: false },

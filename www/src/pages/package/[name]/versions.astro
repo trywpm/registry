@@ -1,5 +1,5 @@
 ---
-export const prerender = false;
+import type { Package } from "@wpm/manifest/package";
 
 import {
 	Card,
@@ -10,12 +10,11 @@ import {
 } from "@/components/ui/card";
 import Layout from "@/layout/index.astro";
 import { Badge } from "@/components/ui/badge";
-import { PackageSidebar } from "@/components/package-sidebar";
-
 import PackageTabs from "@/components/package-tabs.astro";
 import PackageHeader from "@/components/package-header.astro";
+import { PackageSidebar } from "@/components/package-sidebar";
 
-import type { Package } from "@wpm/manifest/package";
+export const prerender = false;
 
 const { name } = Astro.params;
 

@@ -11,6 +11,16 @@ import { allowedSorts } from '@/lib/d1';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 
+const handleSortChange = (key: keyof typeof allowedSorts) => {
+  const url = new URL(window.location.href);
+  url.searchParams.set('sort', key);
+  window.location.href = url.toString();
+};
+
+function isValidSort(sort: string | null): sort is keyof typeof allowedSorts {
+  return sort != null && sort in allowedSorts;
+}
+
 export function PackageSort({ isPlugins = true }: { isPlugins?: boolean }) {
   const [searchTerm, setSearchTerm] = React.useState('');
   const [sortBy, setSortBy] = React.useState<keyof typeof allowedSorts>('popularity');
@@ -21,8 +31,8 @@ export function PackageSort({ isPlugins = true }: { isPlugins?: boolean }) {
     const sortParam = params.get('sort');
     const queryParam = params.get('q');
 
-    if (sortParam && sortParam in allowedSorts) {
-      setSortBy(sortParam as keyof typeof allowedSorts);
+    if (isValidSort(sortParam)) {
+      setSortBy(sortParam);
     }
     if (queryParam) {
       setSearchTerm(queryParam);
@@ -32,7 +42,7 @@ export function PackageSort({ isPlugins = true }: { isPlugins?: boolean }) {
 
   React.useEffect(() => {
     if (!isMounted) {
-      return;
+      return () => {};
     }
 
     const timer = setTimeout(() => {
@@ -48,12 +58,6 @@ export function PackageSort({ isPlugins = true }: { isPlugins?: boolean }) {
 
     return () => clearTimeout(timer);
   }, [searchTerm, isMounted]);
-
-  const handleSortChange = (key: keyof typeof allowedSorts) => {
-    const url = new URL(window.location.href);
-    url.searchParams.set('sort', key);
-    window.location.href = url.toString();
-  };
 
   return (
     <div className="flex gap-3 items-center justify-between mb-4">
@@ -73,20 +77,27 @@ export function PackageSort({ isPlugins = true }: { isPlugins?: boolean }) {
           <DropdownMenuTrigger asChild>
             <Button variant="outline" size="default" className="shrink-0">
               <Filter className="h-4 w-4" />
-              <span className="hidden sm:inline sm:ml-2">
-                Sort by {sortBy.charAt(0).toUpperCase() + sortBy.slice(1)}
-              </span>
+              <span className="hidden sm:inline sm:ml-2">Sort by {allowedSorts[sortBy]}</span>
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-48">
-            {Object.entries(allowedSorts).map(([key, label]) => (
-              <DropdownMenuItem
-                key={key}
-                onSelect={() => handleSortChange(key as keyof typeof allowedSorts)}
-              >
-                {label}
-              </DropdownMenuItem>
-            ))}
+            {Object.keys(allowedSorts).map((key) => {
+              if (!isValidSort(key)) {
+                return null;
+              }
+
+              const label = allowedSorts[key];
+
+              return (
+                <DropdownMenuItem
+                  key={key}
+                  onSelect={() => handleSortChange(key)}
+                  className={sortBy === key ? 'font-medium' : ''}
+                >
+                  {label}
+                </DropdownMenuItem>
+              );
+            })}
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
