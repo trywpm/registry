@@ -10,6 +10,9 @@
         "typescript": "^6.0.3",
       },
     },
+    "packages/util": {
+      "name": "@wpm/util",
+    },
     "registry": {
       "name": "@wpm/registry",
     },
@@ -23,6 +26,7 @@
         "@radix-ui/react-select": "^2.2.6",
         "@radix-ui/react-separator": "^1.1.8",
         "@radix-ui/react-slot": "^1.2.4",
+        "@wpm/util": "workspace:*",
         "astro-seo": "^1.1.0",
         "class-variance-authority": "^0.7.1",
         "clsx": "^2.1.1",
@@ -628,6 +632,8 @@
     "@vscode/l10n": ["@vscode/l10n@0.0.18", "", {}, "sha512-KYSIHVmslkaCDyw013pphY+d7x1qV8IZupYfeIfzNA+nsaWHbn5uPuQRvdRFsa9zFzGeudPuoGoZ1Op4jrJXIQ=="],
 
     "@wpm/registry": ["@wpm/registry@workspace:registry"],
+
+    "@wpm/util": ["@wpm/util@workspace:packages/util"],
 
     "@wpm/www": ["@wpm/www@workspace:www"],
 
