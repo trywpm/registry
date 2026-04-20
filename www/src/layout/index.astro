@@ -37,20 +37,7 @@ const title = homepage ? originalTitle : `${originalTitle} - wpm`;
 <html lang="en">
 	<head>
 		<script is:inline>
-			const getTheme = () =>
-				"undefined" !== typeof localStorage &&
-				localStorage.getItem("theme")
-					? localStorage.getItem("theme")
-					: window.matchMedia("(prefers-color-scheme: dark)").matches
-						? "dark"
-						: "light";
-			("dark" === getTheme()
-				? document.documentElement.classList.add("dark")
-				: document.documentElement.classList.remove("dark"),
-				document.addEventListener("astro:after-swap", () => {
-					"dark" === getTheme() &&
-						document.documentElement.classList.add("dark");
-				}));
+			const getTheme=()=>"undefined" !== typeof localStorage&&localStorage.getItem("theme")?localStorage.getItem("theme"):window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light";"dark"===getTheme()?document.documentElement.classList.add("dark"):document.documentElement.classList.remove("dark"),document.addEventListener("astro:after-swap",()=>{"dark"===getTheme()&&document.documentElement.classList.add("dark")});
 		</script>
 		<SEO
 			charset="utf-8"
