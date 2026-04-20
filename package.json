@@ -17,7 +17,8 @@
   "scripts": {
     "fmt": "oxfmt",
     "lint": "oxlint",
-    "dev:www": ""
+    "typecheck": "tsc --build",
+    "typecheck:force": "tsc --build --force"
   },
   "devDependencies": {
     "oxfmt": "^0.45.0",
