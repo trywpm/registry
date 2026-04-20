@@ -1,17 +1,8 @@
 import { Buffer } from 'node:buffer';
 import { describe, expect, test } from 'bun:test';
 
-import {
-  type Package,
-  DigestSchema,
-  SemverSchema,
-  DistTagSchema,
-  PackageSchema,
-  PackageNameSchema,
-  DANGEROUS_CHARS_REGEX,
-  SemverConstraintSchema,
-  DependencyVersionSchema,
-} from './package';
+import { DigestSchema, SemverSchema, DistTagSchema, PackageSchema, PackageNameSchema, DANGEROUS_CHARS_REGEX, SemverConstraintSchema, DependencyVersionSchema } from './package';
+import type { Package } from './package';
 
 const validateVar = (schema: any, value: any) => {
   const result = schema.safeParse(value);
@@ -340,7 +331,7 @@ describe('PackageValidation', () => {
   runTest(
     'missing required config name',
     (p) => {
-      // @ts-ignore
+      // @ts-expect-error
       delete p.name;
     },
     true,
@@ -389,7 +380,7 @@ describe('PackageValidation', () => {
   runTest(
     'invalid package type',
     (p) => {
-      // @ts-ignore
+      // @ts-expect-error
       p.type = 'library';
     },
     true,
@@ -833,7 +824,7 @@ describe('PackageValidation', () => {
   runTest(
     'missing required meta tag',
     (p) => {
-      // @ts-ignore
+      // @ts-expect-error
       p.tag = '';
     },
     true,
@@ -858,7 +849,7 @@ describe('PackageValidation', () => {
   runTest(
     'invalid visibility',
     (p) => {
-      // @ts-ignore
+      // @ts-expect-error
       p.visibility = 'protected';
     },
     true,

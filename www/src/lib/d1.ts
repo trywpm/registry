@@ -49,5 +49,5 @@ export function buildPackagesQuery(
       ${outerOrderBy}
     `;
 
-  return d1.prepare(sql).bind(...[type, limit, offset]);
+  return d1.prepare(sql).bind(type, limit, offset);
 }
