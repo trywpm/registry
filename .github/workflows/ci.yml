@@ -29,14 +29,11 @@ jobs:
       - name: install dependencies
         run: bun install --ignore-scripts --frozen-lockfile
 
+      - name: generate types
+        run: bun run typegen
+
       - name: format
         run: bun fmt --check
-
-      - name: lint
-        run: bun lint
-
-      - name: type check
-        run: bun typecheck
 
   lint:
     runs-on: ubuntu-latest
@@ -53,6 +50,9 @@ jobs:
 
       - name: install dependencies
         run: bun install --ignore-scripts --frozen-lockfile
+
+      - name: generate types
+        run: bun run typegen
 
       - name: lint
         run: bun lint
@@ -72,6 +72,9 @@ jobs:
 
       - name: install dependencies
         run: bun install --ignore-scripts --frozen-lockfile
+
+      - name: generate types
+        run: bun run typegen
 
       - name: type check
         run: bun typecheck
