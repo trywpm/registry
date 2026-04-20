@@ -1,0 +1,33 @@
+services:
+  db:
+    image: postgres:17
+    shm_size: 2gb
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: wpm
+      POSTGRES_USER: wpm
+      POSTGRES_PASSWORD: wpm
+    ports:
+      - 5432:5432
+  localstack:
+    image: localstack/localstack-pro:latest
+    environment:
+      - PERSISTENCE=1
+      - SERVICES=s3,ses,kms,sesv2
+      - AWS_ACCESS_KEY_ID=admin
+      - AWS_SECRET_ACCESS_KEY=password
+      - LOCALSTACK_AUTH_TOKEN=${LOCALSTACK_AUTH_TOKEN}
+      - EXTENSION_AUTO_INSTALL=localstack-extension-mailhog
+    ports:
+      - "127.0.0.1:4566:4566"
+      - "127.0.0.1:4510-4559:4510-4559"
+    volumes:
+      - localstack_data:/var/lib/localstack
+      - /var/run/docker.sock:/var/run/docker.sock
+
+volumes:
+  db-data:
+    driver: local
+  localstack_data:
+    driver: local
