@@ -4,6 +4,15 @@
     "suspicious": "warn",
     "correctness": "error"
   },
+  "ignorePatterns": [
+    "**/.git/**",
+    "**/dist/**",
+    "**/build/**",
+    "**/.wrangler/**",
+    "www/src/public/**",
+    "**/node_modules/**",
+    "www/src/components/ui/**"
+  ],
   "overrides": [
     {
       "files": ["**/*.astro"],
