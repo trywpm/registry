@@ -2,6 +2,7 @@
   "name": "@wpm/util",
   "private": true,
   "exports": {
-    "./datetime": "./src/datetime.ts"
+    "./datetime": "./src/datetime.ts",
+    "./html-rewriter": "./src/html-rewriter.ts"
   }
 }
