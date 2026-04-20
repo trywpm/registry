@@ -6,7 +6,9 @@
     "build": "astro build",
     "check": "astro check",
     "preview": "astro preview",
-    "prestart": "wrangler types worker-types.d.ts"
+    "sync": "astro sync",
+    "prestart": "wrangler types worker-types.d.ts",
+    "typegen": "bun run sync & bun run prestart & wait"
   },
   "dependencies": {
     "@astrojs/cloudflare": "^13.1.10",

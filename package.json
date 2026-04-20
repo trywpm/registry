@@ -23,7 +23,8 @@
     "fmt": "oxfmt",
     "lint": "oxlint",
     "typecheck": "tsc --build",
-    "typecheck:force": "tsc --build --force"
+    "typecheck:force": "tsc --build --force",
+    "typegen": "bun run --filter '*' typegen"
   },
   "devDependencies": {
     "oxfmt": "^0.45.0",
