@@ -27,7 +27,7 @@ jobs:
           node-version: 24
 
       - name: generate types
-        run: vp run typegen
+        run: vp run -r typegen
 
       - name: check
         run: vp check
