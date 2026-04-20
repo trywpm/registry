@@ -1,5 +1,5 @@
 import { Buffer } from 'node:buffer';
-import { describe, expect, test } from 'bun:test';
+import { describe, expect, test } from 'vitest';
 
 import type { ZodType } from 'zod/v4';
 
