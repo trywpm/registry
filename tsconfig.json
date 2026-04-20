@@ -1,4 +1,9 @@
 {
   "files": [],
-  "references": [{ "path": "www" }, { "path": "registry" }, { "path": "packages/util" }]
+  "references": [
+    { "path": "www" },
+    { "path": "registry" },
+    { "path": "packages/util" },
+    { "path": "packages/manifest" }
+  ]
 }

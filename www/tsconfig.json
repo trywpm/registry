@@ -8,6 +8,6 @@
     }
   },
   "exclude": ["node_modules", "dist"],
-  "references": [{ "path": "../packages/util" }],
-  "include": ["src/**/*", ".astro/types.d.ts", "worker-types.d.ts"]
+  "include": ["src/**/*", ".astro/types.d.ts", "worker-types.d.ts"],
+  "references": [{ "path": "../packages/util" }, { "path": "../packages/manifest" }]
 }

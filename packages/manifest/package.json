@@ -1,0 +1,16 @@
+{
+  "name": "@wpm/manifest",
+  "private": true,
+  "exports": {
+    "./package": "./src/package.ts"
+  },
+  "dependencies": {
+    "semver": "catalog:",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@types/bun": "catalog:",
+    "@types/node": "catalog:",
+    "@types/semver": "catalog:"
+  }
+}
