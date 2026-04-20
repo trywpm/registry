@@ -41,8 +41,8 @@
         "wrangler": "catalog:",
       },
     },
-    "www": {
-      "name": "@wpm/www",
+    "web": {
+      "name": "@wpm/web",
       "dependencies": {
         "@astrojs/cloudflare": "^13.1.10",
         "@astrojs/react": "^5.0.3",
@@ -690,7 +690,7 @@
 
     "@wpm/util": ["@wpm/util@workspace:packages/util"],
 
-    "@wpm/www": ["@wpm/www@workspace:www"],
+    "@wpm/web": ["@wpm/web@workspace:web"],
 
     "ajv": ["ajv@8.18.0", "", { "dependencies": { "fast-deep-equal": "^3.1.3", "fast-uri": "^3.0.1", "json-schema-traverse": "^1.0.0", "require-from-string": "^2.0.2" } }, "sha512-PlXPeEWMXMZ7sPYOHqmDyCJzcfNrUr3fGNKtezX14ykXOEIvyK81d+qydx89KY5O71FKMPaQ2vBfBFI5NHR63A=="],
 

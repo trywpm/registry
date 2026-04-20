@@ -1,5 +1,5 @@
 {
-  "name": "@wpm/www",
+  "name": "@wpm/web",
   "private": true,
   "scripts": {
     "start": "astro dev",

@@ -8,9 +8,9 @@
     "**/dist/**",
     "**/build/**",
     "**/.wrangler/**",
-    "www/src/public/**",
+    "web/src/public/**",
     "**/node_modules/**",
-    "www/src/components/ui/**"
+    "web/src/components/ui/**"
   ],
   "overrides": [
     {

@@ -1,7 +1,7 @@
 {
   "files": [],
   "references": [
-    { "path": "www" },
+    { "path": "web" },
     { "path": "registry" },
     { "path": "packages/util" },
     { "path": "packages/manifest" }
