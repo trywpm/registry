@@ -9,6 +9,9 @@
     "esModuleInterop": true,
     "resolveJsonModule": true,
     "moduleResolution": "Bundler",
-    "forceConsistentCasingInFileNames": true
+    "outDir": "${configDir}/dist",
+    "rootDir": "${configDir}/src",
+    "forceConsistentCasingInFileNames": true,
+    "tsBuildInfoFile": "${configDir}/dist/tsconfig.tsbuildinfo"
   }
 }
