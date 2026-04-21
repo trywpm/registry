@@ -1,0 +1,132 @@
+import { cn } from '@/lib/utils';
+import { CheckIcon, ChevronDownIcon } from '@/components/icon';
+
+export function Select({ children, defaultValue, value, name, disabled, ...props }: any) {
+  return (
+    <custom-select
+      data-slot="select"
+      data-default-value={defaultValue || value}
+      data-name={name}
+      data-disabled={disabled ? 'true' : undefined}
+      {...props}
+    >
+      {name && (
+        <input
+          type="hidden"
+          name={name}
+          value={defaultValue || value || ''}
+          data-slot="select-hidden-input"
+        />
+      )}
+      {children}
+    </custom-select>
+  );
+}
+
+export function SelectGroup({ className, ...props }: any) {
+  return <div role="group" data-slot="select-group" {...props} />;
+}
+
+export function SelectValue({ className, placeholder, children, ...props }: any) {
+  return (
+    <span data-slot="select-value" data-placeholder={placeholder ? '' : undefined} {...props}>
+      {children || placeholder}
+    </span>
+  );
+}
+
+export function SelectTrigger({ className, size = 'default', children, ...props }: any) {
+  return (
+    <button
+      type="button"
+      role="combobox"
+      aria-expanded="false"
+      data-slot="select-trigger"
+      data-size={size}
+      data-state="closed"
+      className={cn(
+        "border-input data-placeholder:text-muted-foreground [&_svg:not([class*='text-'])]:text-muted-foreground focus-visible:border-ring focus-visible:ring-ring/50 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive dark:bg-input/30 dark:hover:bg-input/50 flex w-fit items-center justify-between gap-2 rounded-md border bg-transparent px-3 py-2 text-sm whitespace-nowrap shadow-xs transition-[color,box-shadow] outline-none focus-visible:ring-[3px] disabled:cursor-not-allowed disabled:opacity-50 data-[size=default]:h-9 data-[size=sm]:h-8 *:data-[slot=select-value]:line-clamp-1 *:data-[slot=select-value]:flex *:data-[slot=select-value]:items-center *:data-[slot=select-value]:gap-2 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+        className,
+      )}
+      {...props}
+    >
+      {children}
+      <ChevronDownIcon className="size-4 opacity-50" />
+    </button>
+  );
+}
+
+export function SelectContent({ className, children, position = 'popper', ...props }: any) {
+  return (
+    <div
+      data-slot="select-content"
+      data-state="closed"
+      role="listbox"
+      className={cn(
+        'hidden absolute',
+        'bg-popover text-popover-foreground data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 z-50 max-h-96 min-w-32 origin-top overflow-x-hidden overflow-y-auto rounded-md border shadow-md',
+        className,
+      )}
+      {...props}
+    >
+      <div
+        data-slot="select-viewport"
+        className={cn(
+          'p-1',
+          position === 'popper' && 'w-full min-w-(--radix-select-trigger-width)',
+        )}
+      >
+        {children}
+      </div>
+    </div>
+  );
+}
+
+export function SelectLabel({ className, ...props }: any) {
+  return (
+    <div
+      data-slot="select-label"
+      className={cn('text-muted-foreground px-2 py-1.5 text-xs', className)}
+      {...props}
+    />
+  );
+}
+
+export function SelectItem({ className, children, value, disabled, ...props }: any) {
+  return (
+    <div
+      role="option"
+      tabIndex={-1}
+      data-slot="select-item"
+      data-value={value}
+      data-state="unchecked"
+      aria-selected="false"
+      aria-disabled={disabled ? 'true' : undefined}
+      data-disabled={disabled ? '' : undefined}
+      className={cn(
+        "focus:bg-accent focus:text-accent-foreground hover:bg-accent hover:text-accent-foreground [&_svg:not([class*='text-'])]:text-muted-foreground relative flex w-full cursor-default items-center gap-2 rounded-sm py-1.5 pr-8 pl-2 text-sm outline-none select-none data-disabled:pointer-events-none data-disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0[&_svg:not([class*='size-'])]:size-4 group",
+        className,
+      )}
+      {...props}
+    >
+      <span
+        data-slot="select-item-indicator"
+        className="absolute right-2 flex size-3.5 items-center justify-center opacity-0 group-data-[state=checked]:opacity-100 transition-none"
+      >
+        <CheckIcon className="size-4" />
+      </span>
+      <span data-slot="select-item-text">{children}</span>
+    </div>
+  );
+}
+
+export function SelectSeparator({ className, ...props }: any) {
+  return (
+    <div
+      role="separator"
+      data-slot="select-separator"
+      className={cn('bg-border pointer-events-none -mx-1 my-1 h-px', className)}
+      {...props}
+    />
+  );
+}
