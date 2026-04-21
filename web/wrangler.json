@@ -27,6 +27,13 @@
       "database_id": "488343ab-bac0-43a5-b700-5ae45f39df45"
     }
   ],
+  "hyperdrive": [
+    {
+      "id": "6d4fe5aebbe649ceb316d687436c7653",
+      "binding": "pg",
+      "localConnectionString": "postgresql://wpm:wpm@localhost:5432/wpm"
+    }
+  ],
   "routes": [
     {
       "pattern": "wpm.so",
