@@ -71,8 +71,8 @@ export default defineConfig({
       'typescript/consistent-type-imports': [
         'error',
         {
-          disallowTypeAnnotations: true,
           prefer: 'type-imports',
+          disallowTypeAnnotations: false,
         },
       ],
       'typescript/no-confusing-void-expression': [
