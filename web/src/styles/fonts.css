@@ -1,0 +1,87 @@
+/* -------------------------------------------------------------------------- */
+/*                                    SORA                                    */
+/* -------------------------------------------------------------------------- */
+
+/* Regular (400) */
+@font-face {
+  font-family: 'Sora';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/sora/sora-v17-latin-regular.woff2') format('woff2');
+}
+
+/* SemiBold (600) */
+@font-face {
+  font-family: 'Sora';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url('/fonts/sora/sora-v17-latin-600.woff2') format('woff2');
+}
+
+/* Bold (700) */
+@font-face {
+  font-family: 'Sora';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('/fonts/sora/sora-v17-latin-700.woff2') format('woff2');
+}
+
+/* -------------------------------------------------------------------------- */
+/*                                   DM SANS                                  */
+/* -------------------------------------------------------------------------- */
+
+/* Regular (400) */
+@font-face {
+  font-family: 'DM Sans';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/dm-sans/dm-sans-v17-latin-regular.woff2') format('woff2');
+}
+
+/* Medium (500) */
+@font-face {
+  font-family: 'DM Sans';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url('/fonts/dm-sans/dm-sans-v17-latin-500.woff2') format('woff2');
+}
+
+/* Bold (700) */
+@font-face {
+  font-family: 'DM Sans';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('/fonts/dm-sans/dm-sans-v17-latin-700.woff2') format('woff2');
+}
+
+/* -------------------------------------------------------------------------- */
+/*                                 GEIST MONO                                 */
+/* -------------------------------------------------------------------------- */
+
+@font-face {
+  font-family: 'GeistMono';
+  font-style: normal;
+  font-weight: 400; /* Assuming the file is regular */
+  font-display: swap;
+  src: url('/fonts/geist-mono/geist-mono-v4-latin-regular.woff2') format('woff2');
+}
+
+:root {
+  --font-sora:
+    'Sora', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+    'Helvetica Neue', Arial, sans-serif;
+
+  --font-dm-sans:
+    'DM Sans', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+    'Helvetica Neue', Arial, sans-serif;
+
+  --font-geist-mono:
+    'GeistMono', ui-monospace, SFMono-Regular, Roboto Mono, Menlo, Monaco, Liberation Mono,
+    'DejaVu Sans Mono', 'Courier New', monospace;
+}
