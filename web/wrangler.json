@@ -1,0 +1,43 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "wpm-web",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-01-23",
+  "compatibility_flags": ["nodejs_compat"],
+  "assets": {
+    "binding": "assets",
+    "directory": "src/public"
+  },
+  "observability": {
+    "enabled": true,
+    "traces": {
+      "enabled": true
+    }
+  },
+  "r2_buckets": [
+    {
+      "binding": "readme",
+      "bucket_name": "wpm-readme-storage"
+    }
+  ],
+  "d1_databases": [
+    {
+      "binding": "registry_search",
+      "database_name": "registry_search_db",
+      "database_id": "488343ab-bac0-43a5-b700-5ae45f39df45"
+    }
+  ],
+  "hyperdrive": [
+    {
+      "id": "6d4fe5aebbe649ceb316d687436c7653",
+      "binding": "pg",
+      "localConnectionString": "postgresql://wpm:wpm@localhost:5432/wpm"
+    }
+  ],
+  "routes": [
+    {
+      "pattern": "wpm.so",
+      "custom_domain": true
+    }
+  ]
+}
