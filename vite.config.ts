@@ -13,7 +13,6 @@ export default defineConfig({
       '**/.wrangler/**',
       'web/src/public/**',
       '**/node_modules/**',
-      'web/src/components/ui/**',
     ],
     overrides: [
       {

@@ -4,4 +4,3 @@ web/src/public/js/lite-yt.js linguist-vendored
 
 # Generated.
 web/worker-types.d.ts linguist-generated
-web/src/components/ui/** linguist-generated
