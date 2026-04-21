@@ -13,6 +13,7 @@
       "@types/node": "^25.6.0",
       "@types/semver": "^7.7.1",
       "hono": "^4.12.14",
+      "postgres": "^3.4.9",
       "semver": "^7.7.4",
       "typescript": "^6.0.3",
       "wrangler": "^4.83.0",
