@@ -39,6 +39,10 @@ export const BaseLayout = ({
   const defaultOgImage = 'https://wpm.so/og.png';
   const finalOgImage = ogImage ?? defaultOgImage;
 
+  // no-op to avoid unused variable error.
+  // We might need `c` in the future for something like analytics or dynamic meta tags.
+  c.get('');
+
   const ogImgAlt = originalTitle.replace(' - wpm', '');
   const title = homepage ? originalTitle : `${originalTitle} - wpm`;
 
