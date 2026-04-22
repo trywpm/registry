@@ -38,10 +38,17 @@ function DesktopNav() {
 
 function CTAButtons({ mobile = false }: { mobile?: boolean }) {
   return (
-    <div className={`gap-3 ${mobile ? 'py-6 space-y-3' : 'ml-auto hidden md:flex items-center'}`}>
-      {/* Restored to exactly how you had it! */}
-      <Button asChild size="sm" className={mobile ? 'w-full' : ''}>
-        <a href="/waitlist">Get Early Access</a>
+    <div
+      className={cn(
+        'gap-3',
+        mobile ? 'flex flex-col-reverse py-3' : 'ml-auto hidden md:flex items-center',
+      )}
+    >
+      <Button asChild variant="outline" size="sm" className={cn(mobile ? 'w-full' : '', 'h-7.75')}>
+        <a href="/login">Log In</a>
+      </Button>
+      <Button asChild size="sm" className={cn(mobile ? 'w-full' : '', 'h-7.75')}>
+        <a href="/signup">Sign Up</a>
       </Button>
     </div>
   );
@@ -49,7 +56,12 @@ function CTAButtons({ mobile = false }: { mobile?: boolean }) {
 
 function Hamburger() {
   return (
-    <Button data-menu-toggle variant="ghost" size="icon" className="cursor-pointer md:hidden">
+    <Button
+      data-menu-toggle
+      variant="ghost"
+      size="icon"
+      className="cursor-pointer md:hidden size-8"
+    >
       <div className="relative h-4 w-4 flex flex-col justify-center items-center">
         <span
           data-line-1
@@ -82,19 +94,31 @@ export function Navbar({ hasHero = false }: { hasHero?: boolean }) {
             <Logo />
             <DesktopNav />
           </div>
-          <CTAButtons />
-          <Hamburger />
+
+          <div className="flex items-center gap-2 ml-auto">
+            <ThemeToggle />
+            <Separator orientation="vertical" className="h-4 hidden md:block" />
+            <CTAButtons />
+            <Separator orientation="vertical" className="h-4 md:hidden" />
+            <Hamburger />
+          </div>
         </div>
       </header>
 
       <div
         data-mobile-menu
-        className="fixed inset-0 z-60 bg-white dark:bg-black md:hidden animate-fadeIn hidden"
+        data-state="closed"
+        className={cn(
+          'opacity-0 pointer-events-none',
+          'fixed inset-0 z-60 bg-background md:hidden',
+          'transition-opacity duration-300 ease-in-out',
+          'data-[state=open]:opacity-100 data-[state=open]:pointer-events-auto',
+        )}
       >
-        <div className="flex items-center justify-between h-(--header-height) px-4">
-          <Logo />
+        <div className="container flex items-center justify-end h-(--header-height)">
           <Hamburger />
         </div>
+
         <div className="container flex flex-col h-[calc(100vh-4rem)] overflow-y-auto">
           <CTAButtons mobile />
           <div className="flex-1">
@@ -107,10 +131,6 @@ export function Navbar({ hasHero = false }: { hasHero?: boolean }) {
                 {label}
               </a>
             ))}
-          </div>
-          <Separator />
-          <div className="flex items-center justify-center py-4">
-            <ThemeToggle />
           </div>
         </div>
       </div>

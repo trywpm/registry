@@ -1,64 +1,45 @@
-// client.ts (or wherever you bundle your client-side scripts)
+type Theme = 'light' | 'dark' | 'system';
 
 class ThemeToggle extends HTMLElement {
+  private theme: Theme = 'system';
+  private cycleBtn: HTMLButtonElement | null = null;
+
   connectedCallback() {
-    // Select all buttons inside this element
-    this.buttons = this.querySelectorAll('button[data-theme]');
+    this.cycleBtn = this.querySelector('button[data-theme-cycle]');
 
-    // Read the current theme, fallback to system
-    this.theme = localStorage.getItem('theme') || 'system';
+    const saved = localStorage.getItem('theme') as Theme | null;
+    this.theme = saved || 'system';
 
-    // Attach click listeners to all buttons
-    this.buttons.forEach((btn) => {
-      btn.addEventListener('click', () => {
-        const newTheme = btn.getAttribute('data-theme');
-        if (newTheme) this.applyTheme(newTheme);
-      });
+    this.cycleBtn?.addEventListener('click', () => {
+      const isDark = document.documentElement.classList.contains('dark');
+      const nextTheme: Theme = isDark ? 'light' : 'dark';
+
+      this.applyTheme(nextTheme);
     });
 
-    // Run once on load to sync the active button UI
-    this.applyTheme(this.theme);
+    this.updateAttributes();
   }
 
-  applyTheme(newTheme) {
+  private applyTheme(newTheme: Theme) {
     this.theme = newTheme;
     const root = document.documentElement;
 
-    // 1. Update the document classes
-    root.classList.remove('light', 'dark');
-
-    if (newTheme === 'system') {
-      localStorage.removeItem('theme');
-      const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches
-        ? 'dark'
-        : 'light';
-      root.classList.add(systemTheme);
+    if (newTheme === 'dark') {
+      root.classList.add('dark');
+      localStorage.setItem('theme', 'dark');
     } else {
-      localStorage.setItem('theme', newTheme);
-      root.classList.add(newTheme);
+      root.classList.remove('dark');
+      localStorage.setItem('theme', 'light');
     }
 
-    // 2. Update the buttons' "active" UI state
-    this.updateUI();
+    this.updateAttributes();
   }
 
-  updateUI() {
-    this.buttons.forEach((btn) => {
-      const btnTheme = btn.getAttribute('data-theme');
-      const isActive = this.theme === btnTheme;
-
-      if (isActive) {
-        // Add active classes
-        btn.classList.add('bg-background', 'shadow-sm', 'text-foreground');
-        btn.classList.remove('text-muted-foreground', 'hover:text-foreground');
-      } else {
-        // Remove active classes
-        btn.classList.remove('bg-background', 'shadow-sm', 'text-foreground');
-        btn.classList.add('text-muted-foreground', 'hover:text-foreground');
-      }
-    });
+  private updateAttributes() {
+    this.setAttribute('data-current-theme', this.theme);
   }
 }
 
-// Register the web component
-customElements.define('theme-toggle', ThemeToggle);
+if (!customElements.get('theme-toggle')) {
+  customElements.define('theme-toggle', ThemeToggle);
+}
