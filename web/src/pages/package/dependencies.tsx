@@ -30,13 +30,8 @@ export const DependenciesPage = async (c: Context) => {
     return new Response(null, { status: 404 });
   }
 
-  if (!manifest.dependencies) {
-    manifest.dependencies = {};
-  }
-
-  if (!manifest.requires) {
-    manifest.requires = {};
-  }
+  manifest.requires ??= {};
+  manifest.dependencies ??= {};
 
   const reqUrl = new URL(c.req.url);
   const canonicalUrl = new URL(c.req.path, reqUrl.origin).href;

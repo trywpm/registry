@@ -52,7 +52,7 @@ export const Slot = forwardRef<unknown, SlotProps>((props, forwardedRef) => {
           ? (newElement.props.children as Child)
           : ((<></>) as unknown as Child);
       }
-      return child as Child;
+      return child;
     });
 
     return (
@@ -70,7 +70,7 @@ export const Slot = forwardRef<unknown, SlotProps>((props, forwardedRef) => {
 
   return (
     <SlotClone {...slotProps} ref={forwardedRef}>
-      {children as Child}
+      {children}
     </SlotClone>
   ) as unknown as RenderReturn;
 });
@@ -105,13 +105,9 @@ Object.assign(SlotClone, { displayName: 'SlotClone' });
 
 const SLOTTABLE_IDENTIFIER = Symbol.for('hono.slottable');
 
-type SlottableProps = {
-  children?: Child;
-};
-
 type SlottableComponent = {
   __honoId: symbol;
-} & FC<SlottableProps>;
+} & FC;
 
 export const Slottable = (({ children }) => {
   return (<>{children}</>) as unknown as FCReturn;

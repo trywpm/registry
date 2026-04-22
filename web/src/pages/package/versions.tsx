@@ -30,13 +30,8 @@ export const VersionsPage = async (c: Context) => {
     }
   >();
 
-  if (!manifest.dependencies) {
-    manifest.dependencies = {};
-  }
-
-  if (!manifest.requires) {
-    manifest.requires = {};
-  }
+  manifest.requires ??= {};
+  manifest.dependencies ??= {};
 
   const pkg = await versionsRes.json<{
     versions: string[];

@@ -15,7 +15,9 @@ class Select extends HTMLElement {
   }
 
   connectedCallback(): void {
-    queueMicrotask(() => this.init());
+    queueMicrotask(() => {
+      this.init();
+    });
   }
 
   disconnectedCallback(): void {
@@ -60,7 +62,9 @@ class Select extends HTMLElement {
       this.toggle();
     });
 
-    this.trigger.addEventListener('keydown', (e: KeyboardEvent) => this.handleTriggerKey(e));
+    this.trigger.addEventListener('keydown', (e: KeyboardEvent) => {
+      this.handleTriggerKey(e);
+    });
 
     this.items.forEach((item, index) => {
       item.addEventListener('click', (e: MouseEvent) => {
@@ -70,7 +74,9 @@ class Select extends HTMLElement {
         }
       });
 
-      item.addEventListener('keydown', (e: KeyboardEvent) => this.handleItemKey(e, index));
+      item.addEventListener('keydown', (e: KeyboardEvent) => {
+        this.handleItemKey(e, index);
+      });
 
       item.addEventListener('mouseenter', () => {
         if (!item.hasAttribute('data-disabled')) {
@@ -161,7 +167,7 @@ class Select extends HTMLElement {
     this.addGlobalListeners();
 
     const selected =
-      this.items.find((i) => i.getAttribute('data-state') === 'checked') ||
+      this.items.find((i) => i.getAttribute('data-state') === 'checked') ??
       this.items.find((i) => !i.hasAttribute('data-disabled'));
 
     if (selected) {

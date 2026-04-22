@@ -14,7 +14,9 @@ class Navbar extends HTMLElement {
     this.mobileMenu = this.querySelector('[data-mobile-menu]');
 
     this.toggles.forEach((btn) => {
-      btn.addEventListener('click', () => this.toggleMenu());
+      btn.addEventListener('click', () => {
+        this.toggleMenu();
+      });
     });
 
     if (this.hasHero) {
