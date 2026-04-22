@@ -59,21 +59,19 @@ export const PackagePage = async (c: Context) => {
   const canonicalUrl = new URL(c.req.path, reqUrl.origin).href;
   const ogImage = `https://usercontent.wpm.so/og/${manifest.name}`;
 
-  // Process HTMLRewriter and extract string since we are doing SSR in Hono JSX
   let readmeHtml = null;
-  if (readme?.body) {
+  if (readme.body) {
     const transformedResponse = rewriter.transform(readme);
     readmeHtml = await transformedResponse.text();
   }
 
-  // Safe inline script content
   const imageFallbackScript = ``;
 
   return c.html(
     <BaseLayout
       c={c}
       ogImage={ogImage}
-      title={`${manifest.name}`}
+      title={manifest.name}
       canonicalUrl={canonicalUrl}
       description={
         manifest.description
@@ -86,7 +84,6 @@ export const PackagePage = async (c: Context) => {
       <div class="min-h-screen bg-background">
         <main class="container py-6 sm:py-8">
           <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
-            {/* Main Content Area */}
             <div class="lg:col-span-2 space-y-6 sm:space-y-8">
               <PackageHeader
                 name={manifest.name}
@@ -98,13 +95,11 @@ export const PackagePage = async (c: Context) => {
                 created={manifest.created}
               />
 
-              {/* Tabs and Readme Section */}
               <div class="flex flex-col gap-2 space-y-4">
                 <PackageTabs name={name} active="overview" />
 
                 <article aria-labelledby="package-readme">
                   <Card>
-                    {/* Preserving className as requested for your modified shadcn components */}
                     <CardContent className="py-6">
                       {readmeHtml ? (
                         <div

@@ -118,9 +118,16 @@ class Select extends HTMLElement {
   }
 
   private handleDocumentClick(e: MouseEvent): void {
-    const target = e.target as Node;
+    if (!(e.target instanceof Node)) {
+      return;
+    }
 
-    if (this.isOpen && !this.contains(target) && this.content && !this.content.contains(target)) {
+    if (
+      this.isOpen &&
+      !this.contains(e.target) &&
+      this.content &&
+      !this.content.contains(e.target)
+    ) {
       this.close();
     }
   }
@@ -208,7 +215,7 @@ class Select extends HTMLElement {
   private updateDOMState(item: HTMLElement): void {
     const val = item.getAttribute('data-value') || '';
     const textNode = item.querySelector('[data-slot="select-item-text"]');
-    const text = textNode ? textNode.textContent?.trim() : item.textContent?.trim();
+    const text = textNode ? textNode.textContent.trim() : item.textContent.trim();
 
     if (this.valueNode) {
       this.valueNode.textContent = text || '';

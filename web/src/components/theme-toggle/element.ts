@@ -7,8 +7,12 @@ class ThemeToggle extends HTMLElement {
   connectedCallback() {
     this.cycleBtn = this.querySelector('button[data-theme-cycle]');
 
-    const saved = localStorage.getItem('theme') as Theme | null;
-    this.theme = saved || 'system';
+    const saved = localStorage.getItem('theme');
+    if (saved === 'light' || saved === 'dark') {
+      this.theme = saved;
+    } else {
+      this.theme = 'system';
+    }
 
     this.cycleBtn?.addEventListener('click', () => {
       const isDark = document.documentElement.classList.contains('dark');

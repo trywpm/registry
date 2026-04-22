@@ -26,7 +26,7 @@ export const DependenciesPage = async (c: Context) => {
     }
   >();
 
-  if (!manifest) {
+  if (!manifest.name) {
     return new Response(null, { status: 404 });
   }
 
@@ -41,7 +41,7 @@ export const DependenciesPage = async (c: Context) => {
     <BaseLayout
       c={c}
       ogImage={ogImage}
-      title={`${manifest.name}`}
+      title={manifest.name}
       canonicalUrl={canonicalUrl}
       description={
         manifest.description

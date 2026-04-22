@@ -22,7 +22,6 @@ import {
   ExternalLink as ExternalLinkD,
 } from 'lucide';
 
-import type { JSX } from 'hono/jsx';
 import type { IconNode } from 'lucide';
 
 export type IconProps = {
@@ -54,8 +53,7 @@ const createIcon = (iconData: IconNode) => {
       {...props}
     >
       {iconData.map(([Tag, attrs], index) => {
-        const SvgElement = Tag as keyof JSX.IntrinsicElements;
-        return <SvgElement key={index} {...attrs} />;
+        return <Tag key={index} {...attrs} />;
       })}
     </svg>
   );
