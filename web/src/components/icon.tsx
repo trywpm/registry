@@ -3,21 +3,23 @@ import {
   Zap as ZapD,
   Moon as MoonD,
   Copy as CopyD,
+  User as UserD,
   Menu as MenuD,
   Check as CheckD,
   Globe as GlobeD,
   Server as ServerD,
   Shield as ShieldD,
-  Check as CheckIconD,
   WifiOff as WifiOffD,
   Monitor as MonitorD,
   Package as PackageD,
+  Download as DownloadD,
   Terminal as TerminalD,
   ChevronUp as ChevronUpD,
   ArrowRight as ArrowRightD,
   ChevronDown as ChevronDownD,
   ShieldCheck as ShieldCheckD,
   CheckCircle2 as CheckCircle2D,
+  ExternalLink as ExternalLinkD,
 } from 'lucide';
 
 import type { JSX } from 'hono/jsx';
@@ -103,6 +105,7 @@ export const Zap = createIcon(ZapD);
 export const Copy = createIcon(CopyD);
 export const Moon = createIcon(MoonD);
 export const Menu = createIcon(MenuD);
+export const User = createIcon(UserD);
 export const Globe = createIcon(GlobeD);
 export const Check = createIcon(CheckD);
 export const Server = createIcon(ServerD);
@@ -110,10 +113,12 @@ export const Shield = createIcon(ShieldD);
 export const WifiOff = createIcon(WifiOffD);
 export const Package = createIcon(PackageD);
 export const Monitor = createIcon(MonitorD);
+export const CheckIcon = createIcon(CheckD);
+export const Download = createIcon(DownloadD);
 export const Terminal = createIcon(TerminalD);
-export const CheckIcon = createIcon(CheckIconD);
 export const ArrowRight = createIcon(ArrowRightD);
 export const ShieldCheck = createIcon(ShieldCheckD);
 export const ChevronUpIcon = createIcon(ChevronUpD);
+export const ExternalLink = createIcon(ExternalLinkD);
 export const CheckCircle2 = createIcon(CheckCircle2D);
 export const ChevronDownIcon = createIcon(ChevronDownD);

@@ -163,14 +163,10 @@ function mergeProps(slotProps: AnyProps, childProps: AnyProps) {
     }
   }
 
-  const slotClass =
-    (typeof slotProps.class === 'string' ? slotProps.class : '') ||
-    (typeof slotProps.className === 'string' ? slotProps.className : '');
-  const childClass =
-    (typeof childProps.class === 'string' ? childProps.class : '') ||
-    (typeof childProps.className === 'string' ? childProps.className : '');
+  const slotClass = [slotProps.class, slotProps.className].filter(Boolean).join(' ');
+  const childClass = [childProps.class, childProps.className].filter(Boolean).join(' ');
 
-  const combinedClass = [slotClass, childClass].filter(Boolean).join(' ');
+  const combinedClass = [slotClass, childClass].filter(Boolean).join(' ').trim();
 
   const merged = { ...slotProps, ...overrideProps };
 
@@ -179,6 +175,7 @@ function mergeProps(slotProps: AnyProps, childProps: AnyProps) {
 
   if (combinedClass) {
     merged.class = combinedClass;
+    merged.className = combinedClass;
   }
 
   return merged;
