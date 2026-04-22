@@ -52,10 +52,6 @@ class InstallCommandCta extends HTMLElement {
 
     if (this.selectEl) {
       this.selectEl.addEventListener('change', this.handleSelectChangeBound as EventListener);
-
-      customElements.whenDefined(WPM_SELECT_TAG).then(() => {
-        throw new Error(`${WPM_SELECT_TAG} is not defined.`);
-      });
     }
 
     if (this.copyBtn) {
