@@ -1,6 +1,7 @@
 {
   "name": "@wpm/web",
   "private": true,
+  "type": "module",
   "scripts": {
     "start": "vp run typegen && wrangler dev",
     "typegen": "wrangler types worker-types.d.ts"
