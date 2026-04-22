@@ -2,7 +2,9 @@ import type { PropsWithChildren, RefObject, Child } from 'hono/jsx';
 import { cloneElement, forwardRef, Fragment, isValidElement } from 'hono/jsx';
 
 export type AnyProps = Record<string, unknown>;
-export type SlotProps = PropsWithChildren<AnyProps>;
+export type SlotProps = PropsWithChildren<AnyProps> & {
+  ref?: Ref<unknown>;
+};
 
 export type Ref<T> = RefObject<T> | ((instance: T | null) => void) | null | undefined;
 
