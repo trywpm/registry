@@ -1,5 +1,5 @@
 import { Hono } from 'hono';
-import { HomePage } from '@/views/pages/home';
+import { HomePage } from '@/pages/home';
 
 const homeRoute = new Hono();
 

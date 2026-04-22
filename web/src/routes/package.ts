@@ -1,6 +1,6 @@
 import { Hono } from 'hono';
 
-import { PackagePage } from '@/views/pages/package';
+import { PackagePage } from '@/pages/package';
 
 const packageRoute = new Hono();
 

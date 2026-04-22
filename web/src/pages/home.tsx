@@ -1,5 +1,5 @@
 import type { Context } from 'hono';
-import { BaseLayout } from '@/views/layouts/base';
+import { BaseLayout } from '@/layouts/base';
 import { buttonVariants } from '@/components/ui/button';
 import { TestimonialCarousel } from '@/components/testimonial-carousel';
 import { Hero, HeroActions, HeroHeading, HeroDescription } from '@/components/hero';
