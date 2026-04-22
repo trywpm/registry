@@ -1,0 +1,2 @@
+-- This initial schema migration is considered irreversible.
+-- To reset the database, drop it and run 'migrate up' from scratch.

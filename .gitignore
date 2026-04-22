@@ -27,3 +27,4 @@ worker-types.d.ts
 !.github
 !packages
 !registry
+!migrations
