@@ -34,10 +34,10 @@ export const VersionsPage = async (c: Context) => {
   manifest.dependencies ??= {};
 
   const pkg = await versionsRes.json<{
-    versions: string[];
+    versions?: string[];
   }>();
 
-  if (!pkg || !pkg.versions) {
+  if (!pkg.versions) {
     return new Response(null, { status: 404 });
   }
 
@@ -50,7 +50,7 @@ export const VersionsPage = async (c: Context) => {
     <BaseLayout
       c={c}
       ogImage={ogImage}
-      title={`${manifest.name}`}
+      title={manifest.name}
       canonicalUrl={canonicalUrl}
       description={
         manifest.description
