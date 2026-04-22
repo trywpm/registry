@@ -15,14 +15,14 @@ export function PackageTabs({ name, active }: Props) {
   ];
 
   return (
-    <div class="w-full overflow-x-auto">
+    <package-tabs class="w-full overflow-x-auto">
       <div
         role="tablist"
         aria-orientation="horizontal"
         tabindex={0}
         data-slot="tabs-list"
         data-orientation="horizontal"
-        class="grid grid-flow-col auto-cols-[minmax(8rem,1fr)] w-full rounded-lg p-0.75 bg-muted text-muted-foreground"
+        class="grid grid-flow-col auto-cols-[minmax(8rem,1fr)] min-w-max rounded-lg p-0.75 bg-muted text-muted-foreground"
       >
         {tabs.map((tab) => {
           const isActive = tab.key === active;
@@ -44,6 +44,6 @@ export function PackageTabs({ name, active }: Props) {
           );
         })}
       </div>
-    </div>
+    </package-tabs>
   );
 }

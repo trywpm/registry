@@ -13,6 +13,7 @@ export default defineConfig({
         vendor: './src/scripts/vendor/index.ts',
         'site-navbar': './src/scripts/site-navbar.ts',
         'theme-toggle': './src/scripts/theme-toggle.ts',
+        'package-tabs': './src/scripts/package-tabs.ts',
         'custom-select': './src/scripts/custom-select.ts',
         'avatar-element': './src/scripts/avatar-element.ts',
         'package-sidebar': './src/scripts/package-sidebar.ts',
