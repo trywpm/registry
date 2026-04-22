@@ -10,7 +10,7 @@ import { Footer } from '@/components/footer';
 type LayoutProps = {
   c: Context;
   title: string;
-  children: Child[];
+  children: Child | Child[];
   hasHero?: boolean;
   homepage?: boolean;
   description: string;
