@@ -25,7 +25,7 @@ class InstallCommandCta extends HTMLElement {
 
   disconnectedCallback(): void {
     if (this.selectEl) {
-      this.selectEl.removeEventListener('change', this.handleSelectChangeBound as EventListener);
+      this.selectEl.removeEventListener('change', this.handleSelectChangeBound);
     }
     if (this.copyBtn) {
       this.copyBtn.removeEventListener('click', this.handleCopyBound);
@@ -51,7 +51,7 @@ class InstallCommandCta extends HTMLElement {
     this.checkIcon = this.querySelector('[data-icon="check"]');
 
     if (this.selectEl) {
-      this.selectEl.addEventListener('change', this.handleSelectChangeBound as EventListener);
+      this.selectEl.addEventListener('change', this.handleSelectChangeBound);
     }
 
     if (this.copyBtn) {
@@ -59,8 +59,10 @@ class InstallCommandCta extends HTMLElement {
     }
   }
 
-  private handleSelectChange(e: CustomEvent<{ value: string }>): void {
-    this.updateCommand(e.detail.value);
+  private handleSelectChange(e: Event): void {
+    if (e instanceof CustomEvent) {
+      this.updateCommand(e.detail.value);
+    }
   }
 
   private updateCommand(os: string): void {
