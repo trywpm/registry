@@ -94,13 +94,6 @@ export const BaseLayout = ({
           {/* @todo: add version parameter to css and js files */}
           <link rel="stylesheet" href={`/dist/style.css?v=${Date.now()}`} />
           <script defer src={`/dist/vendor.js?v=${Date.now()}`}></script>
-          <script defer src={`/dist/theme-toggle.js?v=${Date.now()}`}></script>
-          <script defer src={`/dist/site-navbar.js?v=${Date.now()}`}></script>
-          <script defer src={`/dist/package-tabs.js?v=${Date.now()}`}></script>
-          <script defer src={`/dist/custom-select.js?v=${Date.now()}`}></script>
-          <script defer src={`/dist/avatar-element.js?v=${Date.now()}`}></script>
-          <script defer src={`/dist/package-sidebar.js?v=${Date.now()}`}></script>
-          <script defer src={`/dist/install-command-cta.js?v=${Date.now()}`}></script>
 
           {/* JSON-LD Schemas */}
           {homepage && (

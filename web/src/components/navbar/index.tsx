@@ -1,6 +1,7 @@
 import { cn } from '@/lib/utils';
-import { Button } from '@/components/ui/button';
-import { Separator } from '@/components/ui/separator';
+import { Island } from '@/components/island';
+import { Button } from '@/components/button';
+import { Separator } from '@/components/separator';
 import { ThemeToggle } from '@/components/theme-toggle';
 
 const navLinks = [
@@ -81,59 +82,61 @@ function Hamburger() {
 
 export function Navbar({ hasHero = false }: { hasHero?: boolean }) {
   return (
-    <site-navbar data-has-hero={hasHero ? 'true' : 'false'}>
-      <header
-        data-header
-        className={cn(
-          'sticky top-0 z-50 bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60 border-b border-border/50 transition-colors duration-200',
-          hasHero && 'border-b-transparent',
-        )}
-      >
-        <div className="container flex h-(--header-height) items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Logo />
-            <DesktopNav />
-          </div>
+    <Island name="navbar">
+      <wpm-navbar data-has-hero={hasHero ? 'true' : 'false'}>
+        <header
+          data-header
+          className={cn(
+            'sticky top-0 z-50 bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60 border-b border-border/50 transition-colors duration-200',
+            hasHero && 'border-b-transparent',
+          )}
+        >
+          <div className="container flex h-(--header-height) items-center justify-between">
+            <div className="flex items-center gap-3">
+              <Logo />
+              <DesktopNav />
+            </div>
 
-          <div className="flex items-center gap-2 ml-auto">
-            <ThemeToggle />
-            <Separator orientation="vertical" className="h-4 hidden md:block" />
-            <CTAButtons />
-            <Separator orientation="vertical" className="h-4 md:hidden" />
+            <div className="flex items-center gap-2 ml-auto">
+              <ThemeToggle />
+              <Separator orientation="vertical" className="h-4 hidden md:block" />
+              <CTAButtons />
+              <Separator orientation="vertical" className="h-4 md:hidden" />
+              <Hamburger />
+            </div>
+          </div>
+        </header>
+
+        <div
+          data-mobile-menu
+          data-state="closed"
+          className={cn(
+            'opacity-0 pointer-events-none',
+            'fixed inset-0 z-60 bg-background md:hidden',
+            'transition-opacity duration-300 ease-in-out',
+            'data-[state=open]:opacity-100 data-[state=open]:pointer-events-auto',
+          )}
+        >
+          <div className="container flex items-center justify-end h-(--header-height)">
             <Hamburger />
           </div>
-        </div>
-      </header>
 
-      <div
-        data-mobile-menu
-        data-state="closed"
-        className={cn(
-          'opacity-0 pointer-events-none',
-          'fixed inset-0 z-60 bg-background md:hidden',
-          'transition-opacity duration-300 ease-in-out',
-          'data-[state=open]:opacity-100 data-[state=open]:pointer-events-auto',
-        )}
-      >
-        <div className="container flex items-center justify-end h-(--header-height)">
-          <Hamburger />
-        </div>
-
-        <div className="container flex flex-col h-[calc(100vh-4rem)] overflow-y-auto">
-          <CTAButtons mobile />
-          <div className="flex-1">
-            {navLinks.map(({ href, label }) => (
-              <a
-                key={href}
-                href={href}
-                className="flex items-center p-3 text-foreground hover:bg-muted rounded-lg transition-colors"
-              >
-                {label}
-              </a>
-            ))}
+          <div className="container flex flex-col h-[calc(100vh-4rem)] overflow-y-auto">
+            <CTAButtons mobile />
+            <div className="flex-1">
+              {navLinks.map(({ href, label }) => (
+                <a
+                  key={href}
+                  href={href}
+                  className="flex items-center p-3 text-foreground hover:bg-muted rounded-lg transition-colors"
+                >
+                  {label}
+                </a>
+              ))}
+            </div>
           </div>
         </div>
-      </div>
-    </site-navbar>
+      </wpm-navbar>
+    </Island>
   );
 }

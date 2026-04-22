@@ -2,11 +2,11 @@ import type { Context } from 'hono';
 import type { Package } from '@wpm/manifest/package';
 
 import { BaseLayout } from '@/layouts/base';
-import { Badge } from '@/components/ui/badge';
+import { Badge } from '@/components/badge';
 import { PackageTabs } from '@/components/package-tabs';
 import { PackageHeader } from '@/components/package-header';
 import { PackageSidebar } from '@/components/package-sidebar';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/card';
 
 export const DependenciesPage = async (c: Context) => {
   const name = c.req.param('name');

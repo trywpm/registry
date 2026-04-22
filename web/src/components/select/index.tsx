@@ -1,33 +1,52 @@
 import { cn } from '@/lib/utils';
+import { Island } from '@/components/island';
 import { CheckIcon, ChevronDownIcon } from '@/components/icon';
 
-export function Select({ children, defaultValue, value, name, disabled, ...props }: any) {
+import type { JSX, Child } from 'hono/jsx';
+
+export function Select({
+  children,
+  defaultValue,
+  value,
+  name,
+  disabled,
+  ...props
+}: JSX.IntrinsicElements['select'] & {
+  defaultValue?: string;
+  children: Child | Child[];
+}) {
   return (
-    <custom-select
-      data-slot="select"
-      data-default-value={defaultValue || value}
-      data-name={name}
-      data-disabled={disabled ? 'true' : undefined}
-      {...props}
-    >
-      {name && (
-        <input
-          type="hidden"
-          name={name}
-          value={defaultValue || value || ''}
-          data-slot="select-hidden-input"
-        />
-      )}
-      {children}
-    </custom-select>
+    <Island name="select">
+      <wpm-select
+        data-slot="select"
+        data-name={name}
+        data-default-value={defaultValue || value}
+        data-disabled={disabled ? 'true' : undefined}
+        {...props}
+      >
+        {name && (
+          <input
+            type="hidden"
+            name={name}
+            value={defaultValue || value || ''}
+            data-slot="select-hidden-input"
+          />
+        )}
+        {children}
+      </wpm-select>
+    </Island>
   );
 }
 
-export function SelectGroup({ className, ...props }: any) {
+export function SelectGroup({ ...props }: JSX.IntrinsicElements['div']) {
   return <div role="group" data-slot="select-group" {...props} />;
 }
 
-export function SelectValue({ className, placeholder, children, ...props }: any) {
+export function SelectValue({
+  children,
+  placeholder,
+  ...props
+}: JSX.IntrinsicElements['span'] & { placeholder?: string; children?: Child | Child[] }) {
   return (
     <span data-slot="select-value" data-placeholder={placeholder ? '' : undefined} {...props}>
       {children || placeholder}
@@ -35,11 +54,16 @@ export function SelectValue({ className, placeholder, children, ...props }: any)
   );
 }
 
-export function SelectTrigger({ className, size = 'default', children, ...props }: any) {
+export function SelectTrigger({
+  className,
+  size = 'default',
+  children,
+  ...props
+}: JSX.IntrinsicElements['button'] & { size?: 'default' | 'sm'; children?: Child | Child[] }) {
   return (
     <button
       type="button"
-      role="combobox"
+      aria-haspopup="listbox"
       aria-expanded="false"
       data-slot="select-trigger"
       data-size={size}
@@ -56,7 +80,15 @@ export function SelectTrigger({ className, size = 'default', children, ...props 
   );
 }
 
-export function SelectContent({ className, children, position = 'popper', ...props }: any) {
+export function SelectContent({
+  className,
+  children,
+  position = 'popper',
+  ...props
+}: JSX.IntrinsicElements['div'] & {
+  children: Child | Child[];
+  position?: 'popper' | 'popper-viewport';
+}) {
   return (
     <div
       data-slot="select-content"
@@ -82,7 +114,7 @@ export function SelectContent({ className, children, position = 'popper', ...pro
   );
 }
 
-export function SelectLabel({ className, ...props }: any) {
+export function SelectLabel({ className, ...props }: JSX.IntrinsicElements['div']) {
   return (
     <div
       data-slot="select-label"
@@ -92,7 +124,17 @@ export function SelectLabel({ className, ...props }: any) {
   );
 }
 
-export function SelectItem({ className, children, value, disabled, ...props }: any) {
+export function SelectItem({
+  className,
+  children,
+  value,
+  disabled,
+  ...props
+}: JSX.IntrinsicElements['div'] & {
+  value: string;
+  disabled?: boolean;
+  children: Child | Child[];
+}) {
   return (
     <div
       role="option"
@@ -120,7 +162,7 @@ export function SelectItem({ className, children, value, disabled, ...props }: a
   );
 }
 
-export function SelectSeparator({ className, ...props }: any) {
+export function SelectSeparator({ className, ...props }: JSX.IntrinsicElements['div']) {
   return (
     <div
       role="separator"

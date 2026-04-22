@@ -1,40 +1,38 @@
 import { cn } from '@/lib/utils';
-import type { JSX } from 'hono/jsx';
+import { Island } from '@/components/island';
 
-declare module 'hono/jsx' {
-  namespace JSX {
-    interface IntrinsicElements {
-      'ui-avatar': JSX.HTMLAttributes & {
-        'data-slot'?: string;
-        'data-size'?: string;
-      };
-    }
-  }
-}
+import type { JSX } from 'hono/jsx';
 
 function Avatar({
   className,
   size = 'default',
   ...props
-}: JSX.IntrinsicElements['ui-avatar'] & {
+}: JSX.HTMLAttributes & {
   size?: 'default' | 'sm' | 'lg';
 }) {
   return (
-    <ui-avatar
-      data-slot="avatar"
-      data-size={size}
-      className={cn(
-        'group/avatar relative flex size-8 shrink-0 overflow-hidden rounded-full select-none data-[size=lg]:size-10 data-[size=sm]:size-6',
-        className,
-      )}
-      {...props}
-    />
+    <Island name="avatar">
+      <wpm-avatar
+        data-slot="avatar"
+        data-size={size}
+        className={cn(
+          'group/avatar relative flex size-8 shrink-0 overflow-hidden rounded-full select-none data-[size=lg]:size-10 data-[size=sm]:size-6',
+          className,
+        )}
+        {...props}
+      />
+    </Island>
   );
 }
 
 function AvatarImage({ className, ...props }: JSX.IntrinsicElements['img']) {
   return (
-    <img data-slot="avatar-image" className={cn('aspect-square size-full', className)} {...props} />
+    <img
+      data-slot="avatar-image"
+      alt={props.alt || 'Avatar'}
+      className={cn('aspect-square size-full', className)}
+      {...props}
+    />
   );
 }
 

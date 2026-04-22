@@ -1,4 +1,4 @@
-class SiteNavbar extends HTMLElement {
+class Navbar extends HTMLElement {
   private isOpen: boolean = false;
   private hasHero: boolean = false;
   private header: HTMLElement | null = null;
@@ -56,6 +56,6 @@ class SiteNavbar extends HTMLElement {
   }
 }
 
-if (!customElements.get('site-navbar')) {
-  customElements.define('site-navbar', SiteNavbar);
+if (!customElements.get('wpm-navbar')) {
+  customElements.define('wpm-navbar', Navbar);
 }

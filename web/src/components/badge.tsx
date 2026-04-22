@@ -1,6 +1,7 @@
 import { cn } from '@/lib/utils';
-import { Slot } from '@/components/ui/slot';
-import { cva, type VariantProps } from 'class-variance-authority';
+import { Slot } from '@/components/slot';
+import { cva } from 'class-variance-authority';
+import type { VariantProps } from 'class-variance-authority';
 
 import type { JSX } from 'hono/jsx';
 

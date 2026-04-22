@@ -13,4 +13,6 @@ class PackageTabs extends HTMLElement {
   }
 }
 
-customElements.define('package-tabs', PackageTabs);
+if (!customElements.get('wpm-package-tabs')) {
+  customElements.define('wpm-package-tabs', PackageTabs);
+}

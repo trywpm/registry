@@ -10,7 +10,7 @@ import {
 } from '@/components/icon';
 
 import { cn } from '@/lib/utils';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/card';
 
 import type { Child } from 'hono/jsx';
 

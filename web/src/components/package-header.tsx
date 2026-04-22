@@ -1,7 +1,7 @@
 import { readableTimeDiff } from '@wpm/util/datetime';
 
 import { Package } from '@/components/icon';
-import { Badge } from '@/components/ui/badge';
+import { Badge } from '@/components/badge';
 
 type Props = {
   name: string;

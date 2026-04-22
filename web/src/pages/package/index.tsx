@@ -14,7 +14,7 @@ import {
 import { getCachedReadme } from '@/lib/utils';
 import { BaseLayout } from '@/layouts/base';
 import { PackageTabs } from '@/components/package-tabs';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/card';
 import { PackageHeader } from '@/components/package-header';
 import { PackageSidebar } from '@/components/package-sidebar';
 

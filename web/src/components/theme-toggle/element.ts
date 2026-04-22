@@ -40,6 +40,6 @@ class ThemeToggle extends HTMLElement {
   }
 }
 
-if (!customElements.get('theme-toggle')) {
-  customElements.define('theme-toggle', ThemeToggle);
+if (!customElements.get('wpm-theme-toggle')) {
+  customElements.define('wpm-theme-toggle', ThemeToggle);
 }
