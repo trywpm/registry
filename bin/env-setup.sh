@@ -10,6 +10,11 @@ maybe_create_resource() {
 	local create_cmd=$3
 	local resource_name=$4
 
+	echo "waiting for $container to be healthy..."
+	while ! docker compose exec "$container" bash -c "echo 'select 1' | $check_cmd" &>/dev/null; do
+		sleep 1
+	done
+
 	if ! docker compose exec "$container" bash -c "$check_cmd" &>/dev/null; then
 		echo "creating $resource_name..."
 		docker compose exec "$container" bash -c "$create_cmd"
@@ -27,11 +32,6 @@ maybe_create_resource "$LOCALSTACK_CONTAINER" \
 	"awslocal s3 ls | grep -q wpm-registry" \
 	"awslocal s3 mb s3://wpm-registry" \
 	"wpm-registry bucket"
-
-maybe_create_resource "$LOCALSTACK_CONTAINER" \
-	"awslocal ses list-identities | grep -q no-reply@dev.wpm.so" \
-	"awslocal ses verify-email-identity --email no-reply@dev.wpm.so" \
-	"ses identity no-reply@dev.wpm.so"
 
 maybe_create_resource "$LOCALSTACK_CONTAINER" \
 	"awslocal kms list-keys | grep -q bfee8dd8-0f5a-472e-b309-7bd0d2f38622" \
@@ -66,21 +66,5 @@ else
 	echo "KMS_PUBLIC_KEY=$public_key_b64" >> "$env_file"
 fi
 rm -f "${env_file}.bak"
-
-# set ses templates
-package_published_failed_template=$(cat internal/aws/ses/templates/package-publish-failed.json)
-package_published_success_template=$(cat internal/aws/ses/templates/package-publish-success.json)
-
-package_published_failed_template_name=$(jq -r '.TemplateName' <<< "$package_published_failed_template")
-package_published_success_template_name=$(jq -r '.TemplateName' <<< "$package_published_success_template")
-
-package_published_failed_template_content=$(jq -c '.TemplateContent' <<< "$package_published_failed_template")
-package_published_success_template_content=$(jq -c '.TemplateContent' <<< "$package_published_success_template")
-
-docker compose exec "$LOCALSTACK_CONTAINER" \
-	bash -c "\
-		awslocal sesv2 create-email-template --template-name \"$package_published_failed_template_name\" --template-content '$package_published_failed_template_content' || echo 'Template $package_published_failed_template_name already exists, skipping...'
-		awslocal sesv2 create-email-template --template-name \"$package_published_success_template_name\" --template-content '$package_published_success_template_content' || echo 'Template $package_published_success_template_name already exists, skipping...'
-	"
 
 echo "✓ all resources ready"
