@@ -8,6 +8,10 @@
     "binding": "assets",
     "directory": "src/public"
   },
+  "dev": {
+    "port": 3000,
+    "inspector_port": 9229
+  },
   "observability": {
     "enabled": true,
     "traces": {
