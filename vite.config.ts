@@ -47,7 +47,6 @@ export default defineConfig({
       '**/.wrangler/**',
       'web/src/public/**',
       '**/node_modules/**',
-      'web/src/components/ui/**',
     ],
     rules: {
       'typescript/ban-ts-comment': [
