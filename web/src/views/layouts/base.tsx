@@ -97,6 +97,8 @@ export const BaseLayout = ({
           <script defer src={`/dist/theme-toggle.js?v=${Date.now()}`}></script>
           <script defer src={`/dist/site-navbar.js?v=${Date.now()}`}></script>
           <script defer src={`/dist/custom-select.js?v=${Date.now()}`}></script>
+          <script defer src={`/dist/avatar-element.js?v=${Date.now()}`}></script>
+          <script defer src={`/dist/package-sidebar.js?v=${Date.now()}`}></script>
           <script defer src={`/dist/install-command-cta.js?v=${Date.now()}`}></script>
 
           {/* JSON-LD Schemas */}
