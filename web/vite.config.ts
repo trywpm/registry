@@ -1,5 +1,12 @@
+import { glob } from 'node:fs/promises';
+
 import { defineConfig } from 'vite-plus';
 import tailwindcss from '@tailwindcss/vite';
+
+const webComponents: Record<string, string> = {};
+for await (const file of glob('./src/components/**/element.ts')) {
+  webComponents[file.split('/').slice(-2, -1)[0]] = file;
+}
 
 export default defineConfig({
   plugins: [tailwindcss()],
@@ -11,15 +18,10 @@ export default defineConfig({
       input: {
         style: './src/styles/globals.css',
         vendor: './src/scripts/vendor/index.ts',
-        'site-navbar': './src/scripts/site-navbar.ts',
-        'theme-toggle': './src/scripts/theme-toggle.ts',
-        'package-tabs': './src/scripts/package-tabs.ts',
-        'custom-select': './src/scripts/custom-select.ts',
-        'avatar-element': './src/scripts/avatar-element.ts',
-        'package-sidebar': './src/scripts/package-sidebar.ts',
-        'install-command-cta': './src/scripts/install-command-cta.ts',
+        ...webComponents,
       },
       output: {
+        format: 'esm',
         entryFileNames: '[name].js',
         assetFileNames: '[name].[ext]',
       },
