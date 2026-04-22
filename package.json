@@ -29,6 +29,7 @@
     "lint": "vp lint"
   },
   "devDependencies": {
+    "oxlint-tsgolint": "^0.21.1",
     "typescript": "catalog:",
     "vite-plus": "catalog:"
   },
