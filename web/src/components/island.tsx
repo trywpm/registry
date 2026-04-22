@@ -8,8 +8,8 @@ type IslandProps = {
 export const Island = ({ name, children }: IslandProps) => {
   return (
     <>
-      {children}
       <script type="module" src={`/dist/${name}.js?v=${Date.now()}`}></script>
+      {children}
     </>
   );
 };
