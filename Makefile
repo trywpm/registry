@@ -1,4 +1,4 @@
-.PHONY: s sw sr du dd c prestart help migrate-create migrate-up migrate-down env-setup
+.PHONY: s sw sr du dd c fmt format test build lint prestart help migrate-create migrate-up migrate-down env-setup
 
 SHELL := /usr/bin/env bash
 MIGRATE_CMD := migrate -database "$(DATABASE_URL)" -path migrations
@@ -15,6 +15,21 @@ sr start-registry: ## Start the registry worker
 prestart: ## Prepare infrastructure and environment
 	@$(MAKE) du
 	@$(MAKE) env-setup
+
+test: ## Run tests for both Web and Registry
+	vp test
+
+build: ## Build the project
+	vp build web
+
+check: ## Run linters and formatters
+	vp check
+
+lint: ## Run linters
+	vp lint
+
+fmt format: ## Run formatters
+	vp fmt
 
 # --- Infrastructure ---
 
