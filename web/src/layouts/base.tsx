@@ -69,6 +69,23 @@ export const BaseLayout = ({
             }}
           />
 
+          {/* Preloads */}
+          <link rel="preload" href={getAssetUrl('/src/assets/css/style.css')} as="style" />
+          <link
+            rel="preload"
+            href="/fonts/sora-semibold.woff2"
+            as="font"
+            type="font/woff2"
+            crossorigin="anonymous"
+          />
+          <link
+            rel="preload"
+            href="/fonts/dm-sans-regular.woff2"
+            as="font"
+            type="font/woff2"
+            crossorigin="anonymous"
+          />
+
           {import.meta.env.DEV && <script type="module" src="/@vite/client"></script>}
 
           {/* Basic Meta */}
