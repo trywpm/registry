@@ -25,6 +25,9 @@
     },
     "packages/util": {
       "name": "@wpm/util",
+      "dependencies": {
+        "hono": "catalog:",
+      },
       "devDependencies": {
         "@cloudflare/workers-types": "catalog:",
       },

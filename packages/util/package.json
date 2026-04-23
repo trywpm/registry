@@ -2,8 +2,12 @@
   "name": "@wpm/util",
   "private": true,
   "exports": {
+    "./test": "./src/test.ts",
     "./datetime": "./src/datetime.ts",
     "./html-rewriter": "./src/html-rewriter.ts"
+  },
+  "dependencies": {
+    "hono": "catalog:"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "catalog:"
