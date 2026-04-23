@@ -7,6 +7,8 @@ import {
   Menu as MenuD,
   Check as CheckD,
   Globe as GlobeD,
+  Circle as CircleD,
+  Filter as FilterD,
   Server as ServerD,
   Shield as ShieldD,
   WifiOff as WifiOffD,
@@ -110,6 +112,8 @@ export const User = createIcon(UserD);
 export const Globe = createIcon(GlobeD);
 export const Check = createIcon(CheckD);
 export const Server = createIcon(ServerD);
+export const Filter = createIcon(FilterD);
+export const Circle = createIcon(CircleD);
 export const Shield = createIcon(ShieldD);
 export const WifiOff = createIcon(WifiOffD);
 export const Package = createIcon(PackageD);
