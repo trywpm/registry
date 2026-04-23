@@ -18,8 +18,11 @@ import {
   ArrowRight as ArrowRightD,
   ChevronDown as ChevronDownD,
   ShieldCheck as ShieldCheckD,
+  ChevronLeft as ChevronLeftD,
   CheckCircle2 as CheckCircle2D,
   ExternalLink as ExternalLinkD,
+  ChevronRight as ChevronRightD,
+  MoreHorizontal as MoreHorizontalD,
 } from 'lucide';
 
 import type { IconNode } from 'lucide';
@@ -120,3 +123,6 @@ export const ChevronUpIcon = createIcon(ChevronUpD);
 export const ExternalLink = createIcon(ExternalLinkD);
 export const CheckCircle2 = createIcon(CheckCircle2D);
 export const ChevronDownIcon = createIcon(ChevronDownD);
+export const ChevronLeftIcon = createIcon(ChevronLeftD);
+export const ChevronRightIcon = createIcon(ChevronRightD);
+export const MoreHorizontalIcon = createIcon(MoreHorizontalD);
