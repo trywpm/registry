@@ -1,5 +1,5 @@
 import { Fragment } from 'hono/jsx';
-import { evaluateVNode } from '@wpm/util/test';
+import { honoRender } from '@wpm/util/test';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 import { Slot } from './slot';
@@ -12,7 +12,7 @@ describe('Slot component (Hono SSR)', () => {
           <div id="child-id">Content</div>
         </Slot>
       );
-      const finalNode = evaluateVNode(node);
+      const finalNode = honoRender(node);
 
       expect(finalNode.tag).toBe('div');
       expect(finalNode.props.id).toBe('child-id');
@@ -25,7 +25,7 @@ describe('Slot component (Hono SSR)', () => {
           <div class="child-class" />
         </Slot>
       );
-      const finalNode = evaluateVNode(node);
+      const finalNode = honoRender(node);
 
       expect(finalNode.props.class).toBe('slot-class child-class');
     });
@@ -36,7 +36,7 @@ describe('Slot component (Hono SSR)', () => {
           <div className="child-class" />
         </Slot>
       );
-      const finalNode = evaluateVNode(node);
+      const finalNode = honoRender(node);
 
       expect(finalNode.props.class).toBe('slot-class child-class');
     });
@@ -50,7 +50,7 @@ describe('Slot component (Hono SSR)', () => {
           <div style="background: blue;" />
         </Slot>
       );
-      const finalNode = evaluateVNode(node);
+      const finalNode = honoRender(node);
 
       expect(finalNode.props.style).toBe('color: red; background: blue;');
     });
@@ -61,7 +61,7 @@ describe('Slot component (Hono SSR)', () => {
           <div style={{ background: 'blue' }} />
         </Slot>
       );
-      const finalNode = evaluateVNode(node);
+      const finalNode = honoRender(node);
 
       expect(finalNode.props.style).toEqual({ color: 'red', background: 'blue' });
     });
@@ -77,7 +77,7 @@ describe('Slot component (Hono SSR)', () => {
           </Slot>
         );
 
-        const finalNode = evaluateVNode(node);
+        const finalNode = honoRender(node);
         finalNode.props.onClick('event');
 
         expect(handleClick).toHaveBeenCalledTimes(1);
@@ -96,7 +96,7 @@ describe('Slot component (Hono SSR)', () => {
           </Slot>
         );
 
-        const finalNode = evaluateVNode(node);
+        const finalNode = honoRender(node);
         finalNode.props.onClick('event');
 
         expect(handleClick).toHaveBeenCalledTimes(1);
@@ -117,7 +117,7 @@ describe('Slot component (Hono SSR)', () => {
           </Slot>
         );
 
-        const finalNode = evaluateVNode(node);
+        const finalNode = honoRender(node);
         const result = finalNode.props.onClick('event');
 
         expect(result).toBe('child-result');
@@ -137,7 +137,7 @@ describe('Slot component (Hono SSR)', () => {
           </Slot>
         );
 
-        const finalNode = evaluateVNode(node);
+        const finalNode = honoRender(node);
         finalNode.props.onClick('event');
 
         expect(handleSlotClick).toHaveBeenCalledTimes(1);
@@ -165,7 +165,7 @@ describe('Slot component (Hono SSR)', () => {
         </Slot>
       );
 
-      const finalNode = evaluateVNode(node);
+      const finalNode = honoRender(node);
       expect(finalNode.tag).toBe('div');
       expect(finalNode.props.class).toBe('slot-class child-class');
     });
@@ -180,7 +180,7 @@ describe('Slot component (Hono SSR)', () => {
         </Slot>
       );
 
-      const finalNode = evaluateVNode(node);
+      const finalNode = honoRender(node);
 
       expect(finalNode.props.class).toBeUndefined();
       expect(['', Fragment, undefined]).toContain(finalNode.tag);
@@ -201,7 +201,7 @@ describe('Slot component (Hono SSR)', () => {
         </Slot>
       );
 
-      const finalNode = evaluateVNode(node);
+      const finalNode = honoRender(node);
       finalNode.props.ref('dom-node-instance');
 
       expect(slotRef).toHaveBeenCalledWith('dom-node-instance');
@@ -217,7 +217,7 @@ describe('Slot component (Hono SSR)', () => {
         </Slot>
       );
 
-      const finalNode = evaluateVNode(node);
+      const finalNode = honoRender(node);
       finalNode.props.ref('dom-node-instance');
 
       expect(slotRef).toHaveBeenCalledWith('dom-node-instance');

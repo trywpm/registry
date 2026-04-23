@@ -1,6 +1,6 @@
 import { isValidElement } from 'hono/jsx';
 
-export function evaluateVNode(jsxNode: unknown) {
+export function honoRender(jsxNode: unknown) {
   if (!isValidElement(jsxNode)) {
     throw new Error('Provided value is not a valid JSX element');
   }
