@@ -1,4 +1,4 @@
-import type { Select } from '@/components/select/element';
+import type { Select } from '@/components/select/select.island';
 
 const WPM_SELECT_TAG = 'wpm-select';
 

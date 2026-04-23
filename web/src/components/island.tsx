@@ -8,7 +8,14 @@ type IslandProps = {
 export const Island = ({ name, children }: IslandProps) => {
   return (
     <>
-      <script type="module" src={`/dist/${name}.js?v=${Date.now()}`}></script>
+      {import.meta.env.DEV ? (
+        <script
+          type="module"
+          src={`/src/components/${name}/${name}.island.ts?v=${Date.now()}`}
+        ></script>
+      ) : (
+        <script type="module" src={`/dist/${name}.js?v=${Date.now()}`}></script>
+      )}
       {children}
     </>
   );
