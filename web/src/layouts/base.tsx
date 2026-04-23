@@ -3,7 +3,8 @@ import { html } from 'hono/html';
 import type { Context } from 'hono';
 import type { Child } from 'hono/jsx';
 
-// Import your existing components
+import { getAssetUrl } from '@/lib/utils';
+
 import { Navbar } from '@/components/navbar';
 import { Footer } from '@/components/footer';
 
@@ -62,6 +63,8 @@ export const BaseLayout = ({
             }}
           />
 
+          {import.meta.env.DEV && <script type="module" src="/@vite/client"></script>}
+
           {/* Basic Meta */}
           <title>{title}</title>
           <link rel="canonical" href={canonicalUrl} />
@@ -91,13 +94,13 @@ export const BaseLayout = ({
           <meta name="twitter:image:alt" content={ogImgAlt} />
 
           {/* Links & Theme Colors */}
-          <link rel="icon" type="image/svg+xml" href="https://wpm.so/favicon.svg" />
+          <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
           <meta name="theme-color" content="#09090b" media="(prefers-color-scheme: dark)" />
           <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
 
-          {/* @todo: add version parameter to css and js files */}
-          <link rel="stylesheet" href={`/dist/style.css?v=${Date.now()}`} />
-          <script defer src={`/dist/vendor.js?v=${Date.now()}`}></script>
+          {/* Stylesheets & Vendor Scripts */}
+          <link rel="stylesheet" href={getAssetUrl('/src/styles/style.css')} />
+          <script type="module" src={getAssetUrl('/src/scripts/vendor.ts')}></script>
 
           {/* JSON-LD Schemas */}
           {homepage && (
