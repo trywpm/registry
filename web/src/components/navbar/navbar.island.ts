@@ -6,6 +6,9 @@ class Navbar extends HTMLElement {
   private toggles: NodeListOf<HTMLElement> | null = null;
   private lines: NodeListOf<HTMLElement> | null = null;
 
+  private isScrolled: boolean = false;
+  private toggleRafId: number | null = null;
+
   connectedCallback() {
     this.lines = this.querySelectorAll('[data-line-1], [data-line-2]');
     this.header = this.querySelector('[data-header]');
@@ -14,31 +17,42 @@ class Navbar extends HTMLElement {
     this.mobileMenu = this.querySelector('[data-mobile-menu]');
 
     this.toggles.forEach((btn) => {
-      btn.addEventListener('click', () => {
-        this.toggleMenu();
-      });
+      btn.addEventListener('click', this.handleToggleClick);
     });
 
     if (this.hasHero) {
       window.addEventListener('scroll', this.handleScroll, { passive: true });
-      this.handleScroll();
+      setTimeout(() => this.handleScroll(), 0);
     }
   }
+
+  private handleToggleClick = () => {
+    this.toggleMenu();
+  };
 
   private toggleMenu() {
     this.isOpen = !this.isOpen;
 
-    this.setAttribute('data-state', this.isOpen ? 'open' : 'closed');
+    const state = this.isOpen ? 'open' : 'closed';
+    const overflow = this.isOpen ? 'hidden' : '';
 
-    if (this.mobileMenu) {
-      this.mobileMenu.setAttribute('data-state', this.isOpen ? 'open' : 'closed');
-      document.body.style.overflow = this.isOpen ? 'hidden' : '';
+    if (this.toggleRafId != null) {
+      cancelAnimationFrame(this.toggleRafId);
     }
 
-    requestAnimationFrame(() => {
+    this.toggleRafId = requestAnimationFrame(() => {
+      this.setAttribute('data-state', state);
+
+      if (this.mobileMenu) {
+        this.mobileMenu.setAttribute('data-state', state);
+        document.body.style.overflow = overflow;
+      }
+
       this.lines?.forEach((line) => {
-        line.setAttribute('data-state', this.isOpen ? 'open' : 'closed');
+        line.setAttribute('data-state', state);
       });
+
+      this.toggleRafId = null;
     });
   }
 
@@ -46,15 +60,33 @@ class Navbar extends HTMLElement {
     if (!this.header) {
       return;
     }
-    if (window.scrollY > 0) {
-      this.header.classList.remove('border-b-transparent');
-    } else {
-      this.header.classList.add('border-b-transparent');
+
+    const shouldBeScrolled = window.scrollY > 0;
+    if (shouldBeScrolled !== this.isScrolled) {
+      this.isScrolled = shouldBeScrolled;
+
+      requestAnimationFrame(() => {
+        if (this.isScrolled) {
+          this.header?.classList.remove('border-b-transparent');
+        } else {
+          this.header?.classList.add('border-b-transparent');
+        }
+      });
     }
   };
 
   disconnectedCallback() {
-    window.removeEventListener('scroll', this.handleScroll);
+    if (this.hasHero) {
+      window.removeEventListener('scroll', this.handleScroll);
+    }
+
+    this.toggles?.forEach((btn) => {
+      btn.removeEventListener('click', this.handleToggleClick);
+    });
+
+    if (this.toggleRafId != null) {
+      cancelAnimationFrame(this.toggleRafId);
+    }
   }
 }
 
