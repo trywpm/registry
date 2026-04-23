@@ -7,6 +7,7 @@
     "typegen": "wrangler types worker-types.d.ts"
   },
   "dependencies": {
+    "@floating-ui/dom": "^1.7.6",
     "@wpm/manifest": "workspace:*",
     "@wpm/util": "workspace:*",
     "class-variance-authority": "^0.7.1",
