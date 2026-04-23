@@ -1,21 +1,8 @@
-import { Fragment, isValidElement } from 'hono/jsx';
+import { Fragment } from 'hono/jsx';
+import { evaluateVNode } from '@wpm/util/test';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 import { Slot } from './slot';
-
-const evaluateVNode = (jsxNode: unknown) => {
-  if (!isValidElement(jsxNode)) {
-    throw new Error('Provided value is not a valid JSX element');
-  }
-
-  let current = jsxNode;
-
-  while (typeof current.tag === 'function') {
-    current = current.tag(current.props, current.props.ref);
-  }
-
-  return current;
-};
 
 describe('Slot component (Hono SSR)', () => {
   describe('HTML Attributes Merging', () => {
