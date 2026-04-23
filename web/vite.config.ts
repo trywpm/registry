@@ -1,8 +1,10 @@
-import { glob } from 'node:fs/promises';
-import { join, basename } from 'node:path';
+import { join, basename, resolve } from 'node:path';
+import { glob, readFile } from 'node:fs/promises';
 
+import type { Plugin } from 'vite-plus';
 import { defineConfig } from 'vite-plus';
 import tailwindcss from '@tailwindcss/vite';
+import { cloudflare } from '@cloudflare/vite-plugin';
 
 const webComponents: Record<string, string> = {};
 for await (const file of glob(join(__dirname, 'src/components/**/*.island.ts'))) {
@@ -14,21 +16,77 @@ for await (const file of glob(join(__dirname, 'src/components/**/*.island.ts')))
   webComponents[name] = file;
 }
 
+function injectClientManifest(): Plugin {
+  const virtualModuleId = 'virtual:client-manifest';
+  const resolvedVirtualModuleId = `\0${virtualModuleId}`;
+
+  let manifestPath: string = '';
+
+  return {
+    name: 'vite-plugin-wpm-inject-client-manifest',
+    configResolved(config) {
+      const clientOutDir = config.environments.client.build.outDir;
+      manifestPath = resolve(config.root, clientOutDir, '.vite/manifest.json');
+    },
+    resolveId(id) {
+      if (this.environment.name === 'wpm_web' && id === virtualModuleId) {
+        return resolvedVirtualModuleId;
+      }
+      return null;
+    },
+    async load(id) {
+      if (id === resolvedVirtualModuleId) {
+        const manifest = await readFile(manifestPath, 'utf-8').then(JSON.parse);
+        return `export default ${JSON.stringify(manifest)}`;
+      }
+
+      return null;
+    },
+  };
+}
+
 export default defineConfig({
-  plugins: [tailwindcss()],
-  build: {
-    emptyOutDir: true,
-    outDir: 'src/public/dist',
-    rolldownOptions: {
-      input: {
-        style: 'src/styles/globals.css',
-        vendor: 'src/scripts/vendor/index.ts',
-        ...webComponents,
-      },
-      output: {
-        format: 'esm',
-        entryFileNames: '[name].js',
-        assetFileNames: '[name].[ext]',
+  plugins: [tailwindcss(), cloudflare(), injectClientManifest()],
+  resolve: {
+    alias: {
+      '@': join(__dirname, 'src'),
+    },
+  },
+  publicDir: 'src/public',
+  server: {
+    port: 3000,
+    strictPort: true,
+  },
+  builder: {
+    buildApp: async (builder) => {
+      // Build client assets first, so we can get the
+      // manifest and asset paths for the wpm_web worker.
+      await builder.build(builder.environments.client);
+
+      // `wpm_web` is coming from Cloudflare plugin.
+      // Build wpm_web worker, which depends on the client manifest.
+      await builder.build(builder.environments.wpm_web);
+    },
+  },
+  environments: {
+    client: {
+      build: {
+        outDir: 'dist/public',
+        manifest: true,
+        emptyOutDir: true,
+        rolldownOptions: {
+          input: {
+            style: 'src/styles/style.css',
+            vendor: 'src/scripts/vendor.ts',
+            ...webComponents,
+          },
+          output: {
+            format: 'esm',
+            entryFileNames: 'dist/[name]-[hash].js',
+            chunkFileNames: 'dist/[name]-[hash].js',
+            assetFileNames: 'dist/[name]-[hash].[ext]',
+          },
+        },
       },
     },
   },
