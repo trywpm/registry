@@ -4,6 +4,8 @@ import { twMerge } from 'tailwind-merge';
 import type { Context } from 'hono';
 import type { ClassValue } from 'clsx';
 
+import manifest from 'virtual:client-manifest';
+
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
@@ -54,4 +56,23 @@ export async function getCachedReadme(c: Context, key: string) {
   c.executionCtx.waitUntil(cache.put(cacheKey, response.clone()));
 
   return response;
+}
+
+export function getAssetUrl(path: string) {
+  if (!import.meta.env.DEV) {
+    if (path.startsWith('/')) {
+      path = path.slice(1);
+    }
+
+    path = manifest[path].file ?? '';
+    if (!path) {
+      throw new Error(`Component ${path} not found in manifest`);
+    }
+
+    if (!path.startsWith('/')) {
+      path = `/${path}`;
+    }
+  }
+
+  return path;
 }
