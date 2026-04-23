@@ -24,6 +24,9 @@ type LayoutProps = {
     license?: string;
   };
   addCsrfToken?: boolean;
+  loadVendorScripts?: {
+    htmx?: boolean;
+  };
 };
 
 export const BaseLayout = ({
@@ -36,6 +39,9 @@ export const BaseLayout = ({
   title: originalTitle,
   hasHero = false,
   homepage = false,
+  loadVendorScripts = {
+    htmx: false,
+  },
 }: LayoutProps) => {
   const defaultOgImage = 'https://wpm.so/og.png';
   const finalOgImage = ogImage ?? defaultOgImage;
@@ -99,8 +105,11 @@ export const BaseLayout = ({
           <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
 
           {/* Stylesheets & Vendor Scripts */}
-          <link rel="stylesheet" href={getAssetUrl('/src/styles/style.css')} />
-          <script type="module" src={getAssetUrl('/src/scripts/vendor.ts')}></script>
+          <link rel="stylesheet" href={getAssetUrl('/src/assets/css/style.css')} />
+
+          {loadVendorScripts.htmx && (
+            <script type="module" src={getAssetUrl('/src/assets/js/htmx.ts')}></script>
+          )}
 
           {/* JSON-LD Schemas */}
           {homepage && (

@@ -76,8 +76,8 @@ export default defineConfig({
         emptyOutDir: true,
         rolldownOptions: {
           input: {
-            style: 'src/styles/style.css',
-            vendor: 'src/scripts/vendor.ts',
+            htmx: 'src/assets/js/htmx.ts',
+            style: 'src/assets/css/style.css',
             ...webComponents,
           },
           output: {
