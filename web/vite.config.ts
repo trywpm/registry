@@ -82,9 +82,9 @@ export default defineConfig({
           },
           output: {
             format: 'esm',
-            entryFileNames: 'dist/[name]-[hash].js',
-            chunkFileNames: 'dist/[name]-[hash].js',
-            assetFileNames: 'dist/[name]-[hash].[ext]',
+            entryFileNames: 'dist/[name]-[hash:12].js',
+            chunkFileNames: 'dist/[name]-[hash:12].js',
+            assetFileNames: 'dist/[name]-[hash:12].[ext]',
           },
         },
       },
