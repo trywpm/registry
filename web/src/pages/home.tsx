@@ -60,7 +60,7 @@ export const HomePage = (c: Context) => {
 
       <section class="mb-16">
         <div class="container">
-          <h2 class="leading-tighter max-w-2xl text-4xl font-semibold tracking-tight text-balance lg:leading-[1.1] xl:text-5xl xl:tracking-tighter text-foreground text-center mx-auto">
+          <h2 class="leading-tighter max-w-2xl text-4xl tracking-tight text-balance lg:leading-[1.1] xl:text-5xl xl:tracking-tighter text-foreground text-center mx-auto">
             Fast Package Manager
           </h2>
           <p class="max-w-2xl text-center text-lg text-muted-foreground mx-auto">
@@ -73,7 +73,7 @@ export const HomePage = (c: Context) => {
 
       <section class="mb-16">
         <div class="container">
-          <h2 class="leading-tighter max-w-2xl text-4xl font-semibold tracking-tight text-balance lg:leading-[1.1] xl:text-5xl xl:tracking-tighter text-foreground text-center mx-auto">
+          <h2 class="leading-tighter max-w-2xl text-4xl tracking-tight text-balance lg:leading-[1.1] xl:text-5xl xl:tracking-tighter text-foreground text-center mx-auto">
             Modern Package Registry
           </h2>
           <p class="max-w-2xl text-center text-lg text-muted-foreground mx-auto">
@@ -85,7 +85,7 @@ export const HomePage = (c: Context) => {
 
       <section class="mb-8">
         <div class="container">
-          <h2 class="leading-tighter max-w-2xl text-4xl font-semibold tracking-tight text-balance lg:leading-[1.1] xl:text-5xl xl:tracking-tighter text-foreground text-center mx-auto">
+          <h2 class="leading-tighter max-w-2xl text-4xl tracking-tight text-balance lg:leading-[1.1] xl:text-5xl xl:tracking-tighter text-foreground text-center mx-auto">
             Centralized and Secure Ops
           </h2>
           <p class="max-w-2xl text-center text-lg text-muted-foreground mx-auto">

@@ -31,7 +31,7 @@ export function PackageHeader({
         </div>
         <div>
           <div class="flex items-center gap-2">
-            <h1 class="text-2xl font-bold text-gray-900 dark:text-white">{name}</h1>
+            <h1 class="text-2xl text-gray-900 dark:text-white">{name}</h1>
             <Badge variant="secondary" className="text-xs px-2 py-0.5 capitalize">
               {type}
             </Badge>
