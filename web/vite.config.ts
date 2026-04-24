@@ -38,7 +38,7 @@ function injectClientManifest(mode: string): Plugin {
       if (id === resolvedVirtualModuleId) {
         let manifest: Record<string, unknown> = {};
 
-        if (mode === 'test') {
+        if (mode !== 'production') {
           manifest = {};
         } else {
           manifest = await readFile(manifestPath, 'utf-8').then(JSON.parse);
