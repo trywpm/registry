@@ -83,9 +83,14 @@ class DropdownMenu extends HTMLElement {
   private lastHoverTarget: HTMLElement | null = null;
   private hoverRafId: number | null = null;
   private pendingHoverEvent: PointerEvent | null = null;
+
   private childObserver: MutationObserver | null = null;
+  private localEventsController: AbortController | null = null;
 
   private pendingFocusIndex: number | null = null;
+
+  private cachedAlign: string = 'center';
+  private cachedSideOffset: number = 4;
 
   constructor() {
     super();
@@ -99,11 +104,21 @@ class DropdownMenu extends HTMLElement {
       return;
     }
 
-    if (this.childElementCount > 0) {
+    const hasRequiredElements =
+      this.querySelector(
+        '[data-slot="dropdown-menu-trigger"], [data-slot="dropdown-menu-sub-trigger"]',
+      ) && this.querySelector('[data-slot="dropdown-menu-content"]');
+
+    if (hasRequiredElements) {
       this.init();
     } else {
       this.childObserver = new MutationObserver(() => {
-        if (this.childElementCount > 0) {
+        const trigger = this.querySelector(
+          '[data-slot="dropdown-menu-trigger"], [data-slot="dropdown-menu-sub-trigger"]',
+        );
+        const content = this.querySelector('[data-slot="dropdown-menu-content"]');
+
+        if (trigger && content) {
           this.childObserver?.disconnect();
           this.childObserver = null;
           if (this.isConnected) {
@@ -111,12 +126,16 @@ class DropdownMenu extends HTMLElement {
           }
         }
       });
-      this.childObserver.observe(this, { childList: true });
+
+      this.childObserver.observe(this, { childList: true, subtree: true });
     }
   }
 
   disconnectedCallback(): void {
     this.removeGlobalListeners();
+
+    this.localEventsController?.abort();
+    this.localEventsController = null;
 
     if (this.isOpen && this.content) {
       unlockScroll(this.content);
@@ -246,75 +265,114 @@ class DropdownMenu extends HTMLElement {
       return;
     }
 
-    this.trigger.addEventListener('click', (e: MouseEvent) => {
-      e.preventDefault();
-      e.stopPropagation();
-      this.toggle();
-    });
+    this.localEventsController?.abort();
+    this.localEventsController = new AbortController();
+    const { signal } = this.localEventsController;
 
-    this.trigger.addEventListener('keydown', (e: KeyboardEvent) => {
-      if (!this.isSub) {
-        if (['Enter', ' ', 'ArrowDown'].includes(e.key)) {
+    this.trigger.addEventListener(
+      'click',
+      (e: MouseEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        this.toggle();
+      },
+      { signal },
+    );
+
+    this.trigger.addEventListener(
+      'keydown',
+      (e: KeyboardEvent) => {
+        if (!this.isSub) {
+          if (['Enter', ' ', 'ArrowDown'].includes(e.key)) {
+            e.preventDefault();
+            e.stopPropagation();
+            this.open(0);
+          } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            e.stopPropagation();
+            this.open(-1);
+          }
+        } else if (['Enter', ' ', 'ArrowRight'].includes(e.key)) {
           e.preventDefault();
           e.stopPropagation();
           this.open(0);
-        } else if (e.key === 'ArrowUp') {
-          e.preventDefault();
-          e.stopPropagation();
-          this.open(-1);
         }
-      } else if (['Enter', ' ', 'ArrowRight'].includes(e.key)) {
-        e.preventDefault();
-        e.stopPropagation();
-        this.open(0);
-      }
-    });
+      },
+      { signal },
+    );
 
-    this.content.addEventListener('animationend', () => {
-      if (this.content?.getAttribute('data-state') === 'closed') {
-        this.content.classList.add('hidden');
-      }
-    });
+    this.content.addEventListener(
+      'animationend',
+      () => {
+        if (this.content?.getAttribute('data-state') === 'closed') {
+          this.content.classList.add('hidden');
+        }
+      },
+      { signal },
+    );
 
-    this.content.addEventListener('click', (e: MouseEvent) => {
-      this.handleContentClick(e);
-    });
-    this.content.addEventListener('keydown', (e: KeyboardEvent) => {
-      this.handleContentKeydown(e);
-    });
+    this.content.addEventListener(
+      'click',
+      (e: MouseEvent) => {
+        this.handleContentClick(e);
+      },
+      { signal },
+    );
 
-    this.content.addEventListener('pointermove', (e: PointerEvent) => {
-      if (e.pointerType === 'touch') {
-        return;
-      }
+    this.content.addEventListener(
+      'keydown',
+      (e: KeyboardEvent) => {
+        this.handleContentKeydown(e);
+      },
+      { signal },
+    );
 
-      if (e.movementX === 0 && e.movementY === 0) {
-        return;
-      }
+    this.content.addEventListener(
+      'pointermove',
+      (e: PointerEvent) => {
+        if (e.pointerType === 'touch') {
+          return;
+        }
+        if (e.movementX === 0 && e.movementY === 0) {
+          return;
+        }
+        this.handleContentHover(e);
+      },
+      { signal },
+    );
 
-      this.handleContentHover(e);
-    });
+    this.content.addEventListener(
+      'pointerenter',
+      (e: PointerEvent) => {
+        if (e.pointerType === 'touch') {
+          return;
+        }
+        if (this.isSub) {
+          this.dispatchEvent(new CustomEvent('wpm-cancel-close', { bubbles: true }));
+        }
+      },
+      { signal },
+    );
 
-    this.content.addEventListener('pointerenter', (e: PointerEvent) => {
-      if (e.pointerType === 'touch') {
-        return;
-      }
-      if (this.isSub) {
-        this.dispatchEvent(new CustomEvent('wpm-cancel-close', { bubbles: true }));
-      }
-    });
+    this.addEventListener(
+      'wpm-cancel-close',
+      (e: Event) => {
+        if (e.target !== this && this.hoverTimer) {
+          window.clearTimeout(this.hoverTimer);
+        }
+      },
+      { signal },
+    );
 
-    this.addEventListener('wpm-cancel-close', (e: Event) => {
-      if (e.target !== this && this.hoverTimer) {
-        window.clearTimeout(this.hoverTimer);
-      }
-    });
-
-    this.addEventListener('wpm-dropdown-close', (e: Event) => {
-      if (e.target !== this) {
-        this.close(true);
-      }
-    });
+    this.addEventListener(
+      'wpm-dropdown-close',
+      (e: Event) => {
+        if (e.target !== this) {
+          this.close(true);
+        }
+      },
+      { signal },
+    );
   }
 
   private updatePosition(): void {
@@ -322,16 +380,13 @@ class DropdownMenu extends HTMLElement {
       return;
     }
 
-    const alignAttr = this.content.getAttribute('data-align') || 'center';
-    const sideOffset = parseInt(this.content.getAttribute('data-side-offset') || '4', 10);
-
     let desiredPlacement: Placement = 'bottom';
-    if (alignAttr === 'start') {
+    if (this.cachedAlign === 'start') {
       desiredPlacement = 'bottom-start';
-    }
-    if (alignAttr === 'end') {
+    } else if (this.cachedAlign === 'end') {
       desiredPlacement = 'bottom-end';
     }
+
     if (this.isSub) {
       desiredPlacement = 'right-start';
     }
@@ -340,7 +395,7 @@ class DropdownMenu extends HTMLElement {
       placement: desiredPlacement,
       strategy: 'fixed',
       middleware: [
-        offset(sideOffset),
+        offset(this.cachedSideOffset),
         flip(),
         shift({ padding: 8 }),
         size({
@@ -599,10 +654,12 @@ class DropdownMenu extends HTMLElement {
     if (this.items.length === 0) {
       return;
     }
+
     let nextIndex = currentIndex + direction;
     if (nextIndex < 0) {
       nextIndex = this.items.length - 1;
     }
+
     if (nextIndex >= this.items.length) {
       nextIndex = 0;
     }
@@ -657,6 +714,9 @@ class DropdownMenu extends HTMLElement {
 
     if (!this.isOpen) {
       this.isOpen = true;
+
+      this.cachedAlign = this.content.getAttribute('data-align') || 'center';
+      this.cachedSideOffset = parseInt(this.content.getAttribute('data-side-offset') || '4', 10);
 
       lockScroll(this.content);
 
