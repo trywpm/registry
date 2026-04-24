@@ -1,5 +1,5 @@
 import type { Placement } from '@floating-ui/dom';
-import { computePosition, autoUpdate, flip, shift, offset } from '@floating-ui/dom';
+import { computePosition, autoUpdate, flip, shift, offset, size } from '@floating-ui/dom';
 
 let instanceCounter = 0;
 
@@ -325,24 +325,71 @@ class DropdownMenu extends HTMLElement {
     const alignAttr = this.content.getAttribute('data-align') || 'center';
     const sideOffset = parseInt(this.content.getAttribute('data-side-offset') || '4', 10);
 
-    let placement: Placement = 'bottom';
+    let desiredPlacement: Placement = 'bottom';
     if (alignAttr === 'start') {
-      placement = 'bottom-start';
+      desiredPlacement = 'bottom-start';
     }
     if (alignAttr === 'end') {
-      placement = 'bottom-end';
+      desiredPlacement = 'bottom-end';
     }
     if (this.isSub) {
-      placement = 'right-start';
+      desiredPlacement = 'right-start';
     }
 
     void computePosition(this.trigger, this.content, {
-      placement,
+      placement: desiredPlacement,
       strategy: 'fixed',
-      middleware: [offset(sideOffset), flip(), shift({ padding: 8 })],
-    }).then(({ x, y }) => {
+      middleware: [
+        offset(sideOffset),
+        flip(),
+        shift({ padding: 8 }),
+        size({
+          padding: 8,
+          apply: ({ rects, availableHeight, elements }) => {
+            elements.floating.style.setProperty(
+              '--wpm-dropdown-menu-content-available-height',
+              `${availableHeight}px`,
+            );
+
+            elements.floating.style.setProperty(
+              '--wpm-dropdown-menu-trigger-width',
+              `${rects.reference.width}px`,
+            );
+          },
+        }),
+      ],
+    }).then(({ x, y, placement }) => {
       if (!this.content) {
         return;
+      }
+
+      const [side, alignment] = placement.split('-');
+
+      let originX = 'center';
+      let originY = 'center';
+
+      if (side === 'bottom') {
+        originY = 'top';
+      } else if (side === 'top') {
+        originY = 'bottom';
+      } else if (side === 'left') {
+        originX = 'right';
+      } else if (side === 'right') {
+        originX = 'left';
+      }
+
+      if (alignment === 'start') {
+        if (side === 'top' || side === 'bottom') {
+          originX = 'left';
+        } else {
+          originY = 'top';
+        }
+      } else if (alignment === 'end') {
+        if (side === 'top' || side === 'bottom') {
+          originX = 'right';
+        } else {
+          originY = 'bottom';
+        }
       }
 
       Object.assign(this.content.style, {
@@ -350,6 +397,13 @@ class DropdownMenu extends HTMLElement {
         left: `${Math.round(x)}px`,
         position: 'fixed',
       });
+
+      this.content.style.setProperty(
+        '--wpm-dropdown-menu-content-transform-origin',
+        `${originX} ${originY}`,
+      );
+
+      this.content.setAttribute('data-side', side);
 
       if (this.content.style.visibility === 'hidden') {
         this.content.style.visibility = '';
