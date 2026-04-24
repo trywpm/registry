@@ -16,7 +16,7 @@ for await (const file of glob(join(__dirname, 'src/components/**/*.island.ts')))
   webComponents[name] = file;
 }
 
-function injectClientManifest(): Plugin {
+function injectClientManifest(mode: string): Plugin {
   const virtualModuleId = 'virtual:client-manifest';
   const resolvedVirtualModuleId = `\0${virtualModuleId}`;
 
@@ -29,14 +29,21 @@ function injectClientManifest(): Plugin {
       manifestPath = resolve(config.root, clientOutDir, '.vite/manifest.json');
     },
     resolveId(id) {
-      if (this.environment.name === 'wpm_web' && id === virtualModuleId) {
+      if (id === virtualModuleId) {
         return resolvedVirtualModuleId;
       }
       return null;
     },
     async load(id) {
       if (id === resolvedVirtualModuleId) {
-        const manifest = await readFile(manifestPath, 'utf-8').then(JSON.parse);
+        let manifest: Record<string, unknown> = {};
+
+        if (mode === 'test') {
+          manifest = {};
+        } else {
+          manifest = await readFile(manifestPath, 'utf-8').then(JSON.parse);
+        }
+
         return `export default ${JSON.stringify(manifest)}`;
       }
 
@@ -45,8 +52,8 @@ function injectClientManifest(): Plugin {
   };
 }
 
-export default defineConfig({
-  plugins: [tailwindcss(), cloudflare(), injectClientManifest()],
+export default defineConfig(({ mode }) => ({
+  plugins: [tailwindcss(), mode === 'test' ? undefined : cloudflare(), injectClientManifest(mode)],
   resolve: {
     alias: {
       '@': join(__dirname, 'src'),
@@ -90,4 +97,9 @@ export default defineConfig({
       },
     },
   },
-});
+  test: {
+    alias: {
+      '@': join(__dirname, 'src'),
+    },
+  },
+}));
