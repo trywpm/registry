@@ -261,7 +261,7 @@ class DropdownMenu extends HTMLElement {
         } else if (e.key === 'ArrowUp') {
           e.preventDefault();
           e.stopPropagation();
-          this.open(this.items.length - 1);
+          this.open(-1);
         }
       } else if (['Enter', ' ', 'ArrowRight'].includes(e.key)) {
         e.preventDefault();
@@ -409,7 +409,10 @@ class DropdownMenu extends HTMLElement {
         this.content.style.visibility = '';
 
         if (this.pendingFocusIndex != null && this.items[this.pendingFocusIndex]) {
-          this.items[this.pendingFocusIndex].focus({ preventScroll: true });
+          const targetItem = this.items[this.pendingFocusIndex];
+
+          targetItem.focus({ preventScroll: true });
+          targetItem.scrollIntoView({ block: 'nearest' });
           this.pendingFocusIndex = null;
         }
       }
@@ -606,7 +609,10 @@ class DropdownMenu extends HTMLElement {
 
     this.closeSubmenus();
 
-    this.items[nextIndex]?.focus({ preventScroll: true });
+    const nextItem = this.items[nextIndex];
+
+    nextItem.focus({ preventScroll: true });
+    nextItem.scrollIntoView({ block: 'nearest' });
   }
 
   private handleDocumentClick(e: MouseEvent): void {
@@ -673,11 +679,18 @@ class DropdownMenu extends HTMLElement {
       document.addEventListener('keydown', this.handleDocumentKeydown);
     }
 
-    if (focusIndex != null) {
+    let actualFocusIndex = focusIndex;
+    if (actualFocusIndex === -1 && this.items.length > 0) {
+      actualFocusIndex = this.items.length - 1;
+    }
+
+    if (actualFocusIndex != null) {
       if (this.content.style.visibility === 'hidden') {
-        this.pendingFocusIndex = focusIndex;
-      } else if (this.items[focusIndex]) {
-        this.items[focusIndex].focus({ preventScroll: true });
+        this.pendingFocusIndex = actualFocusIndex;
+      } else if (this.items[actualFocusIndex]) {
+        const targetItem = this.items[actualFocusIndex];
+        targetItem.focus({ preventScroll: true });
+        targetItem.scrollIntoView({ block: 'nearest' });
       }
     }
   }
