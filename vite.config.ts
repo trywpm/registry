@@ -1,6 +1,9 @@
 import { defineConfig } from 'vite-plus';
 
 export default defineConfig({
+  test: {
+    projects: ['web', 'registry', 'packages/*'],
+  },
   fmt: {
     tabWidth: 2,
     printWidth: 100,
