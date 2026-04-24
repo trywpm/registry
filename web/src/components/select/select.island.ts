@@ -1,3 +1,5 @@
+import { computePosition, autoUpdate, offset, flip, size } from '@floating-ui/dom';
+
 class Select extends HTMLElement {
   private trigger: HTMLElement | null = null;
   private content: HTMLElement | null = null;
@@ -6,12 +8,13 @@ class Select extends HTMLElement {
 
   private items: HTMLElement[] = [];
   private isOpen: boolean = false;
-  private ticking: boolean = false;
+
+  private cleanupFloating: (() => void) | null = null;
+  private abortController: AbortController | null = null;
 
   constructor() {
     super();
     this.handleDocumentClick = this.handleDocumentClick.bind(this);
-    this.handleScrollOrResize = this.handleScrollOrResize.bind(this);
   }
 
   connectedCallback(): void {
@@ -21,6 +24,11 @@ class Select extends HTMLElement {
   }
 
   disconnectedCallback(): void {
+    this.stopPositioning();
+    if (this.abortController) {
+      this.abortController.abort();
+      this.abortController = null;
+    }
     if (this.content && this.content.parentNode === document.body) {
       document.body.removeChild(this.content);
     }
@@ -28,6 +36,12 @@ class Select extends HTMLElement {
   }
 
   private init(): void {
+    if (this.abortController) {
+      this.abortController.abort();
+    }
+    this.abortController = new AbortController();
+    const { signal } = this.abortController;
+
     this.trigger = this.querySelector<HTMLElement>('[data-slot="select-trigger"]');
     this.content = this.querySelector<HTMLElement>('[data-slot="select-content"]');
     this.valueNode = this.querySelector<HTMLElement>('[data-slot="select-value"]');
@@ -53,68 +67,132 @@ class Select extends HTMLElement {
       return;
     }
 
-    this.trigger.addEventListener('pointerdown', () => {
-      this.trigger?.focus({ preventScroll: true });
-    });
+    this.trigger.addEventListener(
+      'pointerdown',
+      () => {
+        this.trigger?.focus({ preventScroll: true });
+      },
+      { signal },
+    );
 
-    this.trigger.addEventListener('click', (e: MouseEvent) => {
-      e.preventDefault();
-      this.toggle();
-    });
+    this.trigger.addEventListener(
+      'click',
+      (e: MouseEvent) => {
+        e.preventDefault();
+        this.toggle();
+      },
+      { signal },
+    );
 
-    this.trigger.addEventListener('keydown', (e: KeyboardEvent) => {
-      this.handleTriggerKey(e);
-    });
+    this.trigger.addEventListener(
+      'keydown',
+      (e: KeyboardEvent) => {
+        this.handleTriggerKey(e);
+      },
+      { signal },
+    );
 
     this.items.forEach((item, index) => {
-      item.addEventListener('click', (e: MouseEvent) => {
-        e.stopPropagation();
-        if (!item.hasAttribute('data-disabled')) {
-          this.selectItem(item);
-        }
-      });
+      item.addEventListener(
+        'click',
+        (e: MouseEvent) => {
+          e.stopPropagation();
+          if (!item.hasAttribute('data-disabled')) {
+            this.selectItem(item);
+          }
+        },
+        { signal },
+      );
 
-      item.addEventListener('keydown', (e: KeyboardEvent) => {
-        this.handleItemKey(e, index);
-      });
+      item.addEventListener(
+        'keydown',
+        (e: KeyboardEvent) => {
+          this.handleItemKey(e, index);
+        },
+        { signal },
+      );
 
-      item.addEventListener('mouseenter', () => {
-        if (!item.hasAttribute('data-disabled')) {
-          item.focus({ preventScroll: true });
-        }
-      });
+      item.addEventListener(
+        'mouseenter',
+        () => {
+          if (!item.hasAttribute('data-disabled')) {
+            item.focus({ preventScroll: true });
+          }
+        },
+        { signal },
+      );
     });
 
-    this.content.addEventListener('animationend', () => {
-      if (this.content?.getAttribute('data-state') === 'closed') {
-        this.content.classList.add('hidden');
-      }
-    });
+    this.content.addEventListener(
+      'animationend',
+      () => {
+        if (this.content?.getAttribute('data-state') === 'closed') {
+          this.content.classList.add('hidden');
+        }
+      },
+      { signal },
+    );
   }
 
-  private handleScrollOrResize(): void {
-    if (!this.ticking) {
-      window.requestAnimationFrame(() => {
-        this.reposition();
-        this.ticking = false;
-      });
-      this.ticking = true;
-    }
-  }
-
-  private reposition(): void {
-    if (!this.isOpen || !this.trigger || !this.content) {
+  private startPositioning(): void {
+    if (!this.trigger || !this.content) {
       return;
     }
 
-    const rect = this.trigger.getBoundingClientRect();
-    const scrollY = window.scrollY || document.documentElement.scrollTop;
-    const scrollX = window.scrollX || document.documentElement.scrollLeft;
+    this.cleanupFloating = autoUpdate(this.trigger, this.content, () => {
+      void computePosition(this.trigger!, this.content!, {
+        placement: 'bottom-start',
+        middleware: [
+          offset(4),
+          flip(),
+          size({
+            apply: ({ rects, elements }) => {
+              Object.assign(elements.floating.style, {
+                width: `${rects.reference.width}px`,
+              });
+              elements.floating.style.setProperty(
+                '--wpm-select-trigger-width',
+                `${rects.reference.width}px`,
+              );
+            },
+          }),
+        ],
+      }).then(({ x, y, placement }) => {
+        Object.assign(this.content!.style, {
+          left: `${x}px`,
+          top: `${y}px`,
+        });
 
-    this.content.style.top = `${rect.bottom + scrollY + 4}px`;
-    this.content.style.left = `${rect.left + scrollX}px`;
-    this.content.style.width = `${rect.width}px`;
-    this.content.style.setProperty('--wpm-select-trigger-width', `${rect.width}px`);
+        const side = placement.split('-')[0];
+        this.content!.setAttribute('data-side', side);
+
+        if (this.content!.style.visibility === 'hidden') {
+          this.content!.style.visibility = 'visible';
+
+          requestAnimationFrame(() => {
+            this.trigger!.setAttribute('data-state', 'open');
+            this.trigger!.setAttribute('aria-expanded', 'true');
+            this.content!.setAttribute('data-state', 'open');
+
+            const selected =
+              this.items.find((i) => i.getAttribute('data-state') === 'checked') ??
+              this.items.find((i) => !i.hasAttribute('data-disabled'));
+
+            if (selected) {
+              selected.focus({ preventScroll: true });
+              selected.scrollIntoView({ block: 'nearest' });
+            }
+          });
+        }
+      });
+    });
+  }
+
+  private stopPositioning(): void {
+    if (this.cleanupFloating) {
+      this.cleanupFloating();
+      this.cleanupFloating = null;
+    }
   }
 
   private handleDocumentClick(e: MouseEvent): void {
@@ -134,14 +212,10 @@ class Select extends HTMLElement {
 
   private addGlobalListeners(): void {
     document.addEventListener('click', this.handleDocumentClick);
-    window.addEventListener('resize', this.handleScrollOrResize);
-    window.addEventListener('scroll', this.handleScrollOrResize, true);
   }
 
   private removeGlobalListeners(): void {
     document.removeEventListener('click', this.handleDocumentClick);
-    window.removeEventListener('resize', this.handleScrollOrResize);
-    window.removeEventListener('scroll', this.handleScrollOrResize, true);
   }
 
   private toggle(): void {
@@ -162,25 +236,11 @@ class Select extends HTMLElement {
     }
 
     this.isOpen = true;
-
+    this.content.style.visibility = 'hidden';
     this.content.classList.remove('hidden');
-    this.reposition();
-    void this.content.offsetWidth;
 
-    this.trigger.setAttribute('data-state', 'open');
-    this.trigger.setAttribute('aria-expanded', 'true');
-    this.content.setAttribute('data-state', 'open');
-
+    this.startPositioning();
     this.addGlobalListeners();
-
-    const selected =
-      this.items.find((i) => i.getAttribute('data-state') === 'checked') ??
-      this.items.find((i) => !i.hasAttribute('data-disabled'));
-
-    if (selected) {
-      selected.focus({ preventScroll: true });
-      selected.scrollIntoView({ block: 'nearest' });
-    }
   }
 
   private close(returnFocus: boolean = false): void {
@@ -194,6 +254,7 @@ class Select extends HTMLElement {
     this.content.setAttribute('data-state', 'closed');
 
     this.removeGlobalListeners();
+    this.stopPositioning();
 
     if (returnFocus) {
       this.trigger.focus({ preventScroll: true });
