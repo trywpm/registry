@@ -21,6 +21,8 @@ class DropdownMenu extends HTMLElement {
   private pendingHoverEvent: PointerEvent | null = null;
   private childObserver: MutationObserver | null = null;
 
+  private pendingFocusIndex: number | null = null;
+
   constructor() {
     super();
     this.handleDocumentClick = this.handleDocumentClick.bind(this);
@@ -153,7 +155,6 @@ class DropdownMenu extends HTMLElement {
           }
           break;
       }
-
       if (!item.hasAttribute('tabindex')) {
         item.setAttribute('tabindex', '-1');
       }
@@ -184,17 +185,20 @@ class DropdownMenu extends HTMLElement {
     });
 
     this.trigger.addEventListener('keydown', (e: KeyboardEvent) => {
-      if (['Enter', ' ', 'ArrowDown', 'ArrowUp'].includes(e.key)) {
+      if (!this.isSub) {
+        if (['Enter', ' ', 'ArrowDown'].includes(e.key)) {
+          e.preventDefault();
+          e.stopPropagation();
+          this.open(0);
+        } else if (e.key === 'ArrowUp') {
+          e.preventDefault();
+          e.stopPropagation();
+          this.open(this.items.length - 1);
+        }
+      } else if (['Enter', ' ', 'ArrowRight'].includes(e.key)) {
         e.preventDefault();
-        this.open(e.key === 'ArrowUp' ? this.items.length - 1 : 0);
-      }
-      if (this.isSub && e.key === 'ArrowLeft') {
-        e.preventDefault();
-        this.close(true);
-      }
-      if (this.isSub && e.key === 'ArrowRight') {
-        e.preventDefault();
-        this.open();
+        e.stopPropagation();
+        this.open(0);
       }
     });
 
@@ -211,10 +215,15 @@ class DropdownMenu extends HTMLElement {
       this.handleContentKeydown(e);
     });
 
-    this.content.addEventListener('pointerover', (e: PointerEvent) => {
+    this.content.addEventListener('pointermove', (e: PointerEvent) => {
       if (e.pointerType === 'touch') {
         return;
       }
+
+      if (e.movementX === 0 && e.movementY === 0) {
+        return;
+      }
+
       this.handleContentHover(e);
     });
 
@@ -235,7 +244,7 @@ class DropdownMenu extends HTMLElement {
 
     this.addEventListener('wpm-dropdown-close', (e: Event) => {
       if (e.target !== this) {
-        this.close();
+        this.close(true);
       }
     });
   }
@@ -276,6 +285,11 @@ class DropdownMenu extends HTMLElement {
 
       if (this.content.style.visibility === 'hidden') {
         this.content.style.visibility = '';
+
+        if (this.pendingFocusIndex != null && this.items[this.pendingFocusIndex]) {
+          this.items[this.pendingFocusIndex].focus({ preventScroll: true });
+          this.pendingFocusIndex = null;
+        }
       }
     });
   }
@@ -311,6 +325,10 @@ class DropdownMenu extends HTMLElement {
   }
 
   private handleContentHover(e: PointerEvent): void {
+    if (!this.isOpen) {
+      return;
+    }
+
     this.pendingHoverEvent = e;
 
     if (!this.hoverRafId) {
@@ -328,7 +346,6 @@ class DropdownMenu extends HTMLElement {
     if (!(e.target instanceof HTMLElement)) {
       return;
     }
-
     if (this.lastHoverTarget === e.target) {
       return;
     }
@@ -358,7 +375,7 @@ class DropdownMenu extends HTMLElement {
       this.hoverTimer = window.setTimeout(() => {
         const sub = item.closest<DropdownMenu>('wpm-dropdown-menu');
         this.closeSubmenus(sub);
-        sub?.open(0);
+        sub?.open(null);
       }, 100);
     } else {
       const hasOpenSubmenu = this.getActiveSubmenus().some((sub) => sub.isOpen);
@@ -432,14 +449,13 @@ class DropdownMenu extends HTMLElement {
         e.stopPropagation();
         this.focusNext(currentIndex, -1);
         break;
-      case 'ArrowRight':
-        if (activeElement.getAttribute('data-slot') === 'dropdown-menu-sub-trigger') {
+      case 'ArrowLeft':
+        if (this.isSub) {
           e.preventDefault();
           e.stopPropagation();
-          activeElement.closest<DropdownMenu>('wpm-dropdown-menu')?.open(0);
+          this.close(true);
         }
         break;
-      case 'ArrowLeft':
       case 'Escape':
         e.preventDefault();
         e.stopPropagation();
@@ -455,6 +471,9 @@ class DropdownMenu extends HTMLElement {
   }
 
   private focusNext(currentIndex: number, direction: number): void {
+    if (this.items.length === 0) {
+      return;
+    }
     let nextIndex = currentIndex + direction;
     if (nextIndex < 0) {
       nextIndex = this.items.length - 1;
@@ -462,6 +481,9 @@ class DropdownMenu extends HTMLElement {
     if (nextIndex >= this.items.length) {
       nextIndex = 0;
     }
+
+    this.closeSubmenus();
+
     this.items[nextIndex]?.focus({ preventScroll: true });
   }
 
@@ -482,44 +504,55 @@ class DropdownMenu extends HTMLElement {
 
   private handleDocumentKeydown(e: KeyboardEvent): void {
     if (e.key === 'Escape') {
-      this.close(true);
+      const hasOpenSubmenu = this.getActiveSubmenus().some((sub) => sub.isOpen);
+      if (!hasOpenSubmenu) {
+        this.close(true);
+      }
+    } else if (e.key === 'Tab') {
+      this.close(false);
     }
   }
 
   private toggle(): void {
     if (this.isOpen) {
-      this.close();
+      this.close(true);
     } else {
-      this.open();
+      this.trigger?.focus({ preventScroll: true });
+      this.open(null);
     }
   }
 
-  public open(focusIndex: number = 0): void {
+  public open(focusIndex: number | null = null): void {
     if (!this.content || !this.trigger) {
       return;
     }
 
-    this.isOpen = true;
-    this.lastHoverTarget = null;
-    this.content.style.overflow = '';
+    if (!this.isOpen) {
+      this.isOpen = true;
+      this.lastHoverTarget = null;
+      this.content.style.overflow = '';
 
-    // Prevent 1-frame position flash before Floating UI resolves
-    this.content.style.visibility = 'hidden';
-    this.content.classList.remove('hidden');
+      this.content.style.visibility = 'hidden';
+      this.content.classList.remove('hidden');
 
-    this.cleanupFloating = autoUpdate(this.trigger, this.content, this.updatePosition);
+      this.cleanupFloating = autoUpdate(this.trigger, this.content, this.updatePosition);
 
-    this.trigger.setAttribute('data-state', 'open');
-    this.trigger.setAttribute('aria-expanded', 'true');
-    this.content.setAttribute('data-state', 'open');
+      this.trigger.setAttribute('data-state', 'open');
+      this.trigger.setAttribute('aria-expanded', 'true');
+      this.content.setAttribute('data-state', 'open');
 
-    this.refreshItems();
+      this.refreshItems();
 
-    document.addEventListener('click', this.handleDocumentClick, true);
-    document.addEventListener('keydown', this.handleDocumentKeydown);
+      document.addEventListener('click', this.handleDocumentClick, true);
+      document.addEventListener('keydown', this.handleDocumentKeydown);
+    }
 
-    if (this.items[focusIndex]) {
-      this.items[focusIndex].focus({ preventScroll: true });
+    if (focusIndex != null) {
+      if (this.content.style.visibility === 'hidden') {
+        this.pendingFocusIndex = focusIndex;
+      } else if (this.items[focusIndex]) {
+        this.items[focusIndex].focus({ preventScroll: true });
+      }
     }
   }
 
@@ -548,7 +581,6 @@ class DropdownMenu extends HTMLElement {
     this.trigger.setAttribute('aria-expanded', 'false');
     this.content.setAttribute('data-state', 'closed');
 
-    // Fallback for "prefers-reduced-motion" or disabled animations
     const styles = getComputedStyle(this.content);
     const hasAnimation =
       styles.animationName !== 'none' && parseFloat(styles.animationDuration) > 0;
