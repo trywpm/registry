@@ -515,7 +515,7 @@ class DropdownMenu extends HTMLElement {
 
   private toggle(): void {
     if (this.isOpen) {
-      this.close(true);
+      this.close(false);
     } else {
       this.trigger?.focus({ preventScroll: true });
       this.open(null);
