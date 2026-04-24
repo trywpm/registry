@@ -1,0 +1,382 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`DropdownMenu Components (Hono SSR) > DropdownMenu > should wrap children in Island and wpm-dropdown-menu 1`] = `
+JSXFragmentNode {
+  "children": [
+    JSXFunctionNode {
+      "children": [],
+      "isEscaped": true,
+      "key": undefined,
+      "localContexts": undefined,
+      "props": {
+        "src": "/src/components/dropdown-menu/dropdown-menu.island.ts",
+        "type": "module",
+      },
+      "tag": [Function],
+    },
+    JSXNode {
+      "children": [
+        JSXNode {
+          "children": [
+            "Test Child",
+          ],
+          "isEscaped": true,
+          "key": undefined,
+          "localContexts": undefined,
+          "props": {
+            "children": "Test Child",
+          },
+          "tag": "div",
+        },
+      ],
+      "isEscaped": true,
+      "key": undefined,
+      "localContexts": undefined,
+      "props": {
+        "children": JSXNode {
+          "children": [
+            "Test Child",
+          ],
+          "isEscaped": true,
+          "key": undefined,
+          "localContexts": undefined,
+          "props": {
+            "children": "Test Child",
+          },
+          "tag": "div",
+        },
+      },
+      "tag": "wpm-dropdown-menu",
+    },
+  ],
+  "isEscaped": true,
+  "key": undefined,
+  "localContexts": undefined,
+  "props": {
+    "children": [
+      JSXFunctionNode {
+        "children": [],
+        "isEscaped": true,
+        "key": undefined,
+        "localContexts": undefined,
+        "props": {
+          "src": "/src/components/dropdown-menu/dropdown-menu.island.ts",
+          "type": "module",
+        },
+        "tag": [Function],
+      },
+      JSXNode {
+        "children": [
+          JSXNode {
+            "children": [
+              "Test Child",
+            ],
+            "isEscaped": true,
+            "key": undefined,
+            "localContexts": undefined,
+            "props": {
+              "children": "Test Child",
+            },
+            "tag": "div",
+          },
+        ],
+        "isEscaped": true,
+        "key": undefined,
+        "localContexts": undefined,
+        "props": {
+          "children": JSXNode {
+            "children": [
+              "Test Child",
+            ],
+            "isEscaped": true,
+            "key": undefined,
+            "localContexts": undefined,
+            "props": {
+              "children": "Test Child",
+            },
+            "tag": "div",
+          },
+        },
+        "tag": "wpm-dropdown-menu",
+      },
+    ],
+  },
+  "tag": "",
+}
+`;
+
+exports[`DropdownMenu Components (Hono SSR) > DropdownMenuCheckboxItem > should match snapshot to verify internal CheckIcon rendering structure 1`] = `
+JSXNode {
+  "children": [
+    JSXNode {
+      "children": [
+        JSXFunctionNode {
+          "children": [],
+          "isEscaped": true,
+          "key": undefined,
+          "localContexts": undefined,
+          "props": {
+            "className": "size-4",
+          },
+          "tag": [Function],
+        },
+      ],
+      "isEscaped": true,
+      "key": undefined,
+      "localContexts": undefined,
+      "props": {
+        "children": JSXFunctionNode {
+          "children": [],
+          "isEscaped": true,
+          "key": undefined,
+          "localContexts": undefined,
+          "props": {
+            "className": "size-4",
+          },
+          "tag": [Function],
+        },
+        "className": "pointer-events-none absolute left-2 flex size-3.5 items-center justify-center opacity-0 group-data-[state=checked]:opacity-100",
+      },
+      "tag": "span",
+    },
+    "Checked & Disabled",
+  ],
+  "isEscaped": true,
+  "key": undefined,
+  "localContexts": undefined,
+  "props": {
+    "aria-checked": "true",
+    "aria-disabled": "true",
+    "children": [
+      JSXNode {
+        "children": [
+          JSXFunctionNode {
+            "children": [],
+            "isEscaped": true,
+            "key": undefined,
+            "localContexts": undefined,
+            "props": {
+              "className": "size-4",
+            },
+            "tag": [Function],
+          },
+        ],
+        "isEscaped": true,
+        "key": undefined,
+        "localContexts": undefined,
+        "props": {
+          "children": JSXFunctionNode {
+            "children": [],
+            "isEscaped": true,
+            "key": undefined,
+            "localContexts": undefined,
+            "props": {
+              "className": "size-4",
+            },
+            "tag": [Function],
+          },
+          "className": "pointer-events-none absolute left-2 flex size-3.5 items-center justify-center opacity-0 group-data-[state=checked]:opacity-100",
+        },
+        "tag": "span",
+      },
+      "Checked & Disabled",
+    ],
+    "className": "focus:bg-accent focus:text-accent-foreground relative flex cursor-default items-center gap-2 rounded-sm py-1.5 pr-2 pl-8 text-sm outline-hidden select-none data-[disabled=true]:pointer-events-none data-[disabled=true]:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 group",
+    "data-disabled": "true",
+    "data-slot": "dropdown-menu-checkbox-item",
+    "data-state": "checked",
+    "role": "menuitemcheckbox",
+    "tabIndex": -1,
+  },
+  "tag": "div",
+}
+`;
+
+exports[`DropdownMenu Components (Hono SSR) > DropdownMenuContent > should match snapshot to verify complex tailwind classes 1`] = `
+JSXNode {
+  "children": [
+    "Content",
+  ],
+  "isEscaped": true,
+  "key": undefined,
+  "localContexts": undefined,
+  "props": {
+    "children": "Content",
+    "className": "bg-popover text-popover-foreground data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 z-50 hidden max-h-(--wpm-dropdown-menu-content-available-height) min-w-[max(8rem,var(--wpm-dropdown-menu-trigger-width))] origin-(--wpm-dropdown-menu-content-transform-origin) overflow-x-hidden overflow-y-auto rounded-md border p-1 shadow-md custom-class",
+    "data-align": "start",
+    "data-side-offset": 4,
+    "data-slot": "dropdown-menu-content",
+    "data-state": "closed",
+  },
+  "tag": "div",
+}
+`;
+
+exports[`DropdownMenu Components (Hono SSR) > DropdownMenuPortal > should unwrap children through Fragment 1`] = `
+JSXFragmentNode {
+  "children": [
+    JSXNode {
+      "children": [
+        "Portal Content",
+      ],
+      "isEscaped": true,
+      "key": undefined,
+      "localContexts": undefined,
+      "props": {
+        "children": "Portal Content",
+        "id": "portal-child",
+      },
+      "tag": "div",
+    },
+  ],
+  "isEscaped": true,
+  "key": undefined,
+  "localContexts": undefined,
+  "props": {
+    "children": JSXNode {
+      "children": [
+        "Portal Content",
+      ],
+      "isEscaped": true,
+      "key": undefined,
+      "localContexts": undefined,
+      "props": {
+        "children": "Portal Content",
+        "id": "portal-child",
+      },
+      "tag": "div",
+    },
+  },
+  "tag": "",
+}
+`;
+
+exports[`DropdownMenu Components (Hono SSR) > DropdownMenuRadioItem > should match snapshot to verify internal Circle icon rendering structure 1`] = `
+JSXNode {
+  "children": [
+    JSXNode {
+      "children": [
+        JSXFunctionNode {
+          "children": [],
+          "isEscaped": true,
+          "key": undefined,
+          "localContexts": undefined,
+          "props": {
+            "className": "size-2 fill-current",
+          },
+          "tag": [Function],
+        },
+      ],
+      "isEscaped": true,
+      "key": undefined,
+      "localContexts": undefined,
+      "props": {
+        "children": JSXFunctionNode {
+          "children": [],
+          "isEscaped": true,
+          "key": undefined,
+          "localContexts": undefined,
+          "props": {
+            "className": "size-2 fill-current",
+          },
+          "tag": [Function],
+        },
+        "className": "pointer-events-none absolute left-2 flex size-3.5 items-center justify-center opacity-0 group-data-[state=checked]:opacity-100",
+      },
+      "tag": "span",
+    },
+    "Checked & Disabled",
+  ],
+  "isEscaped": true,
+  "key": undefined,
+  "localContexts": undefined,
+  "props": {
+    "aria-checked": "true",
+    "aria-disabled": "true",
+    "children": [
+      JSXNode {
+        "children": [
+          JSXFunctionNode {
+            "children": [],
+            "isEscaped": true,
+            "key": undefined,
+            "localContexts": undefined,
+            "props": {
+              "className": "size-2 fill-current",
+            },
+            "tag": [Function],
+          },
+        ],
+        "isEscaped": true,
+        "key": undefined,
+        "localContexts": undefined,
+        "props": {
+          "children": JSXFunctionNode {
+            "children": [],
+            "isEscaped": true,
+            "key": undefined,
+            "localContexts": undefined,
+            "props": {
+              "className": "size-2 fill-current",
+            },
+            "tag": [Function],
+          },
+          "className": "pointer-events-none absolute left-2 flex size-3.5 items-center justify-center opacity-0 group-data-[state=checked]:opacity-100",
+        },
+        "tag": "span",
+      },
+      "Checked & Disabled",
+    ],
+    "className": "focus:bg-accent focus:text-accent-foreground relative flex cursor-default items-center gap-2 rounded-sm py-1.5 pr-2 pl-8 text-sm outline-hidden select-none data-[disabled=true]:pointer-events-none data-[disabled=true]:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 group",
+    "data-disabled": "true",
+    "data-slot": "dropdown-menu-radio-item",
+    "data-state": "checked",
+    "role": "menuitemradio",
+    "tabIndex": -1,
+  },
+  "tag": "div",
+}
+`;
+
+exports[`DropdownMenu Components (Hono SSR) > Sub-menu Components > should render DropdownMenuSubTrigger correctly 1`] = `
+JSXNode {
+  "children": [
+    "Sub Trigger",
+    JSXFunctionNode {
+      "children": [],
+      "isEscaped": true,
+      "key": undefined,
+      "localContexts": undefined,
+      "props": {
+        "className": "ml-auto size-4",
+      },
+      "tag": [Function],
+    },
+  ],
+  "isEscaped": true,
+  "key": undefined,
+  "localContexts": undefined,
+  "props": {
+    "children": [
+      "Sub Trigger",
+      JSXFunctionNode {
+        "children": [],
+        "isEscaped": true,
+        "key": undefined,
+        "localContexts": undefined,
+        "props": {
+          "className": "ml-auto size-4",
+        },
+        "tag": [Function],
+      },
+    ],
+    "className": "focus:bg-accent focus:text-accent-foreground data-[state=open]:bg-accent data-[state=open]:text-accent-foreground [&_svg:not([class*='text-'])]:text-muted-foreground flex cursor-default items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-hidden select-none data-[inset=true]:pl-8 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+    "data-inset": "true",
+    "data-slot": "dropdown-menu-sub-trigger",
+    "data-state": "closed",
+    "role": "menuitem",
+    "tabIndex": -1,
+  },
+  "tag": "div",
+}
+`;
