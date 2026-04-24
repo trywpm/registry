@@ -3,6 +3,70 @@ import { computePosition, autoUpdate, flip, shift, offset } from '@floating-ui/d
 
 let instanceCounter = 0;
 
+const activeScrollContainers = new Set<HTMLElement>();
+
+const preventGlobalScroll = (e: Event) => {
+  const path = e.composedPath();
+
+  if (path.length > 0) {
+    for (const el of path) {
+      if (!(el instanceof HTMLElement)) {
+        continue;
+      }
+
+      if (activeScrollContainers.has(el)) {
+        return;
+      }
+    }
+  }
+
+  if (e.cancelable) {
+    e.preventDefault();
+  }
+};
+
+const preventGlobalKeyScroll = (e: KeyboardEvent) => {
+  const keys = ['ArrowUp', 'ArrowDown', ' ', 'PageUp', 'PageDown', 'Home', 'End'];
+  if (!keys.includes(e.key)) {
+    return;
+  }
+
+  const path = e.composedPath();
+  for (const el of path) {
+    if (!(el instanceof HTMLElement)) {
+      continue;
+    }
+
+    if (activeScrollContainers.has(el)) {
+      return;
+    }
+  }
+
+  if (e.cancelable) {
+    e.preventDefault();
+  }
+};
+
+const lockScroll = (containerEl: HTMLElement) => {
+  if (activeScrollContainers.size === 0) {
+    window.addEventListener('wheel', preventGlobalScroll, { passive: false });
+    window.addEventListener('touchmove', preventGlobalScroll, { passive: false });
+    window.addEventListener('keydown', preventGlobalKeyScroll, { passive: false });
+  }
+
+  activeScrollContainers.add(containerEl);
+};
+
+const unlockScroll = (containerEl: HTMLElement) => {
+  activeScrollContainers.delete(containerEl);
+
+  if (activeScrollContainers.size === 0) {
+    window.removeEventListener('wheel', preventGlobalScroll);
+    window.removeEventListener('touchmove', preventGlobalScroll);
+    window.removeEventListener('keydown', preventGlobalKeyScroll);
+  }
+};
+
 class DropdownMenu extends HTMLElement {
   public isOpen: boolean = false;
 
@@ -53,6 +117,10 @@ class DropdownMenu extends HTMLElement {
 
   disconnectedCallback(): void {
     this.removeGlobalListeners();
+
+    if (this.isOpen && this.content) {
+      unlockScroll(this.content);
+    }
 
     if (this.hoverTimer) {
       window.clearTimeout(this.hoverTimer);
@@ -529,8 +597,12 @@ class DropdownMenu extends HTMLElement {
 
     if (!this.isOpen) {
       this.isOpen = true;
+
+      lockScroll(this.content);
+
       this.lastHoverTarget = null;
       this.content.style.overflow = '';
+      this.content.style.overscrollBehavior = 'contain';
 
       this.content.style.visibility = 'hidden';
       this.content.classList.remove('hidden');
@@ -561,6 +633,8 @@ class DropdownMenu extends HTMLElement {
       return;
     }
     this.isOpen = false;
+
+    unlockScroll(this.content);
 
     if (this.hoverTimer) {
       window.clearTimeout(this.hoverTimer);
