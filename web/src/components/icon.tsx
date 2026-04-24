@@ -7,6 +7,7 @@ import {
   Menu as MenuD,
   Check as CheckD,
   Globe as GlobeD,
+  Search as SearchD,
   Circle as CircleD,
   Filter as FilterD,
   Server as ServerD,
@@ -111,6 +112,7 @@ export const Menu = createIcon(MenuD);
 export const User = createIcon(UserD);
 export const Globe = createIcon(GlobeD);
 export const Check = createIcon(CheckD);
+export const Search = createIcon(SearchD);
 export const Server = createIcon(ServerD);
 export const Filter = createIcon(FilterD);
 export const Circle = createIcon(CircleD);
