@@ -114,7 +114,7 @@ class Select extends HTMLElement {
     this.content.style.top = `${rect.bottom + scrollY + 4}px`;
     this.content.style.left = `${rect.left + scrollX}px`;
     this.content.style.width = `${rect.width}px`;
-    this.content.style.setProperty('--radix-select-trigger-width', `${rect.width}px`);
+    this.content.style.setProperty('--wpm-select-trigger-width', `${rect.width}px`);
   }
 
   private handleDocumentClick(e: MouseEvent): void {

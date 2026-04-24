@@ -103,10 +103,7 @@ export function SelectContent({
     >
       <div
         data-slot="select-viewport"
-        className={cn(
-          'p-1',
-          position === 'popper' && 'w-full min-w-(--radix-select-trigger-width)',
-        )}
+        className={cn('p-1', position === 'popper' && 'w-full min-w-(--wpm-select-trigger-width)')}
       >
         {children}
       </div>
