@@ -1,6 +1,8 @@
 import type { Placement } from '@floating-ui/dom';
 import { computePosition, autoUpdate, flip, shift, offset } from '@floating-ui/dom';
 
+let instanceCounter = 0;
+
 class DropdownMenu extends HTMLElement {
   public isOpen: boolean = false;
 
@@ -10,10 +12,14 @@ class DropdownMenu extends HTMLElement {
 
   private isSub: boolean = false;
   private initialized: boolean = false;
+  private instanceId: string = '';
 
   private cleanupFloating: (() => void) | null = null;
-
   private hoverTimer: number | null = null;
+  private lastHoverTarget: HTMLElement | null = null;
+  private hoverRafId: number | null = null;
+  private pendingHoverEvent: PointerEvent | null = null;
+  private childObserver: MutationObserver | null = null;
 
   constructor() {
     super();
@@ -27,26 +33,49 @@ class DropdownMenu extends HTMLElement {
       return;
     }
 
-    setTimeout(() => {
-      if (this.isConnected) {
-        this.init();
-      }
-    }, 0);
+    if (this.childElementCount > 0) {
+      this.init();
+    } else {
+      this.childObserver = new MutationObserver(() => {
+        if (this.childElementCount > 0) {
+          this.childObserver?.disconnect();
+          this.childObserver = null;
+          if (this.isConnected) {
+            this.init();
+          }
+        }
+      });
+      this.childObserver.observe(this, { childList: true });
+    }
   }
 
   disconnectedCallback(): void {
     this.removeGlobalListeners();
+
     if (this.hoverTimer) {
       window.clearTimeout(this.hoverTimer);
+      this.hoverTimer = null;
+    }
+    if (this.hoverRafId) {
+      cancelAnimationFrame(this.hoverRafId);
+      this.hoverRafId = null;
     }
     if (this.cleanupFloating) {
       this.cleanupFloating();
+      this.cleanupFloating = null;
     }
+    if (this.childObserver) {
+      this.childObserver.disconnect();
+      this.childObserver = null;
+    }
+
+    this.initialized = false;
   }
 
   private init(): void {
     this.initialized = true;
     this.isSub = this.hasAttribute('data-is-sub');
+    this.instanceId = `wpm-dm-${++instanceCounter}`;
 
     this.trigger =
       [
@@ -60,6 +89,90 @@ class DropdownMenu extends HTMLElement {
         (el) => el.closest('wpm-dropdown-menu') === this,
       ) ?? null;
 
+    if (!this.trigger || !this.content) {
+      return;
+    }
+
+    this.setupAria();
+    this.addLocalListeners();
+  }
+
+  private setupAria(): void {
+    if (!this.trigger || !this.content) {
+      return;
+    }
+
+    if (!this.trigger.id) {
+      this.trigger.id = `${this.instanceId}-trigger`;
+    }
+    if (!this.content.id) {
+      this.content.id = `${this.instanceId}-content`;
+    }
+
+    this.trigger.setAttribute('aria-haspopup', 'menu');
+    this.trigger.setAttribute('aria-controls', this.content.id);
+    if (!this.trigger.hasAttribute('aria-expanded')) {
+      this.trigger.setAttribute('aria-expanded', 'false');
+    }
+
+    this.content.setAttribute('role', 'menu');
+    this.content.setAttribute('aria-labelledby', this.trigger.id);
+
+    this.applyItemRoles();
+  }
+
+  private applyItemRoles(): void {
+    if (!this.content) {
+      return;
+    }
+
+    const allItems = this.content.querySelectorAll<HTMLElement>(
+      '[data-slot$="-item"],[data-slot="dropdown-menu-sub-trigger"]',
+    );
+
+    allItems.forEach((item) => {
+      if (item.closest('[data-slot="dropdown-menu-content"]') !== this.content) {
+        return;
+      }
+
+      const slot = item.getAttribute('data-slot');
+      switch (slot) {
+        case 'dropdown-menu-checkbox-item':
+          if (!item.hasAttribute('role')) {
+            item.setAttribute('role', 'menuitemcheckbox');
+          }
+          break;
+        case 'dropdown-menu-radio-item':
+          if (!item.hasAttribute('role')) {
+            item.setAttribute('role', 'menuitemradio');
+          }
+          break;
+        default:
+          if (!item.hasAttribute('role')) {
+            item.setAttribute('role', 'menuitem');
+          }
+          break;
+      }
+
+      if (!item.hasAttribute('tabindex')) {
+        item.setAttribute('tabindex', '-1');
+      }
+    });
+
+    const radioGroups = this.content.querySelectorAll<HTMLElement>(
+      '[data-slot="dropdown-menu-radio-group"]',
+    );
+    radioGroups.forEach((group) => {
+      if (
+        group.closest('[data-slot="dropdown-menu-content"]') === this.content &&
+        !group.hasAttribute('role')
+      ) {
+        group.setAttribute('role', 'group');
+      }
+    });
+  }
+
+  private addLocalListeners(): void {
     if (!this.trigger || !this.content) {
       return;
     }
@@ -98,11 +211,17 @@ class DropdownMenu extends HTMLElement {
       this.handleContentKeydown(e);
     });
 
-    this.content.addEventListener('mouseover', (e: MouseEvent) => {
+    this.content.addEventListener('pointerover', (e: PointerEvent) => {
+      if (e.pointerType === 'touch') {
+        return;
+      }
       this.handleContentHover(e);
     });
 
-    this.content.addEventListener('mouseenter', () => {
+    this.content.addEventListener('pointerenter', (e: PointerEvent) => {
+      if (e.pointerType === 'touch') {
+        return;
+      }
       if (this.isSub) {
         this.dispatchEvent(new CustomEvent('wpm-cancel-close', { bubbles: true }));
       }
@@ -136,7 +255,6 @@ class DropdownMenu extends HTMLElement {
     if (alignAttr === 'end') {
       placement = 'bottom-end';
     }
-
     if (this.isSub) {
       placement = 'right-start';
     }
@@ -145,31 +263,20 @@ class DropdownMenu extends HTMLElement {
       placement,
       strategy: 'fixed',
       middleware: [offset(sideOffset), flip(), shift({ padding: 8 })],
-    }).then(({ x, y, placement: finalPlacement }) => {
+    }).then(({ x, y }) => {
       if (!this.content) {
         return;
       }
 
-      const [finalSide, finalAlign = 'center'] = finalPlacement.split('-');
-
-      this.content.setAttribute('data-side', finalSide);
-
       Object.assign(this.content.style, {
-        top: `${y}px`,
-        left: `${x}px`,
+        top: `${Math.round(y)}px`,
+        left: `${Math.round(x)}px`,
         position: 'fixed',
       });
 
-      const originX = finalAlign === 'end' ? 'right' : finalAlign === 'start' ? 'left' : 'center';
-      const originY = finalSide === 'top' ? 'bottom' : 'top';
-      this.content.style.setProperty(
-        '--radix-dropdown-menu-content-transform-origin',
-        this.isSub
-          ? finalSide === 'left'
-            ? 'right center'
-            : 'left center'
-          : `${originX} ${originY}`,
-      );
+      if (this.content.style.visibility === 'hidden') {
+        this.content.style.visibility = '';
+      }
     });
   }
 
@@ -189,6 +296,7 @@ class DropdownMenu extends HTMLElement {
     if (!this.content) {
       return [];
     }
+
     return [...this.content.querySelectorAll<DropdownMenu>('wpm-dropdown-menu')].filter(
       (sub) => sub.closest('[data-slot="dropdown-menu-content"]') === this.content,
     );
@@ -202,10 +310,29 @@ class DropdownMenu extends HTMLElement {
     });
   }
 
-  private handleContentHover(e: MouseEvent): void {
+  private handleContentHover(e: PointerEvent): void {
+    this.pendingHoverEvent = e;
+
+    if (!this.hoverRafId) {
+      this.hoverRafId = requestAnimationFrame(() => {
+        this.hoverRafId = null;
+        if (this.pendingHoverEvent) {
+          this.processHover(this.pendingHoverEvent);
+          this.pendingHoverEvent = null;
+        }
+      });
+    }
+  }
+
+  private processHover(e: PointerEvent): void {
     if (!(e.target instanceof HTMLElement)) {
       return;
     }
+
+    if (this.lastHoverTarget === e.target) {
+      return;
+    }
+    this.lastHoverTarget = e.target;
 
     const item = e.target.closest<HTMLElement>(
       '[data-slot$="-item"],[data-slot="dropdown-menu-sub-trigger"]',
@@ -213,7 +340,6 @@ class DropdownMenu extends HTMLElement {
     if (!item || item.getAttribute('data-disabled') === 'true') {
       return;
     }
-
     if (item.closest('[data-slot="dropdown-menu-content"]') !== this.content) {
       return;
     }
@@ -298,27 +424,31 @@ class DropdownMenu extends HTMLElement {
     switch (e.key) {
       case 'ArrowDown':
         e.preventDefault();
+        e.stopPropagation();
         this.focusNext(currentIndex, 1);
         break;
       case 'ArrowUp':
         e.preventDefault();
+        e.stopPropagation();
         this.focusNext(currentIndex, -1);
         break;
       case 'ArrowRight':
         if (activeElement.getAttribute('data-slot') === 'dropdown-menu-sub-trigger') {
           e.preventDefault();
-          const sub = activeElement.closest<DropdownMenu>('wpm-dropdown-menu');
-          sub?.open(0);
+          e.stopPropagation();
+          activeElement.closest<DropdownMenu>('wpm-dropdown-menu')?.open(0);
         }
         break;
       case 'ArrowLeft':
       case 'Escape':
         e.preventDefault();
+        e.stopPropagation();
         this.close(true);
         break;
       case 'Enter':
       case ' ':
         e.preventDefault();
+        e.stopPropagation();
         activeElement.click();
         break;
     }
@@ -339,6 +469,7 @@ class DropdownMenu extends HTMLElement {
     if (!(e.target instanceof Node)) {
       return;
     }
+
     if (
       this.isOpen &&
       !this.contains(e.target) &&
@@ -369,7 +500,11 @@ class DropdownMenu extends HTMLElement {
     }
 
     this.isOpen = true;
+    this.lastHoverTarget = null;
     this.content.style.overflow = '';
+
+    // Prevent 1-frame position flash before Floating UI resolves
+    this.content.style.visibility = 'hidden';
     this.content.classList.remove('hidden');
 
     this.cleanupFloating = autoUpdate(this.trigger, this.content, this.updatePosition);
@@ -396,8 +531,12 @@ class DropdownMenu extends HTMLElement {
 
     if (this.hoverTimer) {
       window.clearTimeout(this.hoverTimer);
+      this.hoverTimer = null;
     }
-
+    if (this.hoverRafId) {
+      cancelAnimationFrame(this.hoverRafId);
+      this.hoverRafId = null;
+    }
     if (this.cleanupFloating) {
       this.cleanupFloating();
       this.cleanupFloating = null;
@@ -408,6 +547,15 @@ class DropdownMenu extends HTMLElement {
     this.trigger.setAttribute('data-state', 'closed');
     this.trigger.setAttribute('aria-expanded', 'false');
     this.content.setAttribute('data-state', 'closed');
+
+    // Fallback for "prefers-reduced-motion" or disabled animations
+    const styles = getComputedStyle(this.content);
+    const hasAnimation =
+      styles.animationName !== 'none' && parseFloat(styles.animationDuration) > 0;
+
+    if (!hasAnimation) {
+      this.content.classList.add('hidden');
+    }
 
     this.closeSubmenus();
     this.removeGlobalListeners();
