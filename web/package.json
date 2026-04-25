@@ -13,7 +13,7 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "hono": "catalog:",
-    "htmx.org": "^2.0.9",
+    "htmx.org": "^2.0.10",
     "lucide": "^1.11.0",
     "postgres": "catalog:",
     "tailwind-merge": "^3.5.0",
