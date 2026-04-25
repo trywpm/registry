@@ -63,19 +63,20 @@ export function SelectTrigger({
   return (
     <button
       type="button"
-      aria-haspopup="listbox"
+      role="combobox"
       aria-expanded="false"
       data-slot="select-trigger"
+      aria-controls={props['aria-controls']}
       data-size={size}
       data-state="closed"
       className={cn(
-        "border-input data-placeholder:text-muted-foreground [&_svg:not([class*='text-'])]:text-muted-foreground focus-visible:border-ring focus-visible:ring-ring/50 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive dark:bg-input/30 dark:hover:bg-input/50 flex w-fit items-center justify-between gap-2 rounded-md border bg-transparent px-3 py-2 text-sm whitespace-nowrap shadow-xs transition-[color,box-shadow] outline-none focus-visible:ring-[3px] disabled:cursor-not-allowed disabled:opacity-50 data-[size=default]:h-9 data-[size=sm]:h-8 *:data-[slot=select-value]:line-clamp-1 *:data-[slot=select-value]:flex *:data-[slot=select-value]:items-center *:data-[slot=select-value]:gap-2 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+        'border-input data-placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-ring/50 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive dark:bg-input/30 dark:hover:bg-input/50 flex w-fit items-center justify-between gap-2 rounded-md border bg-transparent px-3 py-2 text-sm whitespace-nowrap shadow-xs transition-[color,box-shadow] outline-none focus-visible:ring-[3px] disabled:cursor-not-allowed disabled:opacity-50 data-[size=default]:h-9 data-[size=sm]:h-8 *:data-[slot=select-value]:line-clamp-1 *:data-[slot=select-value]:flex *:data-[slot=select-value]:items-center *:data-[slot=select-value]:gap-2',
         className,
       )}
       {...props}
     >
       {children}
-      <ChevronDownIcon className="size-4 opacity-50" />
+      <ChevronDownIcon className="size-4 opacity-50 shrink-0 pointer-events-none" />
     </button>
   );
 }
@@ -94,8 +95,9 @@ export function SelectContent({
       data-slot="select-content"
       data-state="closed"
       role="listbox"
+      style={{ display: 'none' }}
       className={cn(
-        'hidden absolute z-50 max-h-96 min-w-32 origin-top overflow-x-hidden overflow-y-auto rounded-md border shadow-md bg-popover text-popover-foreground',
+        'absolute z-50 max-h-96 min-w-32 origin-top overflow-x-hidden overflow-y-auto rounded-md border shadow-md bg-popover text-popover-foreground',
         'data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95',
         'data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2',
         className,
@@ -144,7 +146,7 @@ export function SelectItem({
       aria-disabled={disabled ? 'true' : undefined}
       data-disabled={disabled ? '' : undefined}
       className={cn(
-        "focus:bg-accent focus:text-accent-foreground hover:bg-accent hover:text-accent-foreground [&_svg:not([class*='text-'])]:text-muted-foreground relative flex w-full cursor-default items-center gap-2 rounded-sm py-1.5 pr-8 pl-2 text-sm outline-none select-none data-disabled:pointer-events-none data-disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0[&_svg:not([class*='size-'])]:size-4 group",
+        'focus:bg-accent focus:text-accent-foreground hover:bg-accent hover:text-accent-foreground relative flex w-full cursor-default items-center gap-2 rounded-sm py-1.5 pr-8 pl-2 text-sm outline-none select-none data-disabled:pointer-events-none data-disabled:opacity-50 group',
         className,
       )}
       {...props}
@@ -153,7 +155,7 @@ export function SelectItem({
         data-slot="select-item-indicator"
         className="absolute right-2 flex size-3.5 items-center justify-center opacity-0 group-data-[state=checked]:opacity-100 transition-none"
       >
-        <CheckIcon className="size-4" />
+        <CheckIcon className="size-4 shrink-0 pointer-events-none" />
       </span>
       <span data-slot="select-item-text">{children}</span>
     </div>
