@@ -360,3 +360,5 @@ class Select extends HTMLElement {
 if (!customElements.get('wpm-select')) {
   customElements.define('wpm-select', Select);
 }
+
+export type { Select };
