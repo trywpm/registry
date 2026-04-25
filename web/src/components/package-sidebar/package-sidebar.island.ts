@@ -1,64 +1,68 @@
 class PackageSidebar extends HTMLElement {
-  private codeNode: HTMLElement | null = null;
-  private copyBtn: HTMLButtonElement | null = null;
-  private checkIcon: HTMLElement | null = null;
-
   private copyTimeout: number | null = null;
-  private handleCopyBound = this.handleCopy.bind(this);
 
   connectedCallback(): void {
-    requestAnimationFrame(() => {
-      this.init();
-    });
+    this.addEventListener('click', this.handleClick);
   }
 
   disconnectedCallback(): void {
-    if (this.copyBtn) {
-      this.copyBtn.removeEventListener('click', this.handleCopyBound);
-    }
-
+    this.removeEventListener('click', this.handleClick);
     if (this.copyTimeout != null) {
       window.clearTimeout(this.copyTimeout);
     }
   }
 
-  private init(): void {
-    this.codeNode = this.querySelector<HTMLElement>('[data-target="command-text"]');
-    this.copyBtn = this.querySelector<HTMLButtonElement>('[data-target="copy-btn"]');
-    this.checkIcon = this.querySelector<HTMLElement>('[data-icon="check"]');
-
-    if (this.copyBtn) {
-      this.copyBtn.addEventListener('click', this.handleCopyBound);
-    }
-  }
-
-  private async handleCopy(): Promise<void> {
-    if (!this.codeNode || !this.checkIcon) {
+  private handleClick = async (e: Event): Promise<void> => {
+    if (!(e.target instanceof HTMLElement)) {
       return;
     }
 
-    const commandText = this.codeNode.textContent || '';
+    const copyBtn = e.target.closest<HTMLButtonElement>('[data-target="copy-btn"]');
+
+    if (!copyBtn) {
+      return;
+    }
+
+    const codeNode = this.querySelector<HTMLElement>('[data-target="command-text"]');
+    const srFeedback = this.querySelector<HTMLElement>('[data-target="sr-feedback"]');
+
+    if (!codeNode) {
+      return;
+    }
 
     try {
-      await navigator.clipboard.writeText(commandText);
+      if (!('clipboard' in navigator)) {
+        return;
+      }
+
+      await navigator.clipboard.writeText(codeNode.textContent.trim() || '');
 
       if (this.copyTimeout != null) {
         window.clearTimeout(this.copyTimeout);
       }
 
-      this.checkIcon.classList.remove('hidden');
+      this.dataset.copied = 'true';
+
+      if (srFeedback) {
+        srFeedback.textContent = 'Command copied to clipboard';
+
+        copyBtn.addEventListener(
+          'blur',
+          () => {
+            srFeedback.textContent = '';
+          },
+          { once: true },
+        );
+      }
 
       this.copyTimeout = window.setTimeout(() => {
-        if (this.checkIcon) {
-          this.checkIcon.classList.add('hidden');
-        }
-
         this.copyTimeout = null;
+        this.dataset.copied = 'false';
       }, 2000);
     } catch (err) {
       console.error('Failed to copy command:', err);
     }
-  }
+  };
 }
 
 if (!customElements.get('wpm-package-sidebar')) {
