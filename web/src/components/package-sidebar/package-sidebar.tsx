@@ -10,12 +10,6 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/avatar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/card';
 import { Copy, Check, Download, ExternalLink, User } from '@/components/icon';
 
-type Contributor = {
-  name: string;
-  role: string;
-  username: string;
-};
-
 type PackageSidebarProps = {
   name: string;
   version: string;
@@ -25,7 +19,7 @@ type PackageSidebarProps = {
   unpackedSize: number;
   registryHost: string;
   publishedDate: string | Date;
-  collaborators: Contributor[];
+  collaborators: string[];
 };
 
 export function PackageSidebar({
@@ -45,7 +39,7 @@ export function PackageSidebar({
   return (
     <aside className="space-y-6 lg:sticky lg:top-23 self-start">
       <Island name="package-sidebar">
-        <wpm-package-sidebar>
+        <wpm-package-sidebar class="space-y-4">
           <Card className="gap-2">
             <CardHeader>
               <CardTitle className="text-lg">Install Package</CardTitle>
@@ -107,31 +101,26 @@ export function PackageSidebar({
           </Card>
 
           {collaborators.length > 0 && (
-            <Card>
+            <Card className="gap-2">
               <CardHeader>
                 <CardTitle className="text-base sm:text-lg">Contributors</CardTitle>
               </CardHeader>
 
-              <CardContent>
-                <div className="flex flex-wrap gap-3">
-                  {collaborators.map((contributor) => (
-                    <div key={contributor.username} className="group relative">
-                      <Avatar className="h-12 w-12 border-2 border-border hover:border-primary transition-colors cursor-pointer">
-                        <AvatarImage src="/placeholder-user.jpg" alt={contributor.name} />
-                        <AvatarFallback className="text-muted-foreground">
-                          <User className="h-6 w-6" />
-                        </AvatarFallback>
-                      </Avatar>
-
-                      <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 dark:bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-10">
-                        <div className="font-medium">{contributor.name}</div>
-                        <div className="text-gray-300">@{contributor.username}</div>
-                        <div className="text-xs capitalize text-gray-400">{contributor.role}</div>
-                        <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-900 dark:border-t-gray-800" />
-                      </div>
-                    </div>
-                  ))}
-                </div>
+              <CardContent className="flex flex-wrap gap-2">
+                {collaborators.map((username) => (
+                  <a key={username} href={`/${username}`}>
+                    <Avatar className="h-10 w-10">
+                      <AvatarImage
+                        src={`https://github.com/${username}.png`}
+                        decoding="async"
+                        alt={`@${username}`}
+                      />
+                      <AvatarFallback>
+                        <User />
+                      </AvatarFallback>
+                    </Avatar>
+                  </a>
+                ))}
               </CardContent>
             </Card>
           )}
