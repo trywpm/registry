@@ -4,6 +4,8 @@ class ThemeToggle extends HTMLElement {
   private theme: Theme = 'system';
   private cycleBtn: HTMLButtonElement | null = null;
 
+  private handleToggleBound = this.handleToggle.bind(this);
+
   connectedCallback() {
     this.cycleBtn = this.querySelector('button[data-theme-cycle]');
 
@@ -14,14 +16,24 @@ class ThemeToggle extends HTMLElement {
       this.theme = 'system';
     }
 
-    this.cycleBtn?.addEventListener('click', () => {
-      const isDark = document.documentElement.classList.contains('dark');
-      const nextTheme: Theme = isDark ? 'light' : 'dark';
+    this.updateAriaLabel();
 
-      this.applyTheme(nextTheme);
-    });
+    if (this.cycleBtn) {
+      this.cycleBtn.addEventListener('click', this.handleToggleBound);
+    }
+  }
 
-    this.updateAttributes();
+  disconnectedCallback() {
+    if (this.cycleBtn) {
+      this.cycleBtn.removeEventListener('click', this.handleToggleBound);
+    }
+  }
+
+  private handleToggle() {
+    const isDark = document.documentElement.classList.contains('dark');
+    const nextTheme: Theme = isDark ? 'light' : 'dark';
+
+    this.applyTheme(nextTheme);
   }
 
   private applyTheme(newTheme: Theme) {
@@ -36,10 +48,19 @@ class ThemeToggle extends HTMLElement {
       localStorage.setItem('theme', 'light');
     }
 
-    this.updateAttributes();
+    this.updateAriaLabel();
   }
 
-  private updateAttributes() {
+  private updateAriaLabel() {
+    if (!this.cycleBtn) {
+      return;
+    }
+
+    const isDark = document.documentElement.classList.contains('dark');
+    const label = isDark ? 'Switch to light theme' : 'Switch to dark theme';
+
+    this.cycleBtn.setAttribute('aria-label', label);
+    this.cycleBtn.setAttribute('title', label);
     this.setAttribute('data-current-theme', this.theme);
   }
 }
