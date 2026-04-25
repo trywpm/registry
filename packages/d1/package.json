@@ -1,0 +1,11 @@
+{
+  "name": "@wpm/d1",
+  "private": true,
+  "exports": {
+    "./search": "./src/search/index.ts"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "@cloudflare/workers-types": "catalog:"
+  }
+}
