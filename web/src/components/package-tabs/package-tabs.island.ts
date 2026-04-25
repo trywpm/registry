@@ -2,28 +2,27 @@ class PackageTabs extends HTMLElement {
   private tabs: HTMLAnchorElement[] = [];
 
   connectedCallback(): void {
-    queueMicrotask(() => {
-      this.init();
+    // oxlint-disable-next-line typescript/no-unnecessary-condition -- window.requestIdleCallback is not available in all browsers, so we provide a fallback to setTimeout
+    const idleCallback = window.requestIdleCallback || ((cb) => setTimeout(cb, 1));
+
+    idleCallback(() => {
+      this.tabs = [...this.querySelectorAll<HTMLAnchorElement>('[role="tab"]')];
+
+      const activeTab = this.tabs.find((tab) => tab.getAttribute('aria-selected') === 'true');
+      if (activeTab) {
+        activeTab.scrollIntoView({
+          block: 'nearest',
+          inline: 'center',
+          behavior: 'instant',
+        });
+      }
     });
+
+    this.addEventListener('keydown', this.handleKeyDown);
   }
 
   disconnectedCallback(): void {
     this.removeEventListener('keydown', this.handleKeyDown);
-  }
-
-  private init(): void {
-    this.tabs = [...this.querySelectorAll<HTMLAnchorElement>('[role="tab"]')];
-
-    const activeTab = this.tabs.find((t) => t.getAttribute('aria-selected') === 'true');
-    if (activeTab) {
-      activeTab.scrollIntoView({
-        block: 'nearest',
-        inline: 'center',
-        behavior: 'instant',
-      });
-    }
-
-    this.addEventListener('keydown', this.handleKeyDown);
   }
 
   private handleKeyDown = (e: KeyboardEvent): void => {
@@ -31,10 +30,7 @@ class PackageTabs extends HTMLElement {
       return;
     }
 
-    if (
-      !(document.activeElement instanceof HTMLAnchorElement) ||
-      !this.tabs.includes(document.activeElement)
-    ) {
+    if (!(document.activeElement instanceof HTMLAnchorElement)) {
       return;
     }
 
