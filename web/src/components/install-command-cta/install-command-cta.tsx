@@ -24,9 +24,6 @@ export function getOSFromUserAgent(userAgent?: string | null): OS {
   if (/Win/i.test(userAgent)) {
     return 'windows';
   }
-  if (/Mac/i.test(userAgent)) {
-    return 'macos';
-  }
   if (/Linux/i.test(userAgent)) {
     return 'linux';
   }
@@ -39,7 +36,7 @@ export function InstallCommandCta({ defaultOS = 'macos' }: { defaultOS?: OS }) {
 
   return (
     <Island name="install-command-cta">
-      <wpm-install-command-cta data-commands={JSON.stringify(commands)} data-initial-os={defaultOS}>
+      <wpm-install-command-cta data-commands={JSON.stringify(commands)}>
         <div className="hidden md:flex items-center gap-3 p-2 rounded-lg backdrop-blur-sm bg-secondary/50">
           <Select defaultValue={defaultOS}>
             <SelectTrigger className="border border-border/50">
@@ -67,16 +64,17 @@ export function InstallCommandCta({ defaultOS = 'macos' }: { defaultOS?: OS }) {
             </code>
           </div>
 
-          <Button variant="secondary" data-target="copy-btn" className="cursor-pointer" size="icon">
+          <Button
+            variant="secondary"
+            data-target="copy-btn"
+            data-copied="false"
+            aria-label="Copy installation command"
+            className="cursor-pointer group relative"
+            size="icon"
+          >
             <div className="relative h-4 w-4">
-              <Copy
-                data-icon="copy"
-                className="absolute inset-0 transition-all duration-150 ease-out scale-100 opacity-100 text-muted-foreground hover:text-foreground"
-              />
-              <Check
-                data-icon="check"
-                className="absolute inset-0 transition-all duration-150 ease-out text-green-500 scale-90 opacity-0"
-              />
+              <Copy className="absolute inset-0 transition-all duration-200 ease-out text-muted-foreground hover:text-foreground scale-100 opacity-100 group-data-[copied=true]:scale-90 group-data-[copied=true]:opacity-0" />
+              <Check className="absolute inset-0 transition-all duration-200 ease-out text-green-500 scale-90 opacity-0 group-data-[copied=true]:scale-100 group-data-[copied=true]:opacity-100" />
             </div>
           </Button>
         </div>

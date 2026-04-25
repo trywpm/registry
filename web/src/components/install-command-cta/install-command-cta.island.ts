@@ -9,8 +9,6 @@ class InstallCommandCta extends HTMLElement {
   private prefixNode: HTMLElement | null = null;
   private codeNode: HTMLElement | null = null;
   private copyBtn: HTMLButtonElement | null = null;
-  private copyIcon: HTMLElement | null = null;
-  private checkIcon: HTMLElement | null = null;
 
   private copyTimeout: number | null = null;
 
@@ -18,7 +16,7 @@ class InstallCommandCta extends HTMLElement {
   private handleSelectChangeBound = this.handleSelectChange.bind(this);
 
   connectedCallback(): void {
-    requestAnimationFrame(() => {
+    void customElements.whenDefined(WPM_SELECT_TAG).then(() => {
       this.init();
     });
   }
@@ -30,9 +28,7 @@ class InstallCommandCta extends HTMLElement {
     if (this.copyBtn) {
       this.copyBtn.removeEventListener('click', this.handleCopyBound);
     }
-    if (this.copyTimeout != null) {
-      window.clearTimeout(this.copyTimeout);
-    }
+    this.clearTimeout();
   }
 
   private init(): void {
@@ -47,8 +43,6 @@ class InstallCommandCta extends HTMLElement {
     this.prefixNode = this.querySelector('[data-target="prompt-prefix"]');
     this.codeNode = this.querySelector('[data-target="command-text"]');
     this.copyBtn = this.querySelector('[data-target="copy-btn"]');
-    this.copyIcon = this.querySelector('[data-icon="copy"]');
-    this.checkIcon = this.querySelector('[data-icon="check"]');
 
     if (this.selectEl) {
       this.selectEl.addEventListener('change', this.handleSelectChangeBound);
@@ -79,8 +73,15 @@ class InstallCommandCta extends HTMLElement {
     }
   }
 
+  private clearTimeout(): void {
+    if (this.copyTimeout != null) {
+      window.clearTimeout(this.copyTimeout);
+      this.copyTimeout = null;
+    }
+  }
+
   private async handleCopy(): Promise<void> {
-    if (!this.codeNode || !this.copyIcon || !this.checkIcon) {
+    if (!this.codeNode || !this.copyBtn) {
       return;
     }
 
@@ -88,29 +89,17 @@ class InstallCommandCta extends HTMLElement {
 
     try {
       await navigator.clipboard.writeText(commandText);
+      this.clearTimeout();
 
-      if (this.copyTimeout != null) {
-        window.clearTimeout(this.copyTimeout);
-      }
-
-      this.copyIcon.classList.replace('scale-100', 'scale-90');
-      this.copyIcon.classList.replace('opacity-100', 'opacity-0');
-
-      this.checkIcon.classList.replace('scale-90', 'scale-100');
-      this.checkIcon.classList.replace('opacity-0', 'opacity-100');
+      this.copyBtn.setAttribute('data-copied', 'true');
+      this.copyBtn.setAttribute('aria-label', 'Copied to clipboard');
 
       this.copyTimeout = window.setTimeout(() => {
-        if (!this.copyIcon || !this.checkIcon) {
-          return;
+        if (this.copyBtn) {
+          this.copyBtn.setAttribute('data-copied', 'false');
+          this.copyBtn.setAttribute('aria-label', 'Copy installation command');
         }
-
-        this.copyIcon.classList.replace('scale-90', 'scale-100');
-        this.copyIcon.classList.replace('opacity-0', 'opacity-100');
-
-        this.checkIcon.classList.replace('scale-100', 'scale-90');
-        this.checkIcon.classList.replace('opacity-100', 'opacity-0');
-
-        this.copyTimeout = null;
+        this.clearTimeout();
       }, 2000);
     } catch (err) {
       console.error('Failed to copy command:', err);
