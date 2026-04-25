@@ -19,7 +19,7 @@ export const HomePage = (c: Context) => {
   const userAgent = c.req.header('user-agent');
   const os = getOSFromUserAgent(userAgent);
 
-  return (
+  return c.html(
     <BaseLayout
       c={c}
       hasHero
@@ -119,6 +119,6 @@ export const HomePage = (c: Context) => {
           </HeroActions>
         </Hero>
       </main>
-    </BaseLayout>
+    </BaseLayout>,
   );
 };
