@@ -10,10 +10,13 @@ class Avatar extends HTMLElement {
     this.img = this.querySelector<HTMLImageElement>('img[data-slot="avatar-image"]');
     this.fallback = this.querySelector<HTMLElement>('[data-slot="avatar-fallback"]');
 
+    if (!this.hasAttribute('data-state')) {
+      this.setAttribute('data-state', 'loading');
+    }
+
     if (!this.img) {
       return;
     }
-
     this.init();
   }
 
@@ -22,13 +25,17 @@ class Avatar extends HTMLElement {
       this.img.removeEventListener('load', this.handleLoadBound);
       this.img.removeEventListener('error', this.handleErrorBound);
     }
-
     this.clearDelay();
   }
 
   private init(): void {
     if (!this.img) {
       return;
+    }
+
+    this.img.setAttribute('aria-hidden', 'true');
+    if (this.fallback) {
+      this.fallback.setAttribute('aria-hidden', 'true');
     }
 
     if (this.img.complete) {
@@ -38,14 +45,13 @@ class Avatar extends HTMLElement {
         this.handleError();
       }
     } else {
-      this.img.style.display = 'none';
-      this.showFallback();
+      this.handleDelay();
       this.img.addEventListener('load', this.handleLoadBound);
       this.img.addEventListener('error', this.handleErrorBound);
     }
   }
 
-  private showFallback(): void {
+  private handleDelay(): void {
     if (!this.fallback) {
       return;
     }
@@ -54,21 +60,11 @@ class Avatar extends HTMLElement {
     const delayMs = delayMsStr ? parseInt(delayMsStr, 10) : 0;
 
     if (delayMs > 0) {
-      this.fallback.style.display = 'none';
-      this.delayTimeout = window.setTimeout(() => {
-        if (this.fallback) {
-          this.fallback.style.display = '';
-        }
-      }, delayMs);
-    } else {
-      this.fallback.style.display = '';
-    }
-  }
+      this.setAttribute('data-fallback', 'delayed');
 
-  private hideFallback(): void {
-    this.clearDelay();
-    if (this.fallback) {
-      this.fallback.style.display = 'none';
+      this.delayTimeout = window.setTimeout(() => {
+        this.removeAttribute('data-fallback');
+      }, delayMs);
     }
   }
 
@@ -80,19 +76,20 @@ class Avatar extends HTMLElement {
   }
 
   private handleLoad(): void {
-    if (this.img) {
-      this.img.style.display = '';
-    }
+    this.setAttribute('data-state', 'loaded');
+    this.clearDelay();
 
-    this.hideFallback();
+    this.img?.removeAttribute('aria-hidden');
+    this.fallback?.setAttribute('aria-hidden', 'true');
   }
 
   private handleError(): void {
-    if (this.img) {
-      this.img.style.display = 'none';
-    }
+    this.setAttribute('data-state', 'error');
+    this.removeAttribute('data-fallback');
+    this.clearDelay();
 
-    this.showFallback();
+    this.img?.setAttribute('aria-hidden', 'true');
+    this.fallback?.removeAttribute('aria-hidden');
   }
 }
 

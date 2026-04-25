@@ -16,7 +16,8 @@ function Avatar({
         data-slot="avatar"
         data-size={size}
         className={cn(
-          'group/avatar relative flex size-8 shrink-0 overflow-hidden rounded-full select-none data-[size=lg]:size-10 data-[size=sm]:size-6',
+          'group/avatar relative grid size-8 shrink-0 rounded-full select-none data-[size=lg]:size-10 data-[size=sm]:size-6',
+          'after:absolute after:inset-0 after:rounded-full after:border after:border-border after:mix-blend-darken dark:after:mix-blend-lighten',
           className,
         )}
         {...props}
@@ -30,7 +31,12 @@ function AvatarImage({ className, ...props }: JSX.IntrinsicElements['img']) {
     <img
       data-slot="avatar-image"
       alt={props.alt || 'Avatar'}
-      className={cn('aspect-square size-full', className)}
+      className={cn(
+        'col-start-1 row-start-1 size-full object-cover',
+        'rounded-full aspect-square',
+        'opacity-0 transition-opacity duration-200 group-data-[state=loaded]/avatar:opacity-100',
+        className,
+      )}
       {...props}
     />
   );
@@ -46,7 +52,10 @@ function AvatarFallback({
       data-slot="avatar-fallback"
       data-delay-ms={delayMs}
       className={cn(
-        'bg-muted text-muted-foreground flex size-full items-center justify-center rounded-full text-sm group-data-[size=sm]/avatar:text-xs',
+        'bg-muted text-muted-foreground flex items-center justify-center rounded-full text-sm group-data-[size=sm]/avatar:text-xs',
+        'col-start-1 row-start-1 size-full',
+        'opacity-100 transition-opacity duration-200 group-data-[state=loaded]/avatar:pointer-events-none group-data-[state=loaded]/avatar:opacity-0',
+        'group-data-[fallback=delayed]/avatar:opacity-0',
         className,
       )}
       {...props}
