@@ -11,6 +11,12 @@
         "wrangler": "catalog:",
       },
     },
+    "packages/d1": {
+      "name": "@wpm/d1",
+      "devDependencies": {
+        "@cloudflare/workers-types": "catalog:",
+      },
+    },
     "packages/manifest": {
       "name": "@wpm/manifest",
       "dependencies": {
@@ -49,6 +55,7 @@
       "name": "@wpm/web",
       "dependencies": {
         "@floating-ui/dom": "^1.7.6",
+        "@wpm/d1": "workspace:*",
         "@wpm/manifest": "workspace:*",
         "@wpm/util": "workspace:*",
         "class-variance-authority": "^0.7.1",
@@ -399,6 +406,8 @@
     "@voidzero-dev/vite-plus-win32-arm64-msvc": ["@voidzero-dev/vite-plus-win32-arm64-msvc@0.1.18", "", { "os": "win32", "cpu": "arm64" }, "sha512-EcDETMHG8xgjIlMizIu/wf0UtRZLGz+lHFvYFZVCkz4vLLz93a06vZ+3Oi9xY2Kc8aOHsCf8Gj5/dox/03cscw=="],
 
     "@voidzero-dev/vite-plus-win32-x64-msvc": ["@voidzero-dev/vite-plus-win32-x64-msvc@0.1.18", "", { "os": "win32", "cpu": "x64" }, "sha512-jBgL4ZjSJJu3FDcrqj4muzbr0WKlU6Ym1ilHQnq8R+2TRvE0AtvAMMuphICDslZGi6EK3fwJ+r2Lv7GU1AipQA=="],
+
+    "@wpm/d1": ["@wpm/d1@workspace:packages/d1"],
 
     "@wpm/manifest": ["@wpm/manifest@workspace:packages/manifest"],
 
