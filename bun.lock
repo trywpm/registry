@@ -53,7 +53,7 @@
         "class-variance-authority": "^0.7.1",
         "clsx": "^2.1.1",
         "hono": "catalog:",
-        "htmx.org": "^2.0.9",
+        "htmx.org": "^2.0.10",
         "lucide": "^1.11.0",
         "postgres": "catalog:",
         "tailwind-merge": "^3.5.0",
@@ -439,7 +439,7 @@
 
     "hono": ["hono@4.12.14", "", {}, "sha512-am5zfg3yu6sqn5yjKBNqhnTX7Cv+m00ox+7jbaKkrLMRJ4rAdldd1xPd/JzbBWspqaQv6RSTrgFN95EsfhC+7w=="],
 
-    "htmx.org": ["htmx.org@2.0.9", "", {}, "sha512-Vd8ZlGSshz2W2ej+gNpMqxX2PM0dfOn4lRgkTXgCT+cqZE/GwBQoYm3zGvlqf+hHXYCMYmmgae33m4/RPdTS0Q=="],
+    "htmx.org": ["htmx.org@2.0.10", "", {}, "sha512-kdeJe7ZVwaS6QMz/ebBIVtZdpwen6L0OQ5GOhPV9MKBb196TCZeZu4yA7ZIQsaLKv7EpXz+So7KSXNuHXhj7Cw=="],
 
     "jiti": ["jiti@2.6.1", "", { "bin": { "jiti": "lib/jiti-cli.mjs" } }, "sha512-ekilCSN1jwRvIbgeg/57YFh8qQDNbwDb9xT/qu2DAHbFFZUicIl4ygVaAvzveMhMVr3LnpSKTNnwt8PoOfmKhQ=="],
 
