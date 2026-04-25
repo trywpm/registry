@@ -28,7 +28,8 @@
     {
       "binding": "registry_search",
       "database_name": "registry_search_db",
-      "database_id": "488343ab-bac0-43a5-b700-5ae45f39df45"
+      "database_id": "488343ab-bac0-43a5-b700-5ae45f39df45",
+      "migrations_dir": "../packages/d1/src/search/migrations"
     }
   ],
   "hyperdrive": [
