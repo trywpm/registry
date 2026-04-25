@@ -14,7 +14,11 @@ export function DropdownMenu({ children }: { children: Child | Child[] }) {
 }
 
 export function DropdownMenuPortal({ children }: { children: Child | Child[] }) {
-  return <>{children}</>;
+  return (
+    <div data-slot="dropdown-menu-portal" style={{ display: 'contents' }}>
+      {children}
+    </div>
+  );
 }
 
 export function DropdownMenuTrigger({

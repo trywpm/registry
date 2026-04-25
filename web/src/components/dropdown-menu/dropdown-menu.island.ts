@@ -6,18 +6,21 @@ let instanceCounter = 0;
 const activeScrollContainers = new Set<HTMLElement>();
 
 const preventGlobalScroll = (e: Event) => {
+  if (activeScrollContainers.size === 0) {
+    return;
+  }
+
   const path = e.composedPath();
-
-  if (path.length > 0) {
-    for (const el of path) {
-      if (!(el instanceof HTMLElement)) {
-        continue;
-      }
-
-      if (activeScrollContainers.has(el)) {
-        return;
-      }
+  const isInsideDropdown = path.some((el) => {
+    if (!(el instanceof HTMLElement)) {
+      return false;
     }
+
+    return activeScrollContainers.has(el);
+  });
+
+  if (isInsideDropdown) {
+    return;
   }
 
   if (e.cancelable) {
@@ -26,23 +29,25 @@ const preventGlobalScroll = (e: Event) => {
 };
 
 const preventGlobalKeyScroll = (e: KeyboardEvent) => {
+  if (activeScrollContainers.size === 0) {
+    return;
+  }
+
   const keys = ['ArrowUp', 'ArrowDown', ' ', 'PageUp', 'PageDown', 'Home', 'End'];
   if (!keys.includes(e.key)) {
     return;
   }
 
   const path = e.composedPath();
-  for (const el of path) {
+  const isInsideDropdown = path.some((el) => {
     if (!(el instanceof HTMLElement)) {
-      continue;
+      return false;
     }
 
-    if (activeScrollContainers.has(el)) {
-      return;
-    }
-  }
+    return activeScrollContainers.has(el);
+  });
 
-  if (e.cancelable) {
+  if (!isInsideDropdown && e.cancelable) {
     e.preventDefault();
   }
 };
@@ -73,6 +78,8 @@ class DropdownMenu extends HTMLElement {
   private trigger: HTMLElement | null = null;
   private content: HTMLElement | null = null;
   private items: HTMLElement[] = [];
+  private portalContainer: HTMLElement | null = null;
+  private anchorNode: Comment | null = null;
 
   private isSub: boolean = false;
   private initialized: boolean = false;
@@ -141,6 +148,19 @@ class DropdownMenu extends HTMLElement {
       unlockScroll(this.content);
     }
 
+    if (this.portalContainer && this.content && this.anchorNode) {
+      if (this.anchorNode.parentNode) {
+        this.anchorNode.parentNode.insertBefore(this.content, this.anchorNode);
+      }
+
+      this.anchorNode.remove();
+      this.anchorNode = null;
+
+      if (this.portalContainer.childNodes.length === 0) {
+        this.portalContainer.remove();
+      }
+    }
+
     if (this.hoverTimer) {
       window.clearTimeout(this.hoverTimer);
       this.hoverTimer = null;
@@ -180,6 +200,32 @@ class DropdownMenu extends HTMLElement {
 
     if (!this.trigger || !this.content) {
       return;
+    }
+
+    const portalWrapper = this.querySelector('[data-slot="dropdown-menu-portal"]');
+    if (portalWrapper && portalWrapper.contains(this.content)) {
+      this.anchorNode = document.createComment('wpm-dropdown-anchor');
+      this.content.parentNode?.insertBefore(this.anchorNode, this.content);
+
+      let root = document.getElementById('wpm-dropdown-portal-root');
+      if (!root) {
+        root = document.createElement('div');
+        root.id = 'wpm-dropdown-portal-root';
+
+        Object.assign(root.style, {
+          position: 'absolute',
+          top: '0',
+          left: '0',
+          zIndex: '2147483647',
+          pointerEvents: 'none',
+        });
+
+        document.body.appendChild(root);
+      }
+
+      this.content.style.pointerEvents = 'auto';
+      root.appendChild(this.content);
+      this.portalContainer = root;
     }
 
     this.setupAria();
@@ -354,25 +400,23 @@ class DropdownMenu extends HTMLElement {
       { signal },
     );
 
-    this.addEventListener(
-      'wpm-cancel-close',
-      (e: Event) => {
-        if (e.target !== this && this.hoverTimer) {
-          window.clearTimeout(this.hoverTimer);
-        }
-      },
-      { signal },
-    );
+    const handleCancelClose = (e: Event) => {
+      if (e.target !== this && e.target !== this.content && this.hoverTimer) {
+        window.clearTimeout(this.hoverTimer);
+      }
+    };
 
-    this.addEventListener(
-      'wpm-dropdown-close',
-      (e: Event) => {
-        if (e.target !== this) {
-          this.close(true);
-        }
-      },
-      { signal },
-    );
+    const handleDropdownClose = (e: Event) => {
+      if (e.target !== this && e.target !== this.content) {
+        this.close(true);
+      }
+    };
+
+    this.addEventListener('wpm-cancel-close', handleCancelClose, { signal });
+    this.content.addEventListener('wpm-cancel-close', handleCancelClose, { signal });
+
+    this.addEventListener('wpm-dropdown-close', handleDropdownClose, { signal });
+    this.content.addEventListener('wpm-dropdown-close', handleDropdownClose, { signal });
   }
 
   private updatePosition(): void {
@@ -694,7 +738,7 @@ class DropdownMenu extends HTMLElement {
         this.close(true);
       }
     } else if (e.key === 'Tab') {
-      this.close(false);
+      this.close(true);
     }
   }
 
