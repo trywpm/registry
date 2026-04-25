@@ -50,7 +50,6 @@ export const lockScroll = (containerEl: HTMLElement) => {
         touch-action: none !important;
         padding-right: var(--wpm-scrollbar-width) !important;
       }
-
       .wpm-lock-padding {
         padding-right: var(--wpm-scrollbar-width) !important;
       }
