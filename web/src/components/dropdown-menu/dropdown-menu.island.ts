@@ -1,76 +1,9 @@
 import type { Placement } from '@floating-ui/dom';
 import { computePosition, autoUpdate, flip, shift, offset, size } from '@floating-ui/dom';
 
+import { lockScroll, unlockScroll } from '@/lib/scroll-lock';
+
 let instanceCounter = 0;
-
-const activeScrollContainers = new Set<HTMLElement>();
-
-const preventGlobalScroll = (e: Event) => {
-  if (activeScrollContainers.size === 0) {
-    return;
-  }
-
-  const path = e.composedPath();
-  const isInsideDropdown = path.some((el) => {
-    if (!(el instanceof HTMLElement)) {
-      return false;
-    }
-
-    return activeScrollContainers.has(el);
-  });
-
-  if (isInsideDropdown) {
-    return;
-  }
-
-  if (e.cancelable) {
-    e.preventDefault();
-  }
-};
-
-const preventGlobalKeyScroll = (e: KeyboardEvent) => {
-  if (activeScrollContainers.size === 0) {
-    return;
-  }
-
-  const keys = ['ArrowUp', 'ArrowDown', ' ', 'PageUp', 'PageDown', 'Home', 'End'];
-  if (!keys.includes(e.key)) {
-    return;
-  }
-
-  const path = e.composedPath();
-  const isInsideDropdown = path.some((el) => {
-    if (!(el instanceof HTMLElement)) {
-      return false;
-    }
-
-    return activeScrollContainers.has(el);
-  });
-
-  if (!isInsideDropdown && e.cancelable) {
-    e.preventDefault();
-  }
-};
-
-const lockScroll = (containerEl: HTMLElement) => {
-  if (activeScrollContainers.size === 0) {
-    window.addEventListener('wheel', preventGlobalScroll, { passive: false });
-    window.addEventListener('touchmove', preventGlobalScroll, { passive: false });
-    window.addEventListener('keydown', preventGlobalKeyScroll, { passive: false });
-  }
-
-  activeScrollContainers.add(containerEl);
-};
-
-const unlockScroll = (containerEl: HTMLElement) => {
-  activeScrollContainers.delete(containerEl);
-
-  if (activeScrollContainers.size === 0) {
-    window.removeEventListener('wheel', preventGlobalScroll);
-    window.removeEventListener('touchmove', preventGlobalScroll);
-    window.removeEventListener('keydown', preventGlobalKeyScroll);
-  }
-};
 
 class DropdownMenu extends HTMLElement {
   public isOpen: boolean = false;

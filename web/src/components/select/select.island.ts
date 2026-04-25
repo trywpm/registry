@@ -1,5 +1,7 @@
 import { computePosition, autoUpdate, offset, flip, size } from '@floating-ui/dom';
 
+import { lockScroll, unlockScroll } from '@/lib/scroll-lock';
+
 class Select extends HTMLElement {
   private trigger: HTMLElement | null = null;
   private content: HTMLElement | null = null;
@@ -245,6 +247,8 @@ class Select extends HTMLElement {
 
     this.isOpen = true;
 
+    lockScroll(this.content);
+
     const contentEl = this.content;
     const triggerEl = this.trigger;
 
@@ -295,6 +299,8 @@ class Select extends HTMLElement {
     }
 
     this.isOpen = false;
+
+    unlockScroll(this.content);
 
     this.trigger.setAttribute('data-state', 'closed');
     this.trigger.setAttribute('aria-expanded', 'false');
