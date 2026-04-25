@@ -15,9 +15,9 @@ function Avatar({
       <wpm-avatar
         data-slot="avatar"
         data-size={size}
+        data-state="loading"
         className={cn(
-          'group/avatar relative grid size-8 shrink-0 rounded-full select-none data-[size=lg]:size-10 data-[size=sm]:size-6',
-          'after:absolute after:inset-0 after:rounded-full after:border after:border-border after:mix-blend-darken dark:after:mix-blend-lighten',
+          'group/avatar relative flex size-8 shrink-0 items-center justify-center rounded-full select-none data-[size=lg]:size-10 data-[size=sm]:size-6',
           className,
         )}
         {...props}
@@ -32,9 +32,8 @@ function AvatarImage({ className, ...props }: JSX.IntrinsicElements['img']) {
       data-slot="avatar-image"
       alt={props.alt || 'Avatar'}
       className={cn(
-        'col-start-1 row-start-1 size-full object-cover',
-        'rounded-full aspect-square',
-        'opacity-0 transition-opacity duration-200 group-data-[state=loaded]/avatar:opacity-100',
+        'aspect-square size-full object-cover rounded-full',
+        'hidden group-data-[state=loaded]/avatar:block',
         className,
       )}
       {...props}
@@ -52,9 +51,9 @@ function AvatarFallback({
       data-slot="avatar-fallback"
       data-delay-ms={delayMs}
       className={cn(
-        'bg-muted text-muted-foreground flex items-center justify-center rounded-full text-sm group-data-[size=sm]/avatar:text-xs',
-        'col-start-1 row-start-1 size-full',
-        'opacity-100 transition-opacity duration-200 group-data-[state=loaded]/avatar:pointer-events-none group-data-[state=loaded]/avatar:opacity-0',
+        'bg-muted text-muted-foreground flex size-full items-center justify-center rounded-full text-sm group-data-[size=sm]/avatar:text-xs',
+        '[&>svg]:size-4 group-data-[size=sm]/avatar:[&>svg]:size-3 group-data-[size=lg]/avatar:[&>svg]:size-5',
+        'group-data-[state=loaded]/avatar:hidden',
         'group-data-[fallback=delayed]/avatar:opacity-0',
         className,
       )}
