@@ -1,6 +1,6 @@
 import type { Child } from 'hono/jsx';
 
-import { humanSize } from '@/lib/utils';
+import { humanSize, cn } from '@/lib/utils';
 import { Button } from '@/components/button';
 import { Island } from '@/components/island';
 import { Separator } from '@/components/separator';
@@ -35,6 +35,12 @@ export function PackageSidebar({
   const installCommand = `wpm install ${name}`;
   const downloadUrl = `${registryHost}/${name}/${version}.tar.zst`;
   const parsedDate = new Date(publishedDate);
+
+  let safeHomepageUrl = '';
+  try {
+    const url = new URL(homepage);
+    safeHomepageUrl = url.href;
+  } catch {}
 
   return (
     <aside className="space-y-6 lg:sticky lg:top-23 self-start">
@@ -101,11 +107,13 @@ export function PackageSidebar({
               <div className="flex flex-col gap-2">
                 <Button variant="outline" size="sm" asChild>
                   <a
-                    href={homepage}
+                    href={safeHomepageUrl || '#'}
                     target="_blank"
                     rel="noopener noreferrer"
                     aria-label="Open homepage in a new tab"
-                    className="flex items-center justify-center gap-2"
+                    className={cn('flex items-center justify-center gap-2', {
+                      'pointer-events-none opacity-50': !safeHomepageUrl,
+                    })}
                   >
                     <ExternalLink aria-hidden="true" className="h-3 w-3" />
                     Homepage
