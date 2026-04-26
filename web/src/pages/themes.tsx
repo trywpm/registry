@@ -49,7 +49,9 @@ export const ThemesPage = async (c: Context) => {
     sortVal = 'popularity';
   }
 
-  const session = c.env.registry_search.withSession('first-unconstrained');
+  const session = c.env.registry_search.withSession(
+    c.req.header('x-search-bm') ?? 'first-unconstrained',
+  );
   const totalPackages = await getPackagesCount(session, c.env.cache, c.executionCtx, 'theme');
   const totalPages = Math.ceil(totalPackages / itemsPerPage);
   const packages = await getPackages(session, url, c.executionCtx, {
@@ -74,6 +76,8 @@ export const ThemesPage = async (c: Context) => {
 
     return [1, '...', currentPage - 1, currentPage, currentPage + 1, '...', totalPages];
   })();
+
+  c.header('x-search-bm', session.getBookmark() ?? '');
 
   return c.html(
     <BaseLayout
