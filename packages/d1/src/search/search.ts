@@ -15,8 +15,33 @@ export type SearchOptions = {
   sort: AllowedSorts;
 };
 
-export function buildQuery(
+type RawPackageRow = {
+  id: number;
+  name: string;
+  type: Type;
+  version: string;
+  description: string | null;
+  tags: string;
+  license: string | null;
+  package_published: string;
+  downloads: number;
+  score: number;
+};
+
+export type PackageRow = Omit<RawPackageRow, 'tags'> & {
+  tags: string[];
+};
+
+export function isAllowedSort(value: string | undefined | null): value is AllowedSorts {
+  return typeof value === 'string' && value in allowedSorts;
+}
+
+export async function getPackages(
   d1: D1DatabaseSession,
+  reqUrl: URL,
+  ctx: {
+    waitUntil: (promise: Promise<unknown>) => void;
+  },
   options: SearchOptions = {
     page: 1,
     type: 'plugin',
@@ -24,6 +49,17 @@ export function buildQuery(
     sort: 'popularity',
   },
 ) {
+  const cacheKey = new Request(
+    `${reqUrl.origin}/__d1_internal-cache/${options.type}?page=${options.page}&pageSize=${options.pageSize}&sort=${options.sort}`,
+  );
+
+  const cache = await caches.open('d1-search-cache-v1');
+
+  const cachedResponse = await cache.match(cacheKey);
+  if (cachedResponse) {
+    return cachedResponse.json<D1Result<PackageRow>>();
+  }
+
   const safePage = Math.max(1, options.page);
   const offset = (safePage - 1) * options.pageSize;
 
@@ -62,5 +98,55 @@ export function buildQuery(
       ${outerOrderBy}
     `;
 
-  return d1.prepare(sql).bind(options.type, options.pageSize, offset);
+  const rawResults = await d1
+    .prepare(sql)
+    .bind(options.type, options.pageSize, offset)
+    .all<RawPackageRow>();
+
+  const parsedResult: PackageRow[] = rawResults.results.map((row) => ({
+    ...row,
+    tags: row.tags ? JSON.parse(row.tags) : [],
+  }));
+
+  const finalResult: D1Result<PackageRow> = {
+    ...rawResults,
+    results: parsedResult,
+  };
+
+  const response = Response.json(finalResult, {
+    headers: {
+      'Cache-Tag': `d1-search-results`,
+      'Cache-Control': 'public, max-age=86400', // Cache for 1 day
+    },
+  });
+
+  ctx.waitUntil(cache.put(cacheKey, response));
+
+  return finalResult;
+}
+
+export async function getPackagesCount(
+  d1: D1DatabaseSession,
+  cache: KVNamespace,
+  ctx: {
+    waitUntil: (promise: Promise<unknown>) => void;
+  },
+  type: Type,
+) {
+  const cacheKey = `d1-search:packages:count:${type}`;
+
+  const cachedCount = await cache.get(cacheKey);
+  if (cachedCount != null) {
+    return Number(cachedCount);
+  }
+
+  const sql = `SELECT COUNT(*) as count FROM packages WHERE type = ?`;
+  const result = await d1.prepare(sql).bind(type).first<{ count: number }>();
+  if (!result) {
+    throw new Error('Failed to fetch packages count');
+  }
+
+  ctx.waitUntil(cache.put(cacheKey, String(result.count), { expirationTtl: 86400 })); // Cache for 1 day
+
+  return result.count;
 }
