@@ -1,8 +1,11 @@
 import { Hono } from 'hono';
 
 import { HomePage } from '@/pages/home';
+import { DocsPage } from '@/pages/docs';
 import { ThemesPage } from '@/pages/themes';
 import { PluginsPage } from '@/pages/plugins';
+import { PrivacyPolicyPage } from '@/pages/privacy';
+import { TermsOfServicePage } from '@/pages/terms';
 
 const homeRoute = new Hono();
 
@@ -16,6 +19,18 @@ homeRoute.get('/plugins', (c) => {
 
 homeRoute.get('/themes', (c) => {
   return ThemesPage(c);
+});
+
+homeRoute.get('/docs', (c) => {
+  return DocsPage(c);
+});
+
+homeRoute.get('/privacy', (c) => {
+  return PrivacyPolicyPage(c);
+});
+
+homeRoute.get('/terms', (c) => {
+  return TermsOfServicePage(c);
 });
 
 export default homeRoute;
