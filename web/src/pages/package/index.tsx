@@ -11,12 +11,12 @@ import {
   EnqueuedEmbedAsset,
 } from '@wpm/util/html-rewriter';
 
-import { getCachedReadme } from '@/lib/utils';
 import { BaseLayout } from '@/layouts/base';
 import { PackageTabs } from '@/components/package-tabs';
 import { Card, CardContent } from '@/components/card';
 import { PackageHeader } from '@/components/package-header';
 import { PackageSidebar } from '@/components/package-sidebar';
+import { getCachedReadme, getCanonicalUrl } from '@/lib/utils';
 
 import type { Package } from '@wpm/manifest/package';
 
@@ -55,8 +55,6 @@ export const PackagePage = async (c: Context) => {
     .on('a', new LinksHandler())
     .on('*', new EnqueuedEmbedAsset(embedsState));
 
-  const reqUrl = new URL(c.req.url);
-  const canonicalUrl = new URL(c.req.path, reqUrl.origin).href;
   const ogImage = `https://usercontent.wpm.so/og/${manifest.name}`;
 
   let readmeHtml = null;
@@ -72,7 +70,7 @@ export const PackagePage = async (c: Context) => {
       c={c}
       ogImage={ogImage}
       title={manifest.name}
-      canonicalUrl={canonicalUrl}
+      canonicalUrl={getCanonicalUrl(c.req.url)}
       description={
         manifest.description
           ? manifest.description

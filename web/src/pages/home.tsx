@@ -1,5 +1,7 @@
 import type { Context } from 'hono';
+
 import { BaseLayout } from '@/layouts/base';
+import { getCanonicalUrl } from '@/lib/utils';
 import { buttonVariants } from '@/components/button';
 import { TestimonialCarousel } from '@/components/testimonial-carousel';
 import { Hero, HeroActions, HeroHeading, HeroDescription } from '@/components/hero';
@@ -14,17 +16,12 @@ const stats = [
 ];
 
 export const HomePage = (c: Context) => {
-  const canonicalUrl = 'https://wpm.so/';
-
-  const userAgent = c.req.header('user-agent');
-  const os = getOSFromUserAgent(userAgent);
-
   return c.html(
     <BaseLayout
       c={c}
       hasHero
       homepage
-      canonicalUrl={canonicalUrl}
+      canonicalUrl={getCanonicalUrl(c.req.url)}
       title="wpm - Modern package management for WordPress"
       description="Discover, install, and manage WordPress packages like never before."
     >
@@ -35,7 +32,7 @@ export const HomePage = (c: Context) => {
             The central registry and package manager for WordPress developers.
           </HeroDescription>
           <HeroActions>
-            <InstallCommandCta defaultOS={os} />
+            <InstallCommandCta defaultOS={getOSFromUserAgent(c.req.header('user-agent'))} />
           </HeroActions>
         </Hero>
 

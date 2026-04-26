@@ -1,6 +1,7 @@
 import type { Context } from 'hono';
 
 import { BaseLayout } from '@/layouts/base';
+import { getCanonicalUrl } from '@/lib/utils';
 
 export function Docs(c: Context) {
   return c.html(
@@ -8,7 +9,7 @@ export function Docs(c: Context) {
       c={c}
       title="Docs"
       description="Documentation for the project."
-      canonicalUrl={new URL(c.req.path, c.req.url).href}
+      canonicalUrl={getCanonicalUrl(c.req.url)}
     >
       <main class="flex min-h-screen w-full items-center justify-center p-6 md:p-10">
         <div class="flex flex-col items-center gap-4 text-center">

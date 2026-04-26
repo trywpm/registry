@@ -84,7 +84,7 @@ export const PluginsPage = async (c: Context) => {
       c={c}
       hasHero
       title="Plugins"
-      canonicalUrl={getCanonicalUrl(getPageUrl(url, currentPage))}
+      canonicalUrl={getCanonicalUrl(getPageUrl(url, currentPage), true)}
       description="Discover and manage WordPress plugins with wpm."
     >
       <main>
@@ -107,7 +107,6 @@ export const PluginsPage = async (c: Context) => {
               <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {packages.results.map((pkg) => (
                   <Card key={pkg.id}>
-                    {/* Header */}
                     <CardHeader>
                       <div class="flex items-center gap-3">
                         <div class="p-2 bg-muted rounded-lg flex items-center justify-center w-9 h-9">
@@ -133,7 +132,6 @@ export const PluginsPage = async (c: Context) => {
 
                     <Separator className="bg-border/50" />
 
-                    {/* Content */}
                     <CardContent className="space-y-4">
                       <p class="text-sm text-muted-foreground line-clamp-2">{pkg.description}</p>
 

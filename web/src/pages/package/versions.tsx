@@ -1,8 +1,9 @@
 import type { Context } from 'hono';
 import type { Package } from '@wpm/manifest/package';
 
-import { BaseLayout } from '@/layouts/base';
 import { Badge } from '@/components/badge';
+import { BaseLayout } from '@/layouts/base';
+import { getCanonicalUrl } from '@/lib/utils';
 import { PackageTabs } from '@/components/package-tabs';
 import { PackageHeader } from '@/components/package-header';
 import { PackageSidebar } from '@/components/package-sidebar';
@@ -41,8 +42,6 @@ export const VersionsPage = async (c: Context) => {
     return new Response(null, { status: 404 });
   }
 
-  const reqUrl = new URL(c.req.url);
-  const canonicalUrl = new URL(c.req.path, reqUrl.origin).href;
   const ogImage = `https://usercontent.wpm.so/og/${manifest.name}`;
   const versions = pkg.versions.filter((v) => v !== manifest.version);
 
@@ -51,17 +50,12 @@ export const VersionsPage = async (c: Context) => {
       c={c}
       ogImage={ogImage}
       title={manifest.name}
-      canonicalUrl={canonicalUrl}
-      description={
-        manifest.description
-          ? manifest.description
-          : `View ${manifest.name} on the wpm package registry with version details, dependency info, and installation instructions.`
-      }
+      canonicalUrl={getCanonicalUrl(c.req.url)}
+      description={`Browse all released versions of ${manifest.name} on wpm, including changelog and published release history.`}
     >
       <div class="min-h-screen bg-background">
         <main class="container py-6 sm:py-8">
           <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
-            {/* Main Content Area */}
             <div class="lg:col-span-2 space-y-6 sm:space-y-8">
               <PackageHeader
                 name={manifest.name}
@@ -73,7 +67,6 @@ export const VersionsPage = async (c: Context) => {
                 created={manifest.created}
               />
 
-              {/* Tabs and Readme Section */}
               <div class="flex flex-col gap-2 space-y-4">
                 <PackageTabs name={name} active="versions" />
 
