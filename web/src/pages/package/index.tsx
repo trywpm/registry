@@ -63,7 +63,8 @@ export const PackagePage = async (c: Context) => {
     readmeHtml = await transformedResponse.text();
   }
 
-  const imageFallbackScript = ``;
+  const imageFallbackScript =
+    '(()=>{const t=["png","jpg","gif"];document.addEventListener("error",(e=>{const s=e.target;"IMG"===s.tagName&&s.closest("#package-readme")&&function(e){const s=e.src,n=s.match(/\\.(png|jpg|gif)(\\?.*)?$/i);if(!n){return;}const i=n[1].toLowerCase();e.dataset.triedExtensions||(e.dataset.triedExtensions=JSON.stringify([i]));const a=JSON.parse(e.dataset.triedExtensions),r=t.find((t=>!a.includes(t)));r?(a.push(r),e.dataset.triedExtensions=JSON.stringify(a),e.src=s.replace(new RegExp(`\\\\.${i}(?=\\\\?|$)`,"i"),`.${r}`)):e.style.display="none"}(s)}),!0)})();';
 
   return c.html(
     <BaseLayout
