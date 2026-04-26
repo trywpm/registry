@@ -1,7 +1,5 @@
 import type { Context } from 'hono';
 
-import { env } from 'cloudflare:workers';
-
 import { readableTimeDiff } from '@wpm/util/datetime';
 import { getPackages, isAllowedSort, getPackagesCount } from '@wpm/d1/search';
 
@@ -51,8 +49,8 @@ export const ThemesPage = async (c: Context) => {
     sortVal = 'popularity';
   }
 
-  const session = env.registry_search.withSession('first-unconstrained');
-  const totalPackages = await getPackagesCount(session, env.cache, c.executionCtx, 'theme');
+  const session = c.env.registry_search.withSession('first-unconstrained');
+  const totalPackages = await getPackagesCount(session, c.env.cache, c.executionCtx, 'theme');
   const totalPages = Math.ceil(totalPackages / itemsPerPage);
   const packages = await getPackages(session, url, c.executionCtx, {
     page: currentPage,
