@@ -79,17 +79,22 @@ export function getAssetUrl(path: string) {
   return path;
 }
 
-export const getCanonicalUrl = (url: string | URL): string => {
+export const getCanonicalUrl = (
+  url: string | URL,
+  preserveQueryParams: boolean = false,
+): string => {
   const newUrl = typeof url === 'string' ? new URL(url) : url;
   const canonical = new URL(newUrl.pathname, newUrl.origin);
 
-  ALLOWED_QUERY_PARAMS.forEach((param) => {
-    if (newUrl.searchParams.has(param)) {
-      canonical.searchParams.set(param, newUrl.searchParams.get(param) ?? '');
-    }
-  });
+  if (preserveQueryParams) {
+    ALLOWED_QUERY_PARAMS.forEach((param) => {
+      if (newUrl.searchParams.has(param)) {
+        canonical.searchParams.set(param, newUrl.searchParams.get(param) ?? '');
+      }
+    });
 
-  canonical.searchParams.sort();
+    canonical.searchParams.sort();
+  }
 
   return canonical.toString();
 };
