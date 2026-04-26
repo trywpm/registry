@@ -11,7 +11,7 @@ export function ThemeToggle() {
           size="icon"
           data-theme-cycle
           aria-label="Toggle theme"
-          className="group/toggle extend-touch-target size-8 cursor-pointer relative"
+          className="group/toggle extend-touch-target size-8 relative"
           title="Toggle theme"
         >
           <Sun className="size-4.5 transition-all duration-200 ease-out rotate-0 scale-100 opacity-100 dark:-rotate-90 dark:scale-0 dark:opacity-0" />

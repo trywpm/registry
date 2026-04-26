@@ -52,7 +52,7 @@ export function PackageSidebar({
                 variant="outline"
                 data-target="copy-btn"
                 aria-label="Copy install command"
-                className="w-full h-12 justify-start font-mono text-sm cursor-pointer"
+                className="w-full h-12 justify-start font-mono text-sm"
               >
                 <div className="relative flex items-center justify-center h-4 w-4 mr-2 shrink-0">
                   <Copy

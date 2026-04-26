@@ -76,7 +76,7 @@ function Hamburger() {
       size="icon"
       aria-expanded="false"
       aria-label="Toggle menu"
-      className="cursor-pointer md:hidden size-8"
+      className="md:hidden size-8"
     >
       <div className="relative h-4 w-4 flex flex-col justify-center items-center">
         <span className="absolute block h-0.5 w-4 bg-current transition-all duration-500 ease-in-out -translate-y-1 group-data-[state=open]/nav:rotate-45 group-data-[state=open]/nav:translate-y-0" />

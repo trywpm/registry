@@ -69,7 +69,7 @@ export function InstallCommandCta({ defaultOS = 'macos' }: { defaultOS?: OS }) {
             data-target="copy-btn"
             data-copied="false"
             aria-label="Copy installation command"
-            className="cursor-pointer group relative"
+            className="group relative"
             size="icon"
           >
             <div className="relative h-4 w-4">
