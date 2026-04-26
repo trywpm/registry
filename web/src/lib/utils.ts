@@ -6,6 +6,8 @@ import type { ClassValue } from 'clsx';
 
 import manifest from 'virtual:client-manifest';
 
+export const ALLOWED_QUERY_PARAMS = ['q', 'sort', 'page'];
+
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
@@ -76,3 +78,18 @@ export function getAssetUrl(path: string) {
 
   return path;
 }
+
+export const getCanonicalUrl = (url: string | URL): string => {
+  const newUrl = typeof url === 'string' ? new URL(url) : url;
+  const canonical = new URL(newUrl.pathname, newUrl.origin);
+
+  ALLOWED_QUERY_PARAMS.forEach((param) => {
+    if (newUrl.searchParams.has(param)) {
+      canonical.searchParams.set(param, newUrl.searchParams.get(param) ?? '');
+    }
+  });
+
+  canonical.searchParams.sort();
+
+  return canonical.toString();
+};
