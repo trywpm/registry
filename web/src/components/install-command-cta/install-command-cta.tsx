@@ -39,7 +39,10 @@ export function InstallCommandCta({ defaultOS = 'macos' }: { defaultOS?: OS }) {
       <wpm-install-command-cta data-commands={JSON.stringify(commands)}>
         <div className="hidden md:flex items-center gap-3 p-2 rounded-lg backdrop-blur-sm bg-secondary/50">
           <Select defaultValue={defaultOS}>
-            <SelectTrigger className="border border-border/50">
+            <SelectTrigger
+              className="border border-border/50"
+              aria-label="Select your operating system"
+            >
               <SelectValue>{defaultLabel}</SelectValue>
             </SelectTrigger>
             <SelectContent>

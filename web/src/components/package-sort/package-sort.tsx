@@ -42,7 +42,12 @@ export function PackageSort({
         <div className="flex items-center gap-2">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="default" className="shrink-0">
+              <Button
+                variant="outline"
+                size="default"
+                className="shrink-0"
+                aria-label="Sort packages"
+              >
                 <Filter className="h-4 w-4" />
                 <span className="hidden sm:inline sm:ml-2">
                   Sort by {currentSort.charAt(0).toUpperCase() + currentSort.slice(1)}

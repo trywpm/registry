@@ -172,7 +172,7 @@ export const PluginsPage = async (c: Context) => {
                 <PaginationContent>
                   <PaginationItem>
                     <PaginationPrevious
-                      href={currentPage > 1 ? getPageUrl(url, currentPage - 1) : undefined}
+                      href={currentPage > 1 ? getPageUrl(url, currentPage - 1) : url.toString()}
                       className={currentPage === 1 ? 'pointer-events-none opacity-50' : undefined}
                       rel="prev"
                     />
@@ -196,7 +196,9 @@ export const PluginsPage = async (c: Context) => {
 
                   <PaginationItem>
                     <PaginationNext
-                      href={currentPage < totalPages ? getPageUrl(url, currentPage + 1) : undefined}
+                      href={
+                        currentPage < totalPages ? getPageUrl(url, currentPage + 1) : url.toString()
+                      }
                       className={
                         currentPage === totalPages ? 'pointer-events-none opacity-50' : undefined
                       }
