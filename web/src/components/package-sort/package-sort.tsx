@@ -16,11 +16,11 @@ export const allowedSorts = {
 } as const;
 
 export function PackageSort({
-  isPlugins = true,
+  type = 'plugin',
   currentQuery = '',
   currentSort = 'popularity',
 }: {
-  isPlugins?: boolean;
+  type?: 'plugin' | 'theme';
   currentQuery?: string;
   currentSort?: keyof typeof allowedSorts;
 }) {
@@ -33,7 +33,7 @@ export function PackageSort({
             <Input
               type="search"
               data-slot="search-input"
-              placeholder={isPlugins ? 'Search plugins...' : 'Search themes...'}
+              placeholder={type === 'plugin' ? 'Search plugins...' : 'Search themes...'}
               defaultValue={currentQuery}
               className="pl-10 w-full"
             />
