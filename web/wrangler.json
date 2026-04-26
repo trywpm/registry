@@ -32,6 +32,12 @@
       "migrations_dir": "../packages/d1/src/search/migrations"
     }
   ],
+  "kv_namespaces": [
+    {
+      "binding": "cache",
+      "id": "c65865f6bdc24667986699702ee727d1"
+    }
+  ],
   "hyperdrive": [
     {
       "id": "6d4fe5aebbe649ceb316d687436c7653",
