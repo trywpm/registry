@@ -12,10 +12,8 @@ function Hero({ className, children, grid, preFooter, ...props }: HeroProps) {
     <section className={cn('border-grid relative overflow-hidden', className)} {...props}>
       {grid && <HeroGridBackground preFooter={preFooter} />}
 
-      <div className="container-wrapper relative z-10">
-        <div className="container flex flex-col items-center gap-2 py-8 text-center md:py-16 lg:py-20 xl:gap-4">
-          {children}
-        </div>
+      <div className="container relative z-10 flex flex-col items-center gap-2 py-8 text-center md:py-16 lg:py-20 xl:gap-4">
+        {children}
       </div>
     </section>
   );
