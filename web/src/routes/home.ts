@@ -4,6 +4,7 @@ import { HomePage } from '@/pages/home';
 import { DocsPage } from '@/pages/docs';
 import { ThemesPage } from '@/pages/themes';
 import { PluginsPage } from '@/pages/plugins';
+import { SearchPage } from '@/pages/search';
 import { PrivacyPolicyPage } from '@/pages/privacy';
 import { TermsOfServicePage } from '@/pages/terms';
 
@@ -31,6 +32,10 @@ homeRoute.get('/privacy', (c) => {
 
 homeRoute.get('/terms', (c) => {
   return TermsOfServicePage(c);
+});
+
+homeRoute.get('/search', (c) => {
+  return SearchPage(c);
 });
 
 export default homeRoute;
