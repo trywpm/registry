@@ -58,7 +58,7 @@ export const ThemesPage = async (c: Context) => {
   const packages = await getPackages(session, url, c.executionCtx, {
     page: currentPage,
     type: 'theme',
-    pageSize: itemsPerPage,
+    limit: itemsPerPage,
     sort: isAllowedSort(sortVal) ? sortVal : 'popularity',
   });
 

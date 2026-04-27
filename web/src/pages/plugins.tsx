@@ -58,7 +58,7 @@ export const PluginsPage = async (c: Context) => {
   const packages = await getPackages(session, url, c.executionCtx, {
     page: currentPage,
     type: 'plugin',
-    pageSize: itemsPerPage,
+    limit: itemsPerPage,
     sort: isAllowedSort(sortVal) ? sortVal : 'popularity',
   });
 
