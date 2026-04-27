@@ -12,7 +12,7 @@ import { Island } from '@/components/island';
 import { ButtonGroup } from '@/components/button-group';
 import { Search, Filter, Package } from '@/components/icon';
 
-export function PackageSearch(query: string = '') {
+export function PackageSearch({ query = '' }: { query?: string }) {
   return (
     <Island name="package-search">
       <wpm-package-search>
