@@ -6,6 +6,7 @@
   },
   "dependencies": {},
   "devDependencies": {
-    "@cloudflare/workers-types": "catalog:"
+    "@cloudflare/workers-types": "catalog:",
+    "@types/node": "catalog:"
   }
 }
