@@ -53,7 +53,18 @@ function injectClientManifest(mode: string): Plugin {
 }
 
 export default defineConfig(({ mode }) => ({
-  plugins: [tailwindcss(), mode === 'test' ? undefined : cloudflare(), injectClientManifest(mode)],
+  plugins: [
+    tailwindcss(),
+    mode === 'test' ? undefined : cloudflare(),
+    injectClientManifest(mode),
+    {
+      name: 'full-reload',
+      handleHotUpdate({ server }) {
+        server.ws.send({ type: 'full-reload' });
+        return [];
+      },
+    },
+  ],
   resolve: {
     alias: {
       '@': join(__dirname, 'src'),
