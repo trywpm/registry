@@ -259,7 +259,8 @@ export async function searchPackages(
               WHEN p.name LIKE '%-' || ? THEN 20
               WHEN p.name LIKE '%-' || ? || '-%' THEN 20
               ELSE 0
-            END) (bm25(packages_fts, 10.0, 2.0, 5.0) * -1) +
+            END) +
+             (bm25(packages_fts, 10.0, 2.0, 5.0) * -1) +
              (p.quality_score * 0.5)
           ) as score
         FROM packages_fts
