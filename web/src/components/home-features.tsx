@@ -203,7 +203,7 @@ export function FeatureRegistry({ className }: { className?: string }) {
   return (
     <Card
       className={cn(
-        'group relative gap-4 flex flex-col overflow-hidden bg-background/50 border border-border/50 border-b-0 shadow-none pb-0 bg-linear-to-b from-muted/20 to-transparent',
+        'group relative gap-4 flex flex-col overflow-hidden border-b-0 shadow-none pb-0 bg-linear-to-b from-muted/20 to-transparent',
         className,
       )}
     >
@@ -253,7 +253,7 @@ export function FeatureCLI({ className }: { className?: string }) {
           <Card
             key={index}
             className={cn(
-              'group relative gap-4 flex flex-col overflow-hidden bg-background/50 border border-border/50 border-b-0 shadow-none pb-0 bg-linear-to-b from-muted/20 to-transparent',
+              'group relative gap-4 flex flex-col overflow-hidden border-b-0 shadow-none pb-0 bg-linear-to-b from-muted/20 to-transparent',
               feature.colSpan,
             )}
           >
@@ -305,7 +305,7 @@ export function FeatureOps({ className }: { className?: string }) {
         <Card
           key={index}
           className={cn(
-            'group relative gap-4 flex flex-col overflow-hidden bg-background/50 border border-border/50 border-b-0 shadow-none pb-0 bg-linear-to-b from-muted/20 to-transparent',
+            'group relative gap-4 flex flex-col overflow-hidden border-b-0 shadow-none pb-0 bg-linear-to-b from-muted/20 to-transparent',
             feature.colSpan,
           )}
         >
