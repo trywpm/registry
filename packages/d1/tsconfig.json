@@ -5,7 +5,7 @@
     "composite": true,
     "declarationDir": "dist",
     "emitDeclarationOnly": true,
-    "types": ["@cloudflare/workers-types"]
+    "types": ["@types/node", "@cloudflare/workers-types"]
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist"]
