@@ -1,5 +1,6 @@
 import type { Context } from 'hono';
 
+import { getCookie, setCookie } from 'hono/cookie';
 import { readableTimeDiff } from '@wpm/util/datetime';
 import { getPackages, isAllowedSort, getPackagesCount } from '@wpm/d1/search';
 
@@ -50,7 +51,7 @@ export const ThemesPage = async (c: Context) => {
   }
 
   const session = c.env.registry_search.withSession(
-    c.req.header('x-search-bm') ?? 'first-unconstrained',
+    getCookie(c, 'search_bm') ?? 'first-unconstrained',
   );
   const totalPackages = await getPackagesCount(session, c.env.cache, c.executionCtx, 'theme');
   const totalPages = Math.ceil(totalPackages / itemsPerPage);
@@ -77,7 +78,12 @@ export const ThemesPage = async (c: Context) => {
     return [1, '...', currentPage - 1, currentPage, currentPage + 1, '...', totalPages];
   })();
 
-  c.header('x-search-bm', session.getBookmark() ?? '');
+  setCookie(c, 'search_bm', session.getBookmark() ?? '', {
+    path: url.pathname,
+    secure: true,
+    httpOnly: true,
+    sameSite: 'lax',
+  });
 
   return c.html(
     <BaseLayout
