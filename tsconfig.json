@@ -3,6 +3,7 @@
   "references": [
     { "path": "web" },
     { "path": "registry" },
+    { "path": "packages/d1" },
     { "path": "packages/util" },
     { "path": "packages/manifest" }
   ]
