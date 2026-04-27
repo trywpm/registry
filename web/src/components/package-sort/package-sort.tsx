@@ -1,3 +1,5 @@
+import { allowedSorts } from '@wpm/d1/search';
+
 import {
   DropdownMenu,
   DropdownMenuItem,
@@ -8,12 +10,6 @@ import { Input } from '@/components/input';
 import { Button } from '@/components/button';
 import { Island } from '@/components/island';
 import { Search, Filter } from '@/components/icon';
-
-export const allowedSorts = {
-  popularity: 'Most Popular',
-  newest: 'Recently Updated',
-  name: 'Name (A-Z)',
-} as const;
 
 export function PackageSort({
   type = 'plugin',
