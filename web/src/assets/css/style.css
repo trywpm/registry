@@ -166,6 +166,9 @@
   [role='button']:not(:disabled) {
     cursor: pointer;
   }
+  a:not(.btn) {
+    @apply text-primary no-underline hover:underline;
+  }
 }
 
 @utility container-wrapper {
