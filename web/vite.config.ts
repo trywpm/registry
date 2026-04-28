@@ -74,6 +74,9 @@ export default defineConfig(({ mode }) => ({
   server: {
     port: 3000,
     strictPort: true,
+    watch: {
+      ignored: ['!**/node_modules/@wpm/**'],
+    },
   },
   builder: {
     buildApp: async (builder) => {
