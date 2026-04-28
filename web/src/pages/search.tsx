@@ -1,7 +1,8 @@
 import type { Context } from 'hono';
 
-import { searchPackages } from '@wpm/d1/search';
+import { getCookie, setCookie } from 'hono/cookie';
 import { readableTimeDiff } from '@wpm/util/datetime';
+import { searchPackages, isAllowedSort, isType } from '@wpm/d1/search';
 
 import { Badge } from '@/components/badge';
 import { BaseLayout } from '@/layouts/base';
@@ -13,22 +14,33 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/com
 
 export const SearchPage = async (c: Context) => {
   const url = new URL(c.req.url);
+  const sort = c.req.query('sort');
 
-  let currentPage = Number(c.req.query('page'));
-  if (!currentPage || currentPage < 1) {
-    currentPage = 1;
+  let query = c.req.query('q');
+  if (typeof query !== 'string') {
+    query = '';
   }
 
-  const query = c.req.query('q') || '';
-  const type = c.req.query('type') === 'theme' ? 'theme' : 'plugin';
+  let type = c.req.query('type');
+  if (!isType(type)) {
+    type = undefined;
+  }
 
   const session = c.env.registry_search.withSession(
-    c.req.header('x-search-bm') ?? 'first-unconstrained',
+    getCookie(c, 'search_bm') ?? 'first-unconstrained',
   );
-
   const packages = await searchPackages(session, url, c.executionCtx, {
     q: query,
     type,
+    sort: isAllowedSort(sort) ? sort : 'popularity',
+    cursor: c.req.query('cursor'),
+  });
+
+  setCookie(c, 'search_bm', session.getBookmark() ?? '', {
+    path: url.pathname,
+    secure: true,
+    httpOnly: true,
+    sameSite: 'lax',
   });
 
   return c.html(
@@ -40,7 +52,11 @@ export const SearchPage = async (c: Context) => {
     >
       <main class="flex grow flex-col">
         <div class="container">
-          <PackageSearch query={query} />
+          <PackageSearch
+            type={type}
+            query={query}
+            sort={isAllowedSort(sort) ? sort : 'popularity'}
+          />
         </div>
 
         <section class="flex grow flex-col mb-8">
@@ -62,6 +78,9 @@ export const SearchPage = async (c: Context) => {
                             >
                               {pkg.name}
                             </a>
+                            <Badge variant="outline" className="text-xs ml-2 capitalize bg-muted">
+                              {pkg.type}
+                            </Badge>
                           </CardTitle>
                           <CardDescription className="flex items-center gap-2">
                             <span>{pkg.version}</span>
