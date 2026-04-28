@@ -1,4 +1,5 @@
 import { cn } from '@/lib/utils';
+import { Search } from '@/components/icon';
 import { Island } from '@/components/island';
 import { Button } from '@/components/button';
 import { Separator } from '@/components/separator';
@@ -107,10 +108,16 @@ export function Navbar({ hasHero = false }: { hasHero?: boolean }) {
             </div>
 
             <div className="flex items-center gap-2 ml-auto">
+              <Button variant="ghost" size="icon" className="size-8" asChild>
+                <a href="/search" aria-label="Search">
+                  <Search className="size-4.5" />
+                </a>
+              </Button>
+              <Separator orientation="vertical" className="h-6" />
               <ThemeToggle />
-              <Separator orientation="vertical" className="h-4 hidden md:block" />
+              <Separator orientation="vertical" className="h-6 hidden md:block" />
               <CTAButtons />
-              <Separator orientation="vertical" className="h-4 md:hidden" />
+              <Separator orientation="vertical" className="h-6 md:hidden" />
               <Hamburger />
             </div>
           </div>
