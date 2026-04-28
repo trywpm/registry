@@ -43,7 +43,10 @@ function DesktopNav() {
 function CTAButtons({ mobile = false }: { mobile?: boolean }) {
   return (
     <div
-      className={cn('gap-2', mobile ? 'flex flex-col py-3' : 'ml-auto hidden md:flex items-center')}
+      className={cn(
+        'md:gap-2 gap-3',
+        mobile ? 'flex flex-col py-3' : 'ml-auto hidden md:flex items-center',
+      )}
     >
       {mobile ? (
         <>
@@ -135,7 +138,7 @@ export function Navbar({ hasHero = false }: { hasHero?: boolean }) {
                 <a
                   key={href}
                   href={href}
-                  className="flex items-center p-3 text-foreground hover:bg-muted rounded-lg transition-colors"
+                  className="flex items-center p-3 text-foreground hover:bg-muted rounded-lg transition-colors no-underline"
                 >
                   {label}
                 </a>
