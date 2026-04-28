@@ -41,7 +41,7 @@ export function Footer({ hasHero = false }: { hasHero?: boolean }) {
     >
       <div className="container">
         <div className="py-8">
-          <div className="flex flex-col md:flex-row items-center justify-between space-y-6 md:space-y-0 gap-2">
+          <div className="flex flex-col md:flex-row items-center justify-between md:space-y-0 gap-4">
             {/* Legal Links */}
             <div className="flex flex-wrap items-center justify-center md:justify-start gap-x-6 gap-y-2">
               {legalLinks.map((link) => (
