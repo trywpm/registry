@@ -45,8 +45,8 @@ export function PackageSearch({ query = '' }: { query?: string }) {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent>
-                <DropdownMenuItem data-type-value="theme">Themes</DropdownMenuItem>
                 <DropdownMenuItem data-type-value="plugin">Plugins</DropdownMenuItem>
+                <DropdownMenuItem data-type-value="theme">Themes</DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
 
