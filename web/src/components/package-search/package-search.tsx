@@ -1,6 +1,4 @@
-import type { Type, AllowedSorts } from '@wpm/d1/search';
-
-import { allowedSorts } from '@wpm/d1/search';
+import type { Type } from '@wpm/d1/search';
 
 import {
   DropdownMenu,
@@ -11,18 +9,13 @@ import {
 import { Input } from '@/components/input';
 import { Button } from '@/components/button';
 import { Island } from '@/components/island';
-import { ButtonGroup } from '@/components/button-group';
-import { Search, Filter, Package } from '@/components/icon';
+import { Search, Package } from '@/components/icon';
 
-export function PackageSearch({
-  type,
-  sort,
-  query = '',
-}: {
-  type?: Type;
-  query?: string;
-  sort: AllowedSorts;
-}) {
+export function PackageSearch({ type, query }: { type?: Type; query: string }) {
+  if (!query) {
+    throw new Error('Query is required for PackageSearch component');
+  }
+
   return (
     <Island name="package-search">
       <wpm-package-search>
@@ -41,50 +34,27 @@ export function PackageSearch({
             />
           </div>
 
-          <ButtonGroup className="shrink-0" orientation="horizontal">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="size-12 rounded-r-none focus:z-10"
-                  aria-label="Filter package type"
-                  title="Filter package type"
-                >
-                  <Package className="size-5" aria-hidden="true" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent>
-                <DropdownMenuItem data-type-value="plugin" disabled={type === 'plugin'}>
-                  Plugins
-                </DropdownMenuItem>
-                <DropdownMenuItem data-type-value="theme" disabled={type === 'theme'}>
-                  Themes
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="size-12 rounded-l-none border-l-0 focus:z-10"
-                  aria-label="Sort packages"
-                  title="Sort packages"
-                >
-                  <Filter className="size-5" aria-hidden="true" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent>
-                {Object.entries(allowedSorts).map(([key, label]) => (
-                  <DropdownMenuItem key={key} data-sort-value={key} disabled={sort === key}>
-                    {label}
-                  </DropdownMenuItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </ButtonGroup>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="outline"
+                size="icon"
+                className="size-12 focus:z-10"
+                aria-label="Filter package type"
+                title="Filter package type"
+              >
+                <Package className="size-5" aria-hidden="true" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              <DropdownMenuItem data-type-value="plugin" disabled={type === 'plugin'}>
+                Plugins
+              </DropdownMenuItem>
+              <DropdownMenuItem data-type-value="theme" disabled={type === 'theme'}>
+                Themes
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </wpm-package-search>
     </Island>
