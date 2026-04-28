@@ -214,9 +214,11 @@ export const BaseLayout = ({
           )}
         </head>
         <body class="antialiased [--header-height:--spacing(14)]">
-          <Navbar hasHero={hasHero} />
-          {children}
-          <Footer hasHero={hasHero} />
+          <div class="flex flex-col min-h-screen">
+            <Navbar hasHero={hasHero} />
+            {children}
+            <Footer hasHero={hasHero} />
+          </div>
         </body>
       </html>
     </>
