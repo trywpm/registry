@@ -7,6 +7,7 @@ import { searchPackages, isAllowedSort, isType } from '@wpm/d1/search';
 import { Badge } from '@/components/badge';
 import { BaseLayout } from '@/layouts/base';
 import { Package } from '@/components/icon';
+import { Button } from '@/components/button';
 import { getCanonicalUrl } from '@/lib/utils';
 import { Separator } from '@/components/separator';
 import { PackageSearch } from '@/components/package-search';
@@ -42,6 +43,13 @@ export const SearchPage = async (c: Context) => {
     httpOnly: true,
     sameSite: 'lax',
   });
+
+  const nextUrl = new URL(url);
+  if (packages.nextCursor) {
+    nextUrl.searchParams.set('cursor', packages.nextCursor);
+  } else {
+    nextUrl.searchParams.delete('cursor');
+  }
 
   return c.html(
     <BaseLayout
@@ -111,6 +119,14 @@ export const SearchPage = async (c: Context) => {
                     </CardContent>
                   </Card>
                 ))}
+
+                {packages.nextCursor && (
+                  <div class="flex justify-center">
+                    <Button variant="outline" size="lg" className="mt-4" asChild>
+                      <a href={nextUrl.toString()}>Load More</a>
+                    </Button>
+                  </div>
+                )}
               </div>
             ) : (
               <div class="flex grow flex-col items-center justify-center text-center py-16">
