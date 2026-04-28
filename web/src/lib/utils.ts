@@ -6,7 +6,7 @@ import type { ClassValue } from 'clsx';
 
 import manifest from 'virtual:client-manifest';
 
-export const ALLOWED_QUERY_PARAMS = ['q', 'sort', 'page'];
+export const ALLOWED_QUERY_PARAMS = ['q', 'sort', 'page'] as const;
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -81,13 +81,13 @@ export function getAssetUrl(path: string) {
 
 export const getCanonicalUrl = (
   url: string | URL,
-  preserveQueryParams: boolean = false,
+  queryParamsToPreserve: (typeof ALLOWED_QUERY_PARAMS)[number][] = [],
 ): string => {
   const newUrl = typeof url === 'string' ? new URL(url) : url;
   const canonical = new URL(newUrl.pathname, newUrl.origin);
 
-  if (preserveQueryParams) {
-    ALLOWED_QUERY_PARAMS.forEach((param) => {
+  if (queryParamsToPreserve.length > 0) {
+    queryParamsToPreserve.forEach((param) => {
       if (newUrl.searchParams.has(param)) {
         canonical.searchParams.set(param, newUrl.searchParams.get(param) ?? '');
       }
