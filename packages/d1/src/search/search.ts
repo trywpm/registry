@@ -56,6 +56,10 @@ export function isAllowedSort(value: string | undefined | null): value is Allowe
   return typeof value === 'string' && value in allowedSorts;
 }
 
+export function isType(value: string | undefined | null): value is Type {
+  return value === 'plugin' || value === 'theme';
+}
+
 export async function getPackages(
   d1: D1DatabaseSession,
   reqUrl: URL,
