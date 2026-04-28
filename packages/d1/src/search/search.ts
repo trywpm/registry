@@ -258,7 +258,7 @@ export async function searchPackages(
 
   let typeFilter = '';
   if (options.type) {
-    typeFilter = ' AND p.type = ?';
+    typeFilter = ' AND packages_fts.type = ?';
     binds.push(options.type);
   }
 
