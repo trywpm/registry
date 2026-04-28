@@ -14,18 +14,17 @@ export type Type = 'plugin' | 'theme';
 export type AllowedSorts = keyof typeof allowedSorts;
 
 export type PackageOptions = {
+  type?: Type;
   limit: number;
   sort: AllowedSorts;
 };
 
 export type ListOptions = PackageOptions & {
-  type: Type;
   page: number;
 };
 
 export type SearchOptions = PackageOptions & {
   q: string;
-  type?: Type;
   cursor?: string;
 };
 
@@ -71,7 +70,6 @@ export async function getPackages(
   const options: ListOptions = {
     page: 1,
     limit: 10,
-    type: 'plugin',
     sort: 'popularity',
     ...opts,
   };
@@ -109,6 +107,14 @@ export async function getPackages(
       break;
   }
 
+  const binds = [];
+
+  let typeFilter = '';
+  if (options.type) {
+    typeFilter = ' WHERE type = ?';
+    binds.push(options.type);
+  }
+
   const sql = `
       SELECT
         p.id, p.name, p.type, p.version, p.description, p.tags,
@@ -118,7 +124,7 @@ export async function getPackages(
       INNER JOIN (
         SELECT id
         FROM packages
-        WHERE type = ?
+        ${typeFilter}
         ${innerOrderBy}
         LIMIT ? OFFSET ?
       ) as sub ON p.id = sub.id
@@ -127,7 +133,7 @@ export async function getPackages(
 
   const rawResults = await d1
     .prepare(sql)
-    .bind(options.type, options.limit, offset)
+    .bind(...binds, options.limit, offset)
     .all<RawPackageRow>();
 
   const parsedResult: ListPackageRow[] = rawResults.results.map((row) => ({
