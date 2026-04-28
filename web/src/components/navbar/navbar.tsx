@@ -43,7 +43,7 @@ function DesktopNav() {
 function CTAButtons({ mobile = false }: { mobile?: boolean }) {
   return (
     <div
-      className={cn('gap-3', mobile ? 'flex flex-col py-3' : 'ml-auto hidden md:flex items-center')}
+      className={cn('gap-2', mobile ? 'flex flex-col py-3' : 'ml-auto hidden md:flex items-center')}
     >
       {mobile ? (
         <>
