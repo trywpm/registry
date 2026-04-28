@@ -50,16 +50,17 @@ export const PluginsPage = async (c: Context) => {
     sortVal = 'popularity';
   }
 
+  const sort = isAllowedSort(sortVal) ? sortVal : 'popularity';
   const session = c.env.registry_search.withSession(
     getCookie(c, 'search_bm') ?? 'first-unconstrained',
   );
   const totalPackages = await getPackagesCount(session, c.env.cache, c.executionCtx, 'plugin');
   const totalPages = Math.ceil(totalPackages / itemsPerPage);
   const packages = await getPackages(session, url, c.executionCtx, {
+    sort,
     page: currentPage,
     type: 'plugin',
     limit: itemsPerPage,
-    sort: isAllowedSort(sortVal) ? sortVal : 'popularity',
   });
 
   const pageNumbers = (() => {
@@ -90,7 +91,7 @@ export const PluginsPage = async (c: Context) => {
       c={c}
       hasHero
       title="Plugins"
-      canonicalUrl={getCanonicalUrl(getPageUrl(url, currentPage), true)}
+      canonicalUrl={getCanonicalUrl(getPageUrl(url, currentPage), ['sort', 'page'])}
       description="Discover and manage WordPress plugins with wpm."
     >
       <main>
@@ -101,7 +102,7 @@ export const PluginsPage = async (c: Context) => {
 
         <section class="my-8">
           <div class="container">
-            <PackageSort type="plugin" />
+            <PackageSort type="plugin" sort={sort} />
 
             <div class="text-sm text-muted-foreground">{`${totalPackages} plugins available`}</div>
           </div>

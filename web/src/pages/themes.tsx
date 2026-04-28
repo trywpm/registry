@@ -50,16 +50,17 @@ export const ThemesPage = async (c: Context) => {
     sortVal = 'popularity';
   }
 
+  const sort = isAllowedSort(sortVal) ? sortVal : 'popularity';
   const session = c.env.registry_search.withSession(
     getCookie(c, 'search_bm') ?? 'first-unconstrained',
   );
   const totalPackages = await getPackagesCount(session, c.env.cache, c.executionCtx, 'theme');
   const totalPages = Math.ceil(totalPackages / itemsPerPage);
   const packages = await getPackages(session, url, c.executionCtx, {
+    sort,
     page: currentPage,
     type: 'theme',
     limit: itemsPerPage,
-    sort: isAllowedSort(sortVal) ? sortVal : 'popularity',
   });
 
   const pageNumbers = (() => {
@@ -90,7 +91,7 @@ export const ThemesPage = async (c: Context) => {
       c={c}
       hasHero
       title="Themes"
-      canonicalUrl={getCanonicalUrl(getPageUrl(url, currentPage), true)}
+      canonicalUrl={getCanonicalUrl(getPageUrl(url, currentPage), ['sort', 'page'])}
       description="Discover and manage WordPress themes with wpm."
     >
       <main>
@@ -101,7 +102,7 @@ export const ThemesPage = async (c: Context) => {
 
         <section class="my-8">
           <div class="container">
-            <PackageSort type="theme" />
+            <PackageSort type="theme" sort={sort} />
 
             <div class="text-sm text-muted-foreground">{`${totalPackages} themes available`}</div>
           </div>
