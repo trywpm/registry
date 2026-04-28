@@ -14,17 +14,18 @@ export type Type = 'plugin' | 'theme';
 export type AllowedSorts = keyof typeof allowedSorts;
 
 export type PackageOptions = {
-  type: Type;
   limit: number;
   sort: AllowedSorts;
 };
 
 export type ListOptions = PackageOptions & {
+  type: Type;
   page: number;
 };
 
 export type SearchOptions = PackageOptions & {
   q: string;
+  type?: Type;
   cursor?: string;
 };
 
@@ -214,7 +215,6 @@ export async function searchPackages(
 ): Promise<D1ResultWithNext<SearchPackageRow>> {
   const options: SearchOptions = {
     limit: 15,
-    type: 'plugin',
     sort: 'popularity',
     ...opts,
   };
@@ -246,6 +246,12 @@ export async function searchPackages(
   const binds: (string | number)[] = [];
   const ftsQuery = prepareFtsQuery(cleanQuery);
 
+  let typeFilter = '';
+  if (options.type) {
+    typeFilter = ' AND p.type = ?';
+    binds.push(options.type);
+  }
+
   sql = `
       WITH RankedPackages AS (
         SELECT
@@ -265,12 +271,12 @@ export async function searchPackages(
           ) as score
         FROM packages_fts
         JOIN packages p ON packages_fts.rowid = p.id
-        WHERE packages_fts MATCH ? AND p.type = ?
+        WHERE packages_fts MATCH ?${typeFilter}
       )
       SELECT * FROM RankedPackages
       WHERE 1=1
     `;
-  binds.push(cleanQuery, cleanQuery, cleanQuery, cleanQuery, ftsQuery, options.type);
+  binds.push(cleanQuery, cleanQuery, cleanQuery, cleanQuery, ftsQuery);
 
   if (cursor) {
     switch (options.sort) {
