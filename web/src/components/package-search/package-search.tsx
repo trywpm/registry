@@ -1,3 +1,5 @@
+import type { Type, AllowedSorts } from '@wpm/d1/search';
+
 import { allowedSorts } from '@wpm/d1/search';
 
 import {
@@ -12,7 +14,15 @@ import { Island } from '@/components/island';
 import { ButtonGroup } from '@/components/button-group';
 import { Search, Filter, Package } from '@/components/icon';
 
-export function PackageSearch({ query = '' }: { query?: string }) {
+export function PackageSearch({
+  type,
+  sort,
+  query = '',
+}: {
+  type?: Type;
+  query?: string;
+  sort: AllowedSorts;
+}) {
   return (
     <Island name="package-search">
       <wpm-package-search>
@@ -45,8 +55,12 @@ export function PackageSearch({ query = '' }: { query?: string }) {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent>
-                <DropdownMenuItem data-type-value="plugin">Plugins</DropdownMenuItem>
-                <DropdownMenuItem data-type-value="theme">Themes</DropdownMenuItem>
+                <DropdownMenuItem data-type-value="plugin" disabled={type === 'plugin'}>
+                  Plugins
+                </DropdownMenuItem>
+                <DropdownMenuItem data-type-value="theme" disabled={type === 'theme'}>
+                  Themes
+                </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
 
@@ -64,7 +78,7 @@ export function PackageSearch({ query = '' }: { query?: string }) {
               </DropdownMenuTrigger>
               <DropdownMenuContent>
                 {Object.entries(allowedSorts).map(([key, label]) => (
-                  <DropdownMenuItem key={key} data-sort-value={key}>
+                  <DropdownMenuItem key={key} data-sort-value={key} disabled={sort === key}>
                     {label}
                   </DropdownMenuItem>
                 ))}
