@@ -26,19 +26,19 @@ class PackageSort extends HTMLElement {
     const { signal } = this.abortController;
 
     this.addEventListener(
-      'click',
+      'wpm-select-action',
       (e: Event) => {
-        if (!(e.target instanceof HTMLElement)) {
+        if (!(e instanceof CustomEvent) || !e.detail || e.detail.item === undefined) {
           return;
         }
 
-        const sortItem = e.target.closest<HTMLElement>('[data-sort-value]');
+        if (!(e.detail.item instanceof HTMLElement)) {
+          return;
+        }
 
-        if (sortItem) {
-          const sortKey = sortItem.getAttribute('data-sort-value');
-          if (sortKey) {
-            this.handleSortChange(sortKey);
-          }
+        const sortVal = e.detail.item.getAttribute('data-sort-value');
+        if (sortVal) {
+          this.handleSortChange(sortVal);
         }
       },
       { signal },
