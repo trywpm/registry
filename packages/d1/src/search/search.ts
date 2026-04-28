@@ -13,18 +13,17 @@ export const allowedSorts = {
 export type Type = 'plugin' | 'theme';
 export type AllowedSorts = keyof typeof allowedSorts;
 
-export type PackageOptions = {
-  type?: Type;
+export type ListOptions = {
+  type: Type;
+  page: number;
   limit: number;
   sort: AllowedSorts;
 };
 
-export type ListOptions = PackageOptions & {
-  page: number;
-};
-
-export type SearchOptions = PackageOptions & {
+export type SearchOptions = {
   q: string;
+  type?: Type;
+  limit: number;
   cursor?: string;
 };
 
@@ -70,6 +69,7 @@ export async function getPackages(
   const options: ListOptions = {
     page: 1,
     limit: 10,
+    type: 'plugin',
     sort: 'popularity',
     ...opts,
   };
@@ -107,14 +107,6 @@ export async function getPackages(
       break;
   }
 
-  const binds = [];
-
-  let typeFilter = '';
-  if (options.type) {
-    typeFilter = ' WHERE type = ?';
-    binds.push(options.type);
-  }
-
   const sql = `
       SELECT
         p.id, p.name, p.type, p.version, p.description, p.tags,
@@ -124,7 +116,7 @@ export async function getPackages(
       INNER JOIN (
         SELECT id
         FROM packages
-        ${typeFilter}
+        WHERE type = ?
         ${innerOrderBy}
         LIMIT ? OFFSET ?
       ) as sub ON p.id = sub.id
@@ -133,7 +125,7 @@ export async function getPackages(
 
   const rawResults = await d1
     .prepare(sql)
-    .bind(...binds, options.limit, offset)
+    .bind(options.type, options.limit, offset)
     .all<RawPackageRow>();
 
   const parsedResult: ListPackageRow[] = rawResults.results.map((row) => ({
@@ -225,22 +217,16 @@ export async function searchPackages(
 ): Promise<D1ResultWithNext<SearchPackageRow>> {
   const options: SearchOptions = {
     limit: 15,
-    sort: 'popularity',
     ...opts,
   };
 
   const cleanQuery = options.q.trim();
   if (!cleanQuery) {
-    return getPackages(d1, reqUrl, ctx, {
-      page: 1,
-      type: options.type,
-      sort: options.sort,
-      limit: options.limit,
-    });
+    throw new Error('Query cannot be empty');
   }
 
   const cacheKey = new Request(
-    `${reqUrl.origin}/${CACHE_KEY_PREFIX}/search/${options.type}?q=${encodeURIComponent(cleanQuery)}&cursor=${options.cursor ? encodeURIComponent(options.cursor) : ''}&sort=${options.sort}&limit=${options.limit}`,
+    `${reqUrl.origin}/${CACHE_KEY_PREFIX}/search/${options.type}?q=${encodeURIComponent(cleanQuery)}&cursor=${options.cursor ? encodeURIComponent(options.cursor) : ''}&limit=${options.limit}`,
   );
   const cache = await caches.open(`d1-search-cache-${CACHE_VERSION}`);
 
@@ -249,20 +235,16 @@ export async function searchPackages(
     return cachedResponse.json<D1ResultWithNext<SearchPackageRow>>();
   }
 
-  const cursor = options.cursor ? decodeCursor(options.cursor) : null;
-
-  let sql = '';
-
   const binds: (string | number)[] = [];
   const ftsQuery = prepareFtsQuery(cleanQuery);
+  const cursor = options.cursor ? decodeCursor(options.cursor) : null;
 
   let typeFilter = '';
   if (options.type) {
     typeFilter = ' AND packages_fts.type = ?';
-    binds.push(options.type);
   }
 
-  sql = `
+  let sql = `
       WITH RankedPackages AS (
         SELECT
           p.id, p.name, p.type, p.version, p.description, p.tags,
@@ -288,38 +270,16 @@ export async function searchPackages(
     `;
   binds.push(cleanQuery, cleanQuery, cleanQuery, cleanQuery, ftsQuery);
 
+  if (options.type) {
+    binds.push(options.type);
+  }
+
   if (cursor) {
-    switch (options.sort) {
-      case 'newest':
-        sql += ` AND (package_published < ? OR (package_published = ? AND id < ?))`;
-        binds.push(cursor.value, cursor.value, cursor.id);
-        break;
-      case 'name':
-        sql += ` AND (name > ? OR (name = ? AND id > ?))`;
-        binds.push(cursor.value, cursor.value, cursor.id);
-        break;
-      case 'popularity':
-      default:
-        sql += ` AND (score < ? OR (score = ? AND id < ?))`;
-        binds.push(cursor.value, cursor.value, cursor.id);
-        break;
-    }
+    sql += ` AND (score < ? OR (score = ? AND id < ?))`;
+    binds.push(cursor.value, cursor.value, cursor.id);
   }
 
-  switch (options.sort) {
-    case 'newest':
-      sql += ` ORDER BY package_published DESC, id DESC`;
-      break;
-    case 'name':
-      sql += ` ORDER BY name ASC, id ASC`;
-      break;
-    case 'popularity':
-    default:
-      sql += ` ORDER BY score DESC, id DESC`;
-      break;
-  }
-
-  sql += ` LIMIT ?`;
+  sql += ` ORDER BY score DESC, id DESC LIMIT ?`;
   binds.push(options.limit + 1); // Fetch one extra to determine if there's a next page
 
   const rawResults = await d1
@@ -334,16 +294,7 @@ export async function searchPackages(
   if (fetchedRows.length > options.limit) {
     const lastRow = fetchedRows[options.limit - 1];
 
-    let cursorValue: string | number;
-    if (options.sort === 'newest') {
-      cursorValue = lastRow.package_published;
-    } else if (options.sort === 'name') {
-      cursorValue = lastRow.name;
-    } else {
-      cursorValue = lastRow.score;
-    }
-
-    nextCursor = encodeCursor(cursorValue, lastRow.id);
+    nextCursor = encodeCursor(lastRow.score, lastRow.id);
 
     fetchedRows.pop();
   }
