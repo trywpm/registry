@@ -42,7 +42,6 @@ export function Footer({ hasHero = false }: { hasHero?: boolean }) {
       <div className="container">
         <div className="py-8">
           <div className="flex flex-col md:flex-row items-center justify-between md:space-y-0 gap-4">
-            {/* Legal Links */}
             <div className="flex flex-wrap items-center justify-center md:justify-start gap-x-6 gap-y-2">
               {legalLinks.map((link) => (
                 <a
@@ -56,8 +55,6 @@ export function Footer({ hasHero = false }: { hasHero?: boolean }) {
                 </a>
               ))}
             </div>
-
-            {/* Social Links - Appears before theme switcher on mobile, after on desktop */}
             <div className="flex items-center space-x-2 order-2 md:order-3">
               {socialLinks.map((social) => {
                 const Icon = social.icon;
@@ -75,14 +72,10 @@ export function Footer({ hasHero = false }: { hasHero?: boolean }) {
                 );
               })}
             </div>
-
-            {/* Theme Switcher */}
             <div className="order-3 md:order-2 text-sm text-muted-foreground">
               Built with ❤️ for WordPress
             </div>
           </div>
-
-          {/* Legal Text */}
           <div className="border-t border-border/40 mt-6 pt-6">
             <div className="text-center">
               <p className="text-muted-foreground text-xs leading-relaxed">
