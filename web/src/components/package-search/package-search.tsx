@@ -11,11 +11,7 @@ import { Button } from '@/components/button';
 import { Island } from '@/components/island';
 import { Search, Package } from '@/components/icon';
 
-export function PackageSearch({ type, query }: { type?: Type; query: string }) {
-  if (!query) {
-    throw new Error('Query is required for PackageSearch component');
-  }
-
+export function PackageSearch({ type, query }: { type?: Type; query?: string }) {
   return (
     <Island name="package-search">
       <wpm-package-search>
@@ -26,9 +22,9 @@ export function PackageSearch({ type, query }: { type?: Type; query: string }) {
             </div>
             <Input
               type="search"
+              value={query}
               data-slot="search-input"
               placeholder="Search packages..."
-              defaultValue={query}
               className="pl-10 h-12 w-full md:text-md"
               aria-label="Search packages"
             />
