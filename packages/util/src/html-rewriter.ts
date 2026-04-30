@@ -1,6 +1,52 @@
 const YT_DOMAINS = ['youtube.com', 'youtu.be'];
 const EMBEDDABLE_DOMAINS = new Set([...YT_DOMAINS, 'videopress.com']);
 
+export function escapeHtmlAttribute(value: string) {
+  return value.replaceAll(/[&"'<>]/g, (character) => {
+    switch (character) {
+      case '&': {
+        return '&amp;';
+      }
+      case '"': {
+        return '&quot;';
+      }
+      case "'": {
+        return '&#39;';
+      }
+      case '<': {
+        return '&lt;';
+      }
+      case '>': {
+        return '&gt;';
+      }
+      default: {
+        return character;
+      }
+    }
+  });
+}
+
+export function getSafeEmbeddableUrl(rawUrl: string) {
+  try {
+    const url = new URL(rawUrl);
+    const domain = url.hostname.replace('www.', '');
+
+    if (
+      (url.protocol !== 'http:' && url.protocol !== 'https:') ||
+      !EMBEDDABLE_DOMAINS.has(domain)
+    ) {
+      return null;
+    }
+
+    return {
+      domain,
+      href: url.href,
+    };
+  } catch {
+    return null;
+  }
+}
+
 const getYoutubeID = (url: string) => {
   if (!url) {
     return false;
@@ -30,8 +76,8 @@ const Renderers = {
   sandboxedIframe(src: string, title: string) {
     return `
       <iframe
-        src="${src}"
-        title="${title}"
+        src="${escapeHtmlAttribute(src)}"
+        title="${escapeHtmlAttribute(title)}"
         frameborder="0"
         loading="lazy"
         allowfullscreen
@@ -155,21 +201,13 @@ export class EmbedHandler {
       return;
     }
 
-    let domain: string;
-    try {
-      const url = new URL(href);
-      domain = url.hostname.replace('www.', '');
-    } catch {
+    const safeEmbed = getSafeEmbeddableUrl(href);
+    if (!safeEmbed) {
       return;
     }
 
-    if (!EMBEDDABLE_DOMAINS.has(domain)) {
-      return;
-    }
-
-    this.state.foundYoutube = true;
-
-    if (YT_DOMAINS.includes(domain)) {
+    if (YT_DOMAINS.includes(safeEmbed.domain)) {
+      this.state.foundYoutube = true;
       const videoId = getYoutubeID(href);
       if (videoId) {
         element.replace(Renderers.liteYoutube(videoId), { html: true });
@@ -178,9 +216,12 @@ export class EmbedHandler {
       return;
     }
 
-    element.replace(Renderers.sandboxedIframe(href, element.getAttribute('title') || ''), {
-      html: true,
-    });
+    element.replace(
+      Renderers.sandboxedIframe(safeEmbed.href, element.getAttribute('title') || ''),
+      {
+        html: true,
+      },
+    );
   }
 }
 

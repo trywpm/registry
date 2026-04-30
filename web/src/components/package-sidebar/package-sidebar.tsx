@@ -21,6 +21,15 @@ type PackageSidebarProps = {
   collaborators: string[];
 };
 
+export function getSafeHomepageUrl(homepage: string) {
+  try {
+    const url = new URL(homepage);
+    return url.protocol === 'http:' || url.protocol === 'https:' ? url.href : '';
+  } catch {
+    return '';
+  }
+}
+
 export function PackageSidebar({
   name,
   version,
@@ -35,12 +44,7 @@ export function PackageSidebar({
   const installCommand = `wpm install ${name}`;
   const downloadUrl = `${registryHost}/${name}/${version}.tar.zst`;
   const parsedDate = new Date(publishedDate);
-
-  let safeHomepageUrl = '';
-  try {
-    const url = new URL(homepage);
-    safeHomepageUrl = url.href;
-  } catch {}
+  const safeHomepageUrl = getSafeHomepageUrl(homepage);
 
   return (
     <aside className="space-y-6 lg:sticky lg:top-23 self-start">

@@ -10,6 +10,7 @@
     "hono": "catalog:"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "catalog:"
+    "@cloudflare/workers-types": "catalog:",
+    "vitest": "catalog:"
   }
 }
