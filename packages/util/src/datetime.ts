@@ -121,3 +121,22 @@ export function readableTimeDiff(date: Date): string {
 export function futureTimeDiff(date: Date): string {
   return getRelativeString(date, new Date());
 }
+
+const months = [
+  'January',
+  'February',
+  'March',
+  'April',
+  'May',
+  'June',
+  'July',
+  'August',
+  'September',
+  'October',
+  'November',
+  'December',
+];
+
+export function formatDate(date: Date): string {
+  return `${date.getDate()} ${months[date.getMonth()]}, ${date.getFullYear()}`;
+}
