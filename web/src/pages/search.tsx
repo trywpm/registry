@@ -1,7 +1,7 @@
 import type { Context } from 'hono';
 
+import { formatDate } from '@wpm/util/datetime';
 import { getCookie, setCookie } from 'hono/cookie';
-import { readableTimeDiff } from '@wpm/util/datetime';
 import { searchPackages, isType } from '@wpm/d1/search';
 import type { D1ResultWithNext, SearchPackageRow } from '@wpm/d1/search';
 
@@ -43,15 +43,13 @@ const PackageCard = ({ pkg }: { pkg: SearchPackageRow }) => (
             >
               {pkg.name}
             </a>
-            <Badge variant="outline" className="text-xs ml-2 capitalize bg-muted">
-              {pkg.type}
-              <span class="sr-only">package type</span>
-            </Badge>
           </CardTitle>
-          <CardDescription className="flex items-center gap-2">
+          <CardDescription className="flex items-center gap-1.5 text-muted-foreground font-mono">
             <span>{pkg.version}</span>
             <span aria-hidden="true">•</span>
-            <span>{readableTimeDiff(new Date(pkg.package_published))}</span>
+            <span>{pkg.type}</span>
+            <span aria-hidden="true">•</span>
+            <span>{formatDate(new Date(pkg.package_published))}</span>
           </CardDescription>
         </div>
       </div>
