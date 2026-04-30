@@ -45,7 +45,7 @@ export const PackagePage = async (c: Context) => {
     }
   >();
 
-  const embedsState = new EmbedsState(cspNonce);
+  const embedsState = new EmbedsState();
   const ssHandler = new ScreenshotHandler(manifest.name);
 
   const rewriter = new HTMLRewriter()
