@@ -213,7 +213,7 @@ export const SearchPage = async (c: Context) => {
             hx-get="/search"
             hx-target="#search-results"
             hx-push-url="true"
-            hx-trigger="input[event.target.value.length >= 3 || event.target.value.length === 0] delay:300ms, submit"
+            hx-trigger="wpm-package-search-trigger delay:300ms, submit"
           >
             {type && <input type="hidden" name="type" value={type} />}
             <PackageSearch type={type} query={query} />
