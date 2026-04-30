@@ -99,6 +99,7 @@ export default defineConfig(({ mode }) => ({
           input: {
             htmx: 'src/assets/js/htmx.ts',
             style: 'src/assets/css/style.css',
+            'lite-yt': 'src/assets/js/lite-yt.ts',
             ...webComponents,
           },
           output: {
