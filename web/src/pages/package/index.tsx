@@ -9,8 +9,7 @@ import {
   ShortcodeHandler,
   ScreenshotHandler,
   EnqueuedEmbedAsset,
-} from '@wpm/util/html-rewriter';
-
+} from '@/lib/html-rewriter';
 import { BaseLayout } from '@/layouts/base';
 import { PackageTabs } from '@/components/package-tabs';
 import { Card, CardContent } from '@/components/card';
