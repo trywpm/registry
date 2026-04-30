@@ -128,7 +128,10 @@ export const BaseLayout = ({
           <link rel="stylesheet" href={getAssetUrl('/src/assets/css/style.css')} />
 
           {loadVendorScripts.htmx && (
-            <script type="module" src={getAssetUrl('/src/assets/js/htmx.ts')}></script>
+            <>
+              <meta name="htmx-config" content='{"allowEval":false}' />
+              <script type="module" src={getAssetUrl('/src/assets/js/htmx.ts')}></script>
+            </>
           )}
 
           {/* JSON-LD Schemas */}
