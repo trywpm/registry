@@ -39,7 +39,7 @@ homeRoute.get('/search', (c) => {
   return SearchPage(c);
 });
 
-homeRoute.get('/waitlist', (c) => {
+homeRoute.on(['GET', 'POST'], '/waitlist', (c) => {
   return WaitlistPage(c);
 });
 
