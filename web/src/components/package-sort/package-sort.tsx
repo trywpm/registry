@@ -13,12 +13,10 @@ import { Search, Filter } from '@/components/icon';
 
 export function PackageSort({
   type = 'plugin',
-  currentQuery = '',
-  currentSort = 'popularity',
+  sort = 'popularity',
 }: {
   type?: 'plugin' | 'theme';
-  currentQuery?: string;
-  currentSort?: keyof typeof allowedSorts;
+  sort?: keyof typeof allowedSorts;
 }) {
   return (
     <Island name="package-sort">
@@ -29,8 +27,8 @@ export function PackageSort({
             <Input
               type="search"
               data-slot="search-input"
+              data-type={type}
               placeholder={type === 'plugin' ? 'Search plugins...' : 'Search themes...'}
-              defaultValue={currentQuery}
               className="pl-10 w-full"
             />
           </div>
@@ -46,13 +44,13 @@ export function PackageSort({
               >
                 <Filter className="h-4 w-4" />
                 <span className="hidden sm:inline sm:ml-2">
-                  Sort by {currentSort.charAt(0).toUpperCase() + currentSort.slice(1)}
+                  Sort by {sort.charAt(0).toUpperCase() + sort.slice(1)}
                 </span>
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent data-align="end" class="w-48">
               {Object.entries(allowedSorts).map(([key, label]) => (
-                <DropdownMenuItem key={key} data-sort-value={key}>
+                <DropdownMenuItem key={key} data-sort-value={key} disabled={key === sort}>
                   {label}
                 </DropdownMenuItem>
               ))}

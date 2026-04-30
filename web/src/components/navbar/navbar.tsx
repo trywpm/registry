@@ -1,4 +1,5 @@
 import { cn } from '@/lib/utils';
+import { Search } from '@/components/icon';
 import { Island } from '@/components/island';
 import { Button } from '@/components/button';
 import { Separator } from '@/components/separator';
@@ -40,12 +41,19 @@ function DesktopNav() {
   );
 }
 
-function CTAButtons({ mobile = false }: { mobile?: boolean }) {
+function CTAButtons({ mobile = false, waitlist = true }: { mobile?: boolean; waitlist?: boolean }) {
   return (
     <div
-      className={cn('gap-3', mobile ? 'flex flex-col py-3' : 'ml-auto hidden md:flex items-center')}
+      className={cn(
+        'md:gap-2 gap-3',
+        mobile ? 'flex flex-col py-3' : 'ml-auto hidden md:flex items-center',
+      )}
     >
-      {mobile ? (
+      {waitlist ? (
+        <Button asChild size="sm" className="w-full h-7.75">
+          <a href="/waitlist">Join Waitlist</a>
+        </Button>
+      ) : mobile ? (
         <>
           <Button asChild size="sm" className="w-full h-7.75">
             <a href="/signup">Sign Up</a>
@@ -88,62 +96,70 @@ function Hamburger() {
 
 export function Navbar({ hasHero = false }: { hasHero?: boolean }) {
   return (
-    <Island name="navbar">
-      <wpm-navbar data-has-hero={hasHero ? 'true' : 'false'} className="group/nav">
-        <header
-          data-header
-          className={cn(
-            'sticky top-0 z-50 bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60 border-b border-border/50 transition-colors duration-200',
-            hasHero && 'border-b-transparent',
-          )}
-        >
-          <div className="container flex h-(--header-height) items-center justify-between">
-            <div className="flex items-center gap-3">
-              <Logo />
-              <DesktopNav />
-            </div>
+    <div className="sticky top-0 z-50 w-full">
+      <Island name="navbar">
+        <wpm-navbar data-has-hero={hasHero ? 'true' : 'false'} className="group/nav">
+          <header
+            data-header
+            className={cn(
+              'bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60 border-b border-border/50 transition-colors duration-200',
+              hasHero && 'border-b-transparent',
+            )}
+          >
+            <div className="container flex h-(--header-height) items-center justify-between">
+              <div className="flex items-center gap-3">
+                <Logo />
+                <DesktopNav />
+              </div>
 
-            <div className="flex items-center gap-2 ml-auto">
-              <ThemeToggle />
-              <Separator orientation="vertical" className="h-4 hidden md:block" />
-              <CTAButtons />
-              <Separator orientation="vertical" className="h-4 md:hidden" />
+              <div className="flex items-center gap-2 ml-auto">
+                <Button variant="ghost" size="icon" className="size-8" asChild>
+                  <a href="/search" aria-label="Search">
+                    <Search className="size-4.5" />
+                  </a>
+                </Button>
+                <Separator orientation="vertical" className="h-6" />
+                <ThemeToggle />
+                <Separator orientation="vertical" className="h-6 hidden md:block" />
+                <CTAButtons />
+                <Separator orientation="vertical" className="h-6 md:hidden" />
+                <Hamburger />
+              </div>
+            </div>
+          </header>
+
+          <div
+            data-mobile-menu
+            data-state="closed"
+            className={cn(
+              'invisible opacity-0 pointer-events-none',
+              'fixed inset-0 z-60 bg-background md:hidden',
+              'transition-opacity duration-300 ease-in-out',
+              'data-[state=open]:visible data-[state=open]:opacity-100 data-[state=open]:pointer-events-auto',
+            )}
+          >
+            <div className="container flex items-center justify-end h-(--header-height)">
               <Hamburger />
             </div>
-          </div>
-        </header>
 
-        <div
-          data-mobile-menu
-          data-state="closed"
-          className={cn(
-            'invisible opacity-0 pointer-events-none',
-            'fixed inset-0 z-60 bg-background md:hidden',
-            'transition-opacity duration-300 ease-in-out',
-            'data-[state=open]:visible data-[state=open]:opacity-100 data-[state=open]:pointer-events-auto',
-          )}
-        >
-          <div className="container flex items-center justify-end h-(--header-height)">
-            <Hamburger />
-          </div>
+            <div className="container flex flex-col h-[calc(100vh-4rem)] overflow-y-auto">
+              <CTAButtons mobile />
 
-          <div className="container flex flex-col h-[calc(100vh-4rem)] overflow-y-auto">
-            <CTAButtons mobile />
-
-            <nav aria-label="Mobile Navigation" className="flex-1">
-              {navLinks.map(({ href, label }) => (
-                <a
-                  key={href}
-                  href={href}
-                  className="flex items-center p-3 text-foreground hover:bg-muted rounded-lg transition-colors"
-                >
-                  {label}
-                </a>
-              ))}
-            </nav>
+              <nav aria-label="Mobile Navigation" className="flex-1">
+                {navLinks.map(({ href, label }) => (
+                  <a
+                    key={href}
+                    href={href}
+                    className="flex items-center p-3 text-foreground hover:bg-muted rounded-lg transition-colors no-underline"
+                  >
+                    {label}
+                  </a>
+                ))}
+              </nav>
+            </div>
           </div>
-        </div>
-      </wpm-navbar>
-    </Island>
+        </wpm-navbar>
+      </Island>
+    </div>
   );
 }

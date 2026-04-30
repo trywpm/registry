@@ -53,8 +53,8 @@ export const VersionsPage = async (c: Context) => {
       canonicalUrl={getCanonicalUrl(c.req.url)}
       description={`Browse all released versions of ${manifest.name} on wpm, including changelog and published release history.`}
     >
-      <div class="min-h-screen bg-background">
-        <main class="container py-6 sm:py-8">
+      <main class="grow">
+        <div class="container mx-auto py-6 sm:py-8">
           <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
             <div class="lg:col-span-2 space-y-6 sm:space-y-8">
               <PackageHeader
@@ -120,8 +120,8 @@ export const VersionsPage = async (c: Context) => {
               collaborators={[]}
             />
           </div>
-        </main>
-      </div>
+        </div>
+      </main>
     </BaseLayout>,
   );
 };

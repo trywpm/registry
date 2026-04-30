@@ -585,6 +585,7 @@ class DropdownMenu extends HTMLElement {
 
     this.close(true);
     this.dispatchEvent(new CustomEvent('wpm-dropdown-close', { bubbles: true }));
+    this.dispatchEvent(new CustomEvent('wpm-select-action', { bubbles: true, detail: { item } }));
   }
 
   private handleContentKeydown(e: KeyboardEvent): void {
