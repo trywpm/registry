@@ -77,12 +77,17 @@ class PackageSort extends HTMLElement {
           inputTarget.disabled = true;
 
           const url = new URL('/search', window.location.origin);
+          const type = inputTarget.getAttribute('data-type');
+          if (type) {
+            url.searchParams.set('type', type);
+          }
+
           url.searchParams.set('q', trimmedValue);
 
           window.location.href = url.toString();
         }
       }
-    }, 800);
+    }, 500);
   }
 
   private handleSortChange(sortKey: string): void {

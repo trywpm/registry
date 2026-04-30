@@ -27,6 +27,7 @@ export function PackageSort({
             <Input
               type="search"
               data-slot="search-input"
+              data-type={type}
               placeholder={type === 'plugin' ? 'Search plugins...' : 'Search themes...'}
               className="pl-10 w-full"
             />
