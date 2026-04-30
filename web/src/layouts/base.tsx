@@ -1,4 +1,5 @@
 import { html } from 'hono/html';
+import serialize from 'serialize-javascript';
 
 import type { Context } from 'hono';
 import type { Child } from 'hono/jsx';
@@ -28,31 +29,6 @@ type LayoutProps = {
     htmx?: boolean;
   };
 };
-
-export function serializeJsonLd(value: unknown) {
-  return JSON.stringify(value).replaceAll(/[&<>\u2028\u2029]/g, (character) => {
-    switch (character) {
-      case '&': {
-        return '\\u0026';
-      }
-      case '<': {
-        return '\\u003C';
-      }
-      case '>': {
-        return '\\u003E';
-      }
-      case '\u2028': {
-        return '\\u2028';
-      }
-      case '\u2029': {
-        return '\\u2029';
-      }
-      default: {
-        return character;
-      }
-    }
-  });
-}
 
 export const BaseLayout = ({
   c,
@@ -158,7 +134,7 @@ export const BaseLayout = ({
             <script
               type="application/ld+json"
               dangerouslySetInnerHTML={{
-                __html: serializeJsonLd({
+                __html: serialize({
                   '@context': 'https://schema.org',
                   '@id': 'https://wpm.so/#website',
                   '@type': 'WebSite',
@@ -190,7 +166,7 @@ export const BaseLayout = ({
             <script
               type="application/ld+json"
               dangerouslySetInnerHTML={{
-                __html: serializeJsonLd({
+                __html: serialize({
                   '@context': 'https://schema.org',
                   '@id': `${canonicalUrl}#software`,
                   '@type': 'SoftwareApplication',
@@ -220,7 +196,7 @@ export const BaseLayout = ({
             <script
               type="application/ld+json"
               dangerouslySetInnerHTML={{
-                __html: serializeJsonLd({
+                __html: serialize({
                   '@context': 'https://schema.org',
                   '@id': `${canonicalUrl}#webpage`,
                   '@type': 'WebPage',
