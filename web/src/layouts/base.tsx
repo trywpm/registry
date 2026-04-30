@@ -44,12 +44,13 @@ export const BaseLayout = ({
     htmx: false,
   },
 }: LayoutProps) => {
+  const cspNonce = c.get('cspNonce');
+  if (!cspNonce) {
+    throw new Error('CSP nonce is missing in context');
+  }
+
   const defaultOgImage = 'https://wpm.so/og.png';
   const finalOgImage = ogImage ?? defaultOgImage;
-
-  // no-op to avoid unused variable error.
-  // We might need `c` in the future for something like analytics or dynamic meta tags.
-  c.get('');
 
   const ogImgAlt = originalTitle.replace(' - wpm', '');
   const title = homepage ? originalTitle : `${originalTitle} - wpm`;
@@ -63,6 +64,7 @@ export const BaseLayout = ({
           <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
           <script
+            nonce={cspNonce}
             dangerouslySetInnerHTML={{
               __html: `
                 const getTheme=()=>"undefined" !== typeof localStorage&&localStorage.getItem("theme")?localStorage.getItem("theme"):window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light";"dark"===getTheme()?document.documentElement.classList.add("dark"):document.documentElement.classList.remove("dark");

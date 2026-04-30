@@ -21,6 +21,10 @@ import type { Package } from '@wpm/manifest/package';
 
 export const PackagePage = async (c: Context) => {
   const name = c.req.param('name');
+  const cspNonce = c.get('cspNonce');
+  if (!cspNonce) {
+    throw new Error('CSP nonce is missing in context');
+  }
 
   if (!name) {
     return c.notFound();
@@ -41,7 +45,7 @@ export const PackagePage = async (c: Context) => {
     }
   >();
 
-  const embedsState = new EmbedsState();
+  const embedsState = new EmbedsState(cspNonce);
   const ssHandler = new ScreenshotHandler(manifest.name);
 
   const rewriter = new HTMLRewriter()
@@ -77,7 +81,7 @@ export const PackagePage = async (c: Context) => {
           : `View ${manifest.name} on the wpm package registry with version details, dependency info, and installation instructions.`
       }
     >
-      <script dangerouslySetInnerHTML={{ __html: imageFallbackScript }} />
+      <script nonce={cspNonce} dangerouslySetInnerHTML={{ __html: imageFallbackScript }} />
 
       <main class="grow">
         <div class="container mx-auto py-6 sm:py-8">
