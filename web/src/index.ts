@@ -1,4 +1,5 @@
 import { Hono } from 'hono';
+import { trimTrailingSlash } from 'hono/trailing-slash';
 
 import { NotFound } from '@/pages/404';
 import { ServerError } from '@/pages/500';
@@ -11,8 +12,9 @@ const app = new Hono<{
   Variables: {
     cspNonce: string;
   };
-}>();
+}>({ strict: true });
 
+app.use('*', trimTrailingSlash({ alwaysRedirect: true }));
 app.use('*', async (c, next) => {
   const nonce = btoa(crypto.randomUUID());
   const csp = [
