@@ -3,7 +3,8 @@
   "private": true,
   "exports": {
     "./test": "./src/test.ts",
-    "./datetime": "./src/datetime.ts"
+    "./datetime": "./src/datetime.ts",
+    "./serialize": "./src/serialize.ts"
   },
   "dependencies": {
     "hono": "catalog:"
