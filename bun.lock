@@ -63,6 +63,7 @@
         "clsx": "^2.1.1",
         "hono": "catalog:",
         "htmx.org": "^2.0.10",
+        "lite-youtube-embed": "^0.3.4",
         "lucide": "^1.11.0",
         "postgres": "catalog:",
         "serialize-javascript": "^7.0.5",
@@ -484,6 +485,8 @@
     "lightningcss-win32-arm64-msvc": ["lightningcss-win32-arm64-msvc@1.32.0", "", { "os": "win32", "cpu": "arm64" }, "sha512-8SbC8BR40pS6baCM8sbtYDSwEVQd4JlFTOlaD3gWGHfThTcABnNDBda6eTZeqbofalIJhFx0qKzgHJmcPTnGdw=="],
 
     "lightningcss-win32-x64-msvc": ["lightningcss-win32-x64-msvc@1.32.0", "", { "os": "win32", "cpu": "x64" }, "sha512-Amq9B/SoZYdDi1kFrojnoqPLxYhQ4Wo5XiL8EVJrVsB8ARoC1PWW6VGtT0WKCemjy8aC+louJnjS7U18x3b06Q=="],
+
+    "lite-youtube-embed": ["lite-youtube-embed@0.3.4", "", {}, "sha512-aXgxpwK7AIW58GEbRzA8EYaY4LWvF3FKak6B9OtSJmuNyLhX2ouD4cMTxz/yR5HFInhknaYd2jLWOTRTvT8oAw=="],
 
     "lucide": ["lucide@1.11.0", "", {}, "sha512-2uvbGlcztUY+z0Ef++YCaxD6mtzrPsUJ1qWbIfqZrZGRxZBCL3icE6g2nzRTtJ6YywOoXC5blL/NmkLI66en5g=="],
 

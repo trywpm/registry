@@ -15,6 +15,7 @@
     "clsx": "^2.1.1",
     "hono": "catalog:",
     "htmx.org": "^2.0.10",
+    "lite-youtube-embed": "^0.3.4",
     "lucide": "^1.11.0",
     "postgres": "catalog:",
     "serialize-javascript": "^7.0.5",
