@@ -36,9 +36,10 @@ const Renderers = {
         title="${title}"
         frameborder="0"
         loading="lazy"
-        allowfullscreen
         style="max-width:100%;aspect-ratio:16/9;"
+        referrerpolicy="strict-origin-when-cross-origin"
         sandbox="allow-scripts allow-same-origin allow-presentation"
+        allow="autoplay; fullscreen; encrypted-media; picture-in-picture; clipboard-write;"
       ></iframe>`;
   },
 };
