@@ -41,7 +41,7 @@ function DesktopNav() {
   );
 }
 
-function CTAButtons({ mobile = false }: { mobile?: boolean }) {
+function CTAButtons({ mobile = false, waitlist = true }: { mobile?: boolean; waitlist?: boolean }) {
   return (
     <div
       className={cn(
@@ -49,7 +49,11 @@ function CTAButtons({ mobile = false }: { mobile?: boolean }) {
         mobile ? 'flex flex-col py-3' : 'ml-auto hidden md:flex items-center',
       )}
     >
-      {mobile ? (
+      {waitlist ? (
+        <Button asChild size="sm" className="w-full h-7.75">
+          <a href="/waitlist">Join Waitlist</a>
+        </Button>
+      ) : mobile ? (
         <>
           <Button asChild size="sm" className="w-full h-7.75">
             <a href="/signup">Sign Up</a>
