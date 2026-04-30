@@ -2,7 +2,8 @@ import type { Context } from 'hono';
 
 import { getCookie, setCookie } from 'hono/cookie';
 import { readableTimeDiff } from '@wpm/util/datetime';
-import { searchPackages, isAllowedSort, isType } from '@wpm/d1/search';
+import { searchPackages, isType } from '@wpm/d1/search';
+import type { D1ResultWithNext, SearchPackageRow } from '@wpm/d1/search';
 
 import { Badge } from '@/components/badge';
 import { BaseLayout } from '@/layouts/base';
@@ -13,9 +14,112 @@ import { Separator } from '@/components/separator';
 import { PackageSearch } from '@/components/package-search';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/card';
 
+const StateMessage = ({ heading, description }: { heading: string; description: string }) => (
+  <div class="flex grow flex-col items-center justify-center text-center py-16 w-full">
+    <Package
+      className="h-12 w-12 text-muted-foreground mx-auto mb-4 opacity-50"
+      aria-hidden="true"
+    />
+    <h2 class="text-lg font-semibold mb-2">{heading}</h2>
+    <p class="text-muted-foreground">{description}</p>
+  </div>
+);
+
+const PackageCard = ({ pkg }: { pkg: SearchPackageRow }) => (
+  <Card key={pkg.id}>
+    <CardHeader>
+      <div class="flex items-center gap-3">
+        <div
+          class="p-2 bg-muted rounded-lg flex items-center justify-center w-9 h-9"
+          aria-hidden="true"
+        >
+          <Package className="h-5 w-5 text-primary" />
+        </div>
+        <div class="min-w-0 flex-1">
+          <CardTitle>
+            <a
+              href={`/package/${pkg.name}`}
+              class="hover:text-primary transition-colors focus-visible:outline focus-visible:outline-primary focus-visible:rounded-sm"
+            >
+              {pkg.name}
+            </a>
+            <Badge variant="outline" className="text-xs ml-2 capitalize bg-muted">
+              {pkg.type}
+              <span class="sr-only">package type</span>
+            </Badge>
+          </CardTitle>
+          <CardDescription className="flex items-center gap-2">
+            <span>{pkg.version}</span>
+            <span aria-hidden="true">•</span>
+            <span>{readableTimeDiff(new Date(pkg.package_published))}</span>
+          </CardDescription>
+        </div>
+      </div>
+    </CardHeader>
+    <Separator className="bg-border/50" />
+    <CardContent className="space-y-4">
+      <p class="text-sm text-muted-foreground line-clamp-2">{pkg.description}</p>
+
+      {pkg.tags.length > 0 && (
+        <div class="flex flex-wrap gap-1">
+          {pkg.tags.slice(0, 3).map((keyword: string) => (
+            <Badge key={keyword} variant="secondary" className="text-xs">
+              {keyword}
+            </Badge>
+          ))}
+          {pkg.tags.length > 3 && (
+            <Badge variant="secondary" className="text-xs">
+              +{pkg.tags.length - 3}
+            </Badge>
+          )}
+        </div>
+      )}
+    </CardContent>
+  </Card>
+);
+
+const LoadMoreButton = ({
+  query,
+  type,
+  cursor,
+}: {
+  query: string;
+  type?: string;
+  cursor: string;
+}) => {
+  const nextParams = new URLSearchParams();
+  if (query) {
+    nextParams.set('q', query);
+  }
+  if (cursor) {
+    nextParams.set('cursor', cursor);
+  }
+  if (type) {
+    nextParams.set('type', type);
+  }
+
+  return (
+    <div id="load-more-wrapper" class="flex justify-center mt-4 w-full">
+      <Button
+        size="lg"
+        type="button"
+        variant="outline"
+        hx-get={`/search?${nextParams.toString()}`}
+        hx-swap="outerHTML"
+        hx-target="#load-more-wrapper"
+        aria-label="Load more search results"
+      >
+        Load More
+      </Button>
+    </div>
+  );
+};
+
 export const SearchPage = async (c: Context) => {
   const url = new URL(c.req.url);
-  const sort = c.req.query('sort');
+  const isHtmxReq = c.req.header('hx-request') === 'true';
+  const cursorParam = c.req.query('cursor');
+  const isLoadMore = isHtmxReq && !!cursorParam;
 
   let query = c.req.query('q');
   if (typeof query !== 'string') {
@@ -27,117 +131,126 @@ export const SearchPage = async (c: Context) => {
     type = undefined;
   }
 
-  const session = c.env.registry_search.withSession(
-    getCookie(c, 'search_bm') ?? 'first-unconstrained',
-  );
-  const packages = await searchPackages(session, url, c.executionCtx, {
-    q: query,
-    type,
-    sort: isAllowedSort(sort) ? sort : 'popularity',
-    cursor: c.req.query('cursor'),
-  });
+  let packages: D1ResultWithNext<SearchPackageRow> | null = null;
 
-  setCookie(c, 'search_bm', session.getBookmark() ?? '', {
-    path: url.pathname,
-    secure: true,
-    httpOnly: true,
-    sameSite: 'lax',
-  });
+  if (query.trim() !== '') {
+    const session = c.env.registry_search.withSession(
+      getCookie(c, 'search_bm') ?? 'first-unconstrained',
+    );
 
-  const nextUrl = new URL(url);
-  if (packages.nextCursor) {
-    nextUrl.searchParams.set('cursor', packages.nextCursor);
-  } else {
-    nextUrl.searchParams.delete('cursor');
+    packages = await searchPackages(session, url, c.executionCtx, {
+      q: query,
+      type,
+      cursor: cursorParam,
+    });
+
+    setCookie(c, 'search_bm', session.getBookmark() ?? '', {
+      path: url.pathname,
+      secure: true,
+      httpOnly: true,
+      sameSite: 'lax',
+    });
+  }
+
+  if (isHtmxReq) {
+    if (!packages) {
+      return c.html(
+        <StateMessage
+          heading="Start searching"
+          description="Type at least 3 characters to search for WordPress plugins and themes."
+        />,
+      );
+    }
+
+    if (isLoadMore) {
+      return c.html(
+        <>
+          {packages.results.map((pkg) => (
+            <PackageCard key={pkg.id} pkg={pkg} />
+          ))}
+          {packages.nextCursor && (
+            <LoadMoreButton query={query} type={type} cursor={packages.nextCursor} />
+          )}
+        </>,
+      );
+    }
+
+    if (packages.results.length === 0) {
+      return c.html(
+        <StateMessage
+          heading="No packages found"
+          description="Try adjusting your search query to find what you're looking for."
+        />,
+      );
+    }
+
+    return c.html(
+      <div class="grid gap-4 w-full">
+        {packages.results.map((pkg) => (
+          <PackageCard key={pkg.id} pkg={pkg} />
+        ))}
+        {packages.nextCursor && (
+          <LoadMoreButton query={query} type={type} cursor={packages.nextCursor} />
+        )}
+      </div>,
+    );
   }
 
   return c.html(
     <BaseLayout
       c={c}
-      title="Search Packages"
+      loadVendorScripts={{ htmx: true }}
+      title={query ? `Search: ${query}` : 'Search Packages'}
       canonicalUrl={getCanonicalUrl(url)}
-      description="Search and discover WordPress plugins and themes with wpm."
+      description={
+        query
+          ? `Search results for "${query}"`
+          : 'Search and discover WordPress plugins and themes with wpm.'
+      }
     >
       <main class="flex grow flex-col">
-        <div class="container">
-          <PackageSearch
-            type={type}
-            query={query}
-            sort={isAllowedSort(sort) ? sort : 'popularity'}
-          />
-        </div>
+        <section class="container" aria-label="Search form">
+          <form
+            role="search"
+            hx-get="/search"
+            hx-target="#search-results"
+            hx-push-url="true"
+            hx-trigger="input[event.target.value.length >= 3 || event.target.value.length === 0] delay:300ms, submit"
+          >
+            {type && <input type="hidden" name="type" value={type} />}
+            <PackageSearch type={type} query={query} />
+          </form>
+        </section>
 
-        <section class="flex grow flex-col mb-8">
-          <div class="container flex grow flex-col">
-            {packages.results.length > 0 ? (
-              <div class="grid gap-4">
+        <section
+          id="search-results"
+          class="container flex grow flex-col mb-8"
+          role="region"
+          aria-label="Search results"
+          aria-live="polite"
+        >
+          {packages ? (
+            packages.results.length > 0 ? (
+              <div class="grid gap-4 w-full">
                 {packages.results.map((pkg) => (
-                  <Card key={pkg.id}>
-                    <CardHeader>
-                      <div class="flex items-center gap-3">
-                        <div class="p-2 bg-muted rounded-lg flex items-center justify-center w-9 h-9">
-                          <Package className="h-5 w-5 text-primary" />
-                        </div>
-                        <div class="min-w-0 flex-1">
-                          <CardTitle>
-                            <a
-                              href={`/package/${pkg.name}`}
-                              class="hover:text-primary transition-colors"
-                            >
-                              {pkg.name}
-                            </a>
-                            <Badge variant="outline" className="text-xs ml-2 capitalize bg-muted">
-                              {pkg.type}
-                            </Badge>
-                          </CardTitle>
-                          <CardDescription className="flex items-center gap-2">
-                            <span>{pkg.version}</span>
-                            <span>•</span>
-                            <span>{readableTimeDiff(new Date(pkg.package_published))}</span>
-                          </CardDescription>
-                        </div>
-                      </div>
-                    </CardHeader>
-
-                    <Separator className="bg-border/50" />
-
-                    <CardContent className="space-y-4">
-                      <p class="text-sm text-muted-foreground line-clamp-2">{pkg.description}</p>
-
-                      <div class="flex flex-wrap gap-1">
-                        {pkg.tags.slice(0, 3).map((keyword: string) => (
-                          <Badge key={keyword} variant="secondary" className="text-xs">
-                            {keyword}
-                          </Badge>
-                        ))}
-                        {pkg.tags.length > 3 && (
-                          <Badge variant="secondary" className="text-xs">
-                            +{pkg.tags.length - 3}
-                          </Badge>
-                        )}
-                      </div>
-                    </CardContent>
-                  </Card>
+                  <PackageCard key={pkg.id} pkg={pkg} />
                 ))}
-
                 {packages.nextCursor && (
-                  <div class="flex justify-center">
-                    <Button variant="outline" size="lg" className="mt-4" asChild>
-                      <a href={nextUrl.toString()}>Load More</a>
-                    </Button>
-                  </div>
+                  <LoadMoreButton query={query} type={type} cursor={packages.nextCursor} />
                 )}
               </div>
             ) : (
-              <div class="flex grow flex-col items-center justify-center text-center py-16">
-                <Package className="h-12 w-12 text-muted-foreground mx-auto mb-4 opacity-50" />
-                <h3 class="text-lg font-semibold mb-2">No packages found</h3>
-                <p class="text-muted-foreground">
-                  Try adjusting your search query to find what you're looking for.
-                </p>
-              </div>
-            )}
-          </div>
+              <StateMessage
+                heading="No packages found"
+                description="Try adjusting your search query to find what you're looking for."
+              />
+            )
+          ) : (
+            <StateMessage
+              heading="Start searching"
+              description="Type at least 3 characters to search for WordPress plugins and themes."
+            />
+          )}
         </section>
       </main>
     </BaseLayout>,
