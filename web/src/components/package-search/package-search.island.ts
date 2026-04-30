@@ -1,8 +1,11 @@
 class PackageSearchElement extends HTMLElement {
+  private searchInput: HTMLInputElement | null = null;
   private abortController: AbortController | null = null;
 
   connectedCallback(): void {
     setTimeout(() => {
+      this.searchInput = this.querySelector<HTMLInputElement>('input[data-slot="search-input"]');
+
       this.init();
     }, 0);
   }
@@ -16,6 +19,25 @@ class PackageSearchElement extends HTMLElement {
     this.abortController?.abort();
     this.abortController = new AbortController();
     const { signal } = this.abortController;
+
+    this.searchInput?.addEventListener(
+      'input',
+      (e: Event) => {
+        if (!(e.target instanceof HTMLInputElement)) {
+          return;
+        }
+
+        const inputLen = e.target.value.trim().length;
+        if (inputLen >= 3 || inputLen === 0) {
+          this.dispatchEvent(
+            new CustomEvent('wpm-package-search-trigger', {
+              bubbles: true,
+            }),
+          );
+        }
+      },
+      { signal },
+    );
 
     this.addEventListener(
       'wpm-select-action',
@@ -39,10 +61,9 @@ class PackageSearchElement extends HTMLElement {
 
   private handleTypeChange(typeVal: string): void {
     const url = new URL(window.location.href);
-    const searchInput = this.querySelector<HTMLInputElement>('[data-slot="search-input"]');
 
-    if (searchInput && searchInput.value.trim() !== '') {
-      url.searchParams.set('q', searchInput.value.trim());
+    if (this.searchInput && this.searchInput.value.trim() !== '') {
+      url.searchParams.set('q', this.searchInput.value.trim());
     } else {
       url.searchParams.delete('q');
     }
