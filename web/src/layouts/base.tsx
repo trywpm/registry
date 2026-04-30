@@ -1,4 +1,5 @@
 import { html } from 'hono/html';
+import serialize from 'serialize-javascript';
 
 import type { Context } from 'hono';
 import type { Child } from 'hono/jsx';
@@ -133,7 +134,7 @@ export const BaseLayout = ({
             <script
               type="application/ld+json"
               dangerouslySetInnerHTML={{
-                __html: JSON.stringify({
+                __html: serialize({
                   '@context': 'https://schema.org',
                   '@id': 'https://wpm.so/#website',
                   '@type': 'WebSite',
@@ -165,7 +166,7 @@ export const BaseLayout = ({
             <script
               type="application/ld+json"
               dangerouslySetInnerHTML={{
-                __html: JSON.stringify({
+                __html: serialize({
                   '@context': 'https://schema.org',
                   '@id': `${canonicalUrl}#software`,
                   '@type': 'SoftwareApplication',
@@ -195,7 +196,7 @@ export const BaseLayout = ({
             <script
               type="application/ld+json"
               dangerouslySetInnerHTML={{
-                __html: JSON.stringify({
+                __html: serialize({
                   '@context': 'https://schema.org',
                   '@id': `${canonicalUrl}#webpage`,
                   '@type': 'WebPage',
