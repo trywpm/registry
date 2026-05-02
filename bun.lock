@@ -66,7 +66,7 @@
         "hono": "catalog:",
         "htmx.org": "^2.0.10",
         "lite-youtube-embed": "^0.3.4",
-        "lucide": "^1.11.0",
+        "lucide": "^1.14.0",
         "postgres": "catalog:",
         "tailwind-merge": "^3.5.0",
         "tw-animate-css": "^1.4.0",
@@ -946,7 +946,7 @@
 
     "lru-cache": ["lru-cache@5.1.1", "", { "dependencies": { "yallist": "^3.0.2" } }, "sha512-KpNARQA3Iwv+jTA0utUVVbrh+Jlrr1Fv0e56GGzAFOXN7dk/FviaDW8LHmK52DlcH4WP2n6gI8vN1aesBFgo9w=="],
 
-    "lucide": ["lucide@1.11.0", "", {}, "sha512-2uvbGlcztUY+z0Ef++YCaxD6mtzrPsUJ1qWbIfqZrZGRxZBCL3icE6g2nzRTtJ6YywOoXC5blL/NmkLI66en5g=="],
+    "lucide": ["lucide@1.14.0", "", {}, "sha512-IoRC3lHwemJWvsXKcHK90hkgY4h1HGztBL63w2XwFtIu8gFDPp4/kiuqVtlN3vaM9bxsLQ4ZUBJfGsbKFaB2IA=="],
 
     "magic-string": ["magic-string@0.30.21", "", { "dependencies": { "@jridgewell/sourcemap-codec": "^1.5.5" } }, "sha512-vd2F4YUyEXKGcLHoq+TEyCjxueSeHnFxyyjNp80yg0XV4vUhnDer/lvvlqM/arB5bXQN5K2/3oinyCRyx8T2CQ=="],
 
