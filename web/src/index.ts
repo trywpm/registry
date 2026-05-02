@@ -20,15 +20,16 @@ app.use('*', async (c, next) => {
   const csp = [
     `base-uri 'self'`,
     `default-src 'none'`,
-    `connect-src 'self'`,
     `object-src 'none'`,
     `form-action 'self'`,
     `font-src 'self' https:`,
     `frame-ancestors 'none'`,
+    `worker-src 'self' blob:`,
     `img-src 'self' data: https:`,
     `style-src 'self' 'unsafe-inline'`,
-    `script-src 'nonce-${nonce}' 'self' 'unsafe-inline'`,
+    `connect-src 'self' ${import.meta.env.VITE_CLERK_DOMAIN}`,
     `frame-src 'self' https://www.youtube-nocookie.com https://videopress.com`,
+    `script-src 'nonce-${nonce}' 'self' 'unsafe-inline' ${import.meta.env.VITE_CLERK_DOMAIN}`,
   ].join('; ');
 
   c.set('cspNonce', nonce);
