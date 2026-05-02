@@ -15,6 +15,7 @@ import {
   WifiOff as WifiOffD,
   Monitor as MonitorD,
   Package as PackageD,
+  Loader2 as Loader2D,
   Download as DownloadD,
   Terminal as TerminalD,
   ChevronUp as ChevronUpD,
@@ -123,6 +124,7 @@ export const Monitor = createIcon(MonitorD);
 export const CheckIcon = createIcon(CheckD);
 export const Download = createIcon(DownloadD);
 export const Terminal = createIcon(TerminalD);
+export const Loader2Icon = createIcon(Loader2D);
 export const ArrowRight = createIcon(ArrowRightD);
 export const ShieldCheck = createIcon(ShieldCheckD);
 export const ChevronUpIcon = createIcon(ChevronUpD);
