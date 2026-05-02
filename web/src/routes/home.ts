@@ -2,7 +2,9 @@ import { Hono } from 'hono';
 
 import { HomePage } from '@/pages/home';
 import { DocsPage } from '@/pages/docs';
+import { LoginPage } from '@/pages/login';
 import { SearchPage } from '@/pages/search';
+import { SignUpPage } from '@/pages/signup';
 import { ThemesPage } from '@/pages/themes';
 import { PluginsPage } from '@/pages/plugins';
 import { WaitlistPage } from '@/pages/waitlist';
@@ -41,6 +43,14 @@ homeRoute.get('/search', (c) => {
 
 homeRoute.on(['GET', 'POST'], '/waitlist', (c) => {
   return WaitlistPage(c);
+});
+
+homeRoute.get('/login', (c) => {
+  return LoginPage(c);
+});
+
+homeRoute.get('/signup', (c) => {
+  return SignUpPage(c);
 });
 
 export default homeRoute;
