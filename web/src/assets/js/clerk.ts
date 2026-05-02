@@ -30,7 +30,7 @@ await clerk.load({
   appearance: {
     theme: shadcn,
     elements: {
-      cardBox: '!shadow-none',
+      cardBox: '!shadow-none md:min-w-md',
     },
   },
 });
