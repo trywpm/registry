@@ -8,6 +8,7 @@ type WpmScrollLockState = {
 };
 
 interface Window {
+  __internal_ClerkUICtor?: ClerkUIConstructor;
   __WPM_SCROLL_LOCK_STATE__?: WpmScrollLockState;
 }
 
