@@ -75,11 +75,14 @@ if (signInContainer instanceof HTMLDivElement) {
   clerk.mountSignIn(signInContainer, {
     routing: 'hash',
     signUpUrl: '/signup',
+    waitlistUrl: '/waitlist',
   });
 }
 
 if (waitlistContainer instanceof HTMLDivElement) {
   handleSpinnerTransition(waitlistContainer, spinner);
 
-  clerk.mountWaitlist(waitlistContainer);
+  clerk.mountWaitlist(waitlistContainer, {
+    signInUrl: '/login',
+  });
 }
