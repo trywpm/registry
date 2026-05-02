@@ -57,6 +57,7 @@ function handleSpinnerTransition(container: HTMLElement, spinner: HTMLElement | 
 const spinner = document.getElementById('clerk-spinner');
 const signUpContainer = document.getElementById('sign-up-container');
 const signInContainer = document.getElementById('sign-in-container');
+const waitlistContainer = document.getElementById('waitlist-container');
 
 if (signUpContainer instanceof HTMLDivElement) {
   handleSpinnerTransition(signUpContainer, spinner);
@@ -64,6 +65,7 @@ if (signUpContainer instanceof HTMLDivElement) {
   clerk.mountSignUp(signUpContainer, {
     routing: 'hash',
     signInUrl: '/login',
+    waitlistUrl: '/waitlist',
   });
 }
 
@@ -74,4 +76,10 @@ if (signInContainer instanceof HTMLDivElement) {
     routing: 'hash',
     signUpUrl: '/signup',
   });
+}
+
+if (waitlistContainer instanceof HTMLDivElement) {
+  handleSpinnerTransition(waitlistContainer, spinner);
+
+  clerk.mountWaitlist(waitlistContainer);
 }
