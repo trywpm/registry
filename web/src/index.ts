@@ -28,8 +28,8 @@ app.use('*', async (c, next) => {
     `img-src 'self' data: https:`,
     `style-src 'self' 'unsafe-inline'`,
     `connect-src 'self' ${import.meta.env.VITE_CLERK_DOMAIN}`,
-    `frame-src 'self' https://www.youtube-nocookie.com https://videopress.com`,
-    `script-src 'nonce-${nonce}' 'self' 'unsafe-inline' ${import.meta.env.VITE_CLERK_DOMAIN}`,
+    `frame-src 'self' https://www.youtube-nocookie.com https://videopress.com https://challenges.cloudflare.com`,
+    `script-src 'nonce-${nonce}' 'self' 'unsafe-inline' ${import.meta.env.VITE_CLERK_DOMAIN} https://challenges.cloudflare.com`,
   ].join('; ');
 
   c.set('cspNonce', nonce);
