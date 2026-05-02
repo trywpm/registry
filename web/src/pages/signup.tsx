@@ -17,7 +17,7 @@ export const SignUpPage = (c: Context) => {
         <div className="relative w-full max-w-sm">
           <div
             id="clerk-spinner"
-            className="absolute inset-0 flex items-center justify-center z-30 transition-opacity duration-500"
+            className="absolute inset-0 flex items-center justify-center z-30 transition-opacity duration-250"
           >
             <Spinner className="size-12" />
           </div>
