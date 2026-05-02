@@ -27,6 +27,7 @@ type LayoutProps = {
   addCsrfToken?: boolean;
   loadVendorScripts?: {
     htmx?: boolean;
+    clerk?: boolean;
   };
 };
 
@@ -42,6 +43,7 @@ export const BaseLayout = ({
   homepage = false,
   loadVendorScripts = {
     htmx: false,
+    clerk: false,
   },
 }: LayoutProps) => {
   const cspNonce = c.get('cspNonce');
@@ -62,6 +64,14 @@ export const BaseLayout = ({
         <head>
           <meta charset="UTF-8" />
           <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+          {loadVendorScripts.clerk && (
+            <link
+              rel="preconnect"
+              href={`https://${import.meta.env.VITE_CLERK_DOMAIN}`}
+              crossorigin="anonymous"
+            />
+          )}
 
           <script
             nonce={cspNonce}
@@ -88,6 +98,17 @@ export const BaseLayout = ({
             type="font/woff2"
             crossorigin="anonymous"
           />
+          {loadVendorScripts.clerk && (
+            <>
+              <link
+                as="script"
+                rel="preload"
+                href={`https://${import.meta.env.VITE_CLERK_DOMAIN}/npm/@clerk/ui@6/dist/ui.browser.js`}
+                crossorigin="anonymous"
+              />
+              <script type="module" src={getAssetUrl(`/src/assets/js/clerk.ts`)}></script>
+            </>
+          )}
 
           {import.meta.env.DEV && <script type="module" src="/@vite/client"></script>}
 
@@ -131,6 +152,18 @@ export const BaseLayout = ({
             <>
               <meta name="htmx-config" content='{"allowEval":false}' />
               <script type="module" src={getAssetUrl('/src/assets/js/htmx.ts')}></script>
+            </>
+          )}
+
+          {loadVendorScripts.clerk && (
+            <>
+              <script
+                id="auth-ui-loader"
+                async
+                crossorigin="anonymous"
+                src={`https://${import.meta.env.VITE_CLERK_DOMAIN}/npm/@clerk/ui@6/dist/ui.browser.js`}
+              ></script>
+              <script type="module" src={getAssetUrl('/src/assets/js/clerk.ts')}></script>
             </>
           )}
 
