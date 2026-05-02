@@ -98,6 +98,7 @@ export default defineConfig(({ mode }) => ({
         rolldownOptions: {
           input: {
             htmx: 'src/assets/js/htmx.ts',
+            clerk: 'src/assets/js/clerk.ts',
             style: 'src/assets/css/style.css',
             'lite-yt': 'src/assets/js/lite-yt.ts',
             ...webComponents,
