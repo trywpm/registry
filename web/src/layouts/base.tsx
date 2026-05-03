@@ -103,10 +103,15 @@ export const BaseLayout = ({
               <link
                 as="script"
                 rel="preload"
-                href={`https://${import.meta.env.VITE_CLERK_DOMAIN}/npm/@clerk/ui@6/dist/ui.browser.js`}
+                href={`https://${import.meta.env.VITE_CLERK_DOMAIN}/npm/@clerk/ui@1.7.0/dist/ui.browser.js`}
                 crossorigin="anonymous"
               />
-              <script type="module" src={getAssetUrl(`/src/assets/js/clerk.ts`)}></script>
+              <link
+                as="script"
+                rel="preload"
+                href={`https://${import.meta.env.VITE_CLERK_DOMAIN}/npm/@clerk/clerk-js@6.8.0/dist/clerk.browser.js`}
+                crossorigin="anonymous"
+              />
             </>
           )}
 
@@ -158,12 +163,17 @@ export const BaseLayout = ({
           {loadVendorScripts.clerk && (
             <>
               <script
+                defer
                 id="auth-ui-loader"
-                async
                 crossorigin="anonymous"
-                src={`https://${import.meta.env.VITE_CLERK_DOMAIN}/npm/@clerk/ui@6/dist/ui.browser.js`}
+                src={`https://${import.meta.env.VITE_CLERK_DOMAIN}/npm/@clerk/ui@1.7.0/dist/ui.browser.js`}
               ></script>
-              <script type="module" src={getAssetUrl('/src/assets/js/clerk.ts')}></script>
+              <script
+                defer
+                crossorigin="anonymous"
+                data-clerk-publishable-key={import.meta.env.VITE_CLERK_PUBLISHABLE_KEY}
+                src={`https://${import.meta.env.VITE_CLERK_DOMAIN}/npm/@clerk/clerk-js@6.8.0/dist/clerk.browser.js`}
+              ></script>
             </>
           )}
 
