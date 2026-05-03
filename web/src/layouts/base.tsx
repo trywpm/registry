@@ -20,14 +20,15 @@ type LayoutProps = {
   ogImage?: string;
   manifest?: {
     name: string;
-    description?: string;
     version?: string;
     license?: string;
+    description?: string;
   };
   addCsrfToken?: boolean;
   loadVendorScripts?: {
     htmx?: boolean;
     clerk?: boolean;
+    clerkUi?: boolean;
   };
 };
 
@@ -44,6 +45,7 @@ export const BaseLayout = ({
   loadVendorScripts = {
     htmx: false,
     clerk: false,
+    clerkUi: false,
   },
 }: LayoutProps) => {
   const cspNonce = c.get('cspNonce');
@@ -98,21 +100,21 @@ export const BaseLayout = ({
             type="font/woff2"
             crossorigin="anonymous"
           />
+          {loadVendorScripts.clerkUi && (
+            <link
+              as="script"
+              rel="preload"
+              href={`https://${import.meta.env.VITE_CLERK_DOMAIN}/npm/@clerk/ui@1.7.0/dist/ui.browser.js`}
+              crossorigin="anonymous"
+            />
+          )}
           {loadVendorScripts.clerk && (
-            <>
-              <link
-                as="script"
-                rel="preload"
-                href={`https://${import.meta.env.VITE_CLERK_DOMAIN}/npm/@clerk/ui@1.7.0/dist/ui.browser.js`}
-                crossorigin="anonymous"
-              />
-              <link
-                as="script"
-                rel="preload"
-                href={`https://${import.meta.env.VITE_CLERK_DOMAIN}/npm/@clerk/clerk-js@6.8.0/dist/clerk.browser.js`}
-                crossorigin="anonymous"
-              />
-            </>
+            <link
+              as="script"
+              rel="preload"
+              href={`https://${import.meta.env.VITE_CLERK_DOMAIN}/npm/@clerk/clerk-js@6.8.0/dist/clerk.browser.js`}
+              crossorigin="anonymous"
+            />
           )}
 
           {import.meta.env.DEV && <script type="module" src="/@vite/client"></script>}
@@ -160,21 +162,20 @@ export const BaseLayout = ({
             </>
           )}
 
+          {loadVendorScripts.clerkUi && (
+            <script
+              defer
+              crossorigin="anonymous"
+              src={`https://${import.meta.env.VITE_CLERK_DOMAIN}/npm/@clerk/ui@1.7.0/dist/ui.browser.js`}
+            ></script>
+          )}
           {loadVendorScripts.clerk && (
-            <>
-              <script
-                defer
-                id="auth-ui-loader"
-                crossorigin="anonymous"
-                src={`https://${import.meta.env.VITE_CLERK_DOMAIN}/npm/@clerk/ui@1.7.0/dist/ui.browser.js`}
-              ></script>
-              <script
-                defer
-                crossorigin="anonymous"
-                data-clerk-publishable-key={import.meta.env.VITE_CLERK_PUBLISHABLE_KEY}
-                src={`https://${import.meta.env.VITE_CLERK_DOMAIN}/npm/@clerk/clerk-js@6.8.0/dist/clerk.browser.js`}
-              ></script>
-            </>
+            <script
+              defer
+              crossorigin="anonymous"
+              data-clerk-publishable-key={import.meta.env.VITE_CLERK_PUBLISHABLE_KEY}
+              src={`https://${import.meta.env.VITE_CLERK_DOMAIN}/npm/@clerk/clerk-js@6.8.0/dist/clerk.browser.js`}
+            ></script>
           )}
 
           {/* JSON-LD Schemas */}
