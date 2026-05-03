@@ -1,39 +1,4 @@
-import { Clerk } from '@clerk/clerk-js';
 import { shadcn } from '@clerk/ui/themes';
-
-if (!import.meta.env.VITE_CLERK_PUBLISHABLE_KEY) {
-  throw new Error('Add your VITE_CLERK_PUBLISHABLE_KEY to the .env file');
-}
-
-await new Promise<void>((resolve, reject) => {
-  if (window.__internal_ClerkUICtor) {
-    return resolve();
-  }
-
-  const script = document.getElementById('auth-ui-loader');
-
-  if (!script) {
-    return reject(new Error('Auth UI loader script not found'));
-  }
-
-  script.addEventListener('load', () => {
-    resolve();
-  });
-  script.addEventListener('error', () => {
-    reject(new Error('Failed to load auth ui module'));
-  });
-});
-
-const clerk = new Clerk(import.meta.env.VITE_CLERK_PUBLISHABLE_KEY);
-await clerk.load({
-  ui: { ClerkUI: window.__internal_ClerkUICtor },
-  appearance: {
-    theme: shadcn,
-    elements: {
-      cardBox: '!shadow-none md:min-w-md',
-    },
-  },
-});
 
 function handleSpinnerTransition(container: HTMLElement, spinner: HTMLElement | null) {
   if (!spinner) {
@@ -54,35 +19,51 @@ function handleSpinnerTransition(container: HTMLElement, spinner: HTMLElement | 
   observer.observe(container, { childList: true });
 }
 
-const spinner = document.getElementById('clerk-spinner');
-const signUpContainer = document.getElementById('sign-up-container');
-const signInContainer = document.getElementById('sign-in-container');
-const waitlistContainer = document.getElementById('waitlist-container');
+window.addEventListener('load', async () => {
+  if (!window.Clerk) {
+    throw new Error('auth sdk not loaded');
+  }
 
-if (signUpContainer instanceof HTMLDivElement) {
-  handleSpinnerTransition(signUpContainer, spinner);
-
-  clerk.mountSignUp(signUpContainer, {
-    routing: 'hash',
-    signInUrl: '/login',
-    waitlistUrl: '/waitlist',
+  await window.Clerk.load({
+    ui: { ClerkUI: window.__internal_ClerkUICtor },
+    appearance: {
+      theme: shadcn,
+      elements: {
+        cardBox: '!shadow-none md:min-w-md',
+      },
+    },
   });
-}
 
-if (signInContainer instanceof HTMLDivElement) {
-  handleSpinnerTransition(signInContainer, spinner);
+  const spinner = document.getElementById('clerk-spinner');
+  const signUpContainer = document.getElementById('sign-up-container');
+  const signInContainer = document.getElementById('sign-in-container');
+  const waitlistContainer = document.getElementById('waitlist-container');
 
-  clerk.mountSignIn(signInContainer, {
-    routing: 'hash',
-    signUpUrl: '/signup',
-    waitlistUrl: '/waitlist',
-  });
-}
+  if (signUpContainer instanceof HTMLDivElement) {
+    handleSpinnerTransition(signUpContainer, spinner);
 
-if (waitlistContainer instanceof HTMLDivElement) {
-  handleSpinnerTransition(waitlistContainer, spinner);
+    window.Clerk.mountSignUp(signUpContainer, {
+      routing: 'hash',
+      signInUrl: '/login',
+      waitlistUrl: '/waitlist',
+    });
+  }
 
-  clerk.mountWaitlist(waitlistContainer, {
-    signInUrl: '/login',
-  });
-}
+  if (signInContainer instanceof HTMLDivElement) {
+    handleSpinnerTransition(signInContainer, spinner);
+
+    window.Clerk.mountSignIn(signInContainer, {
+      routing: 'hash',
+      signUpUrl: '/signup',
+      waitlistUrl: '/waitlist',
+    });
+  }
+
+  if (waitlistContainer instanceof HTMLDivElement) {
+    handleSpinnerTransition(waitlistContainer, spinner);
+
+    window.Clerk.mountWaitlist(waitlistContainer, {
+      signInUrl: '/login',
+    });
+  }
+});
