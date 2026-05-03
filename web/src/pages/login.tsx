@@ -9,9 +9,9 @@ export const LoginPage = (c: Context) => {
     <BaseLayout
       c={c}
       title="Login"
-      loadVendorScripts={{ clerk: true }}
       description="Login to your account."
       canonicalUrl={getCanonicalUrl(c.req.url)}
+      loadVendorScripts={{ clerk: true, clerkUi: true }}
     >
       <style
         dangerouslySetInnerHTML={{

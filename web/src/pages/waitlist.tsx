@@ -9,9 +9,9 @@ export const WaitlistPage = (c: Context) => {
     <BaseLayout
       c={c}
       title="Waitlist"
-      loadVendorScripts={{ clerk: true }}
       description="Join the waitlist to get early access."
       canonicalUrl={getCanonicalUrl(c.req.url)}
+      loadVendorScripts={{ clerk: true, clerkUi: true }}
     >
       <style
         dangerouslySetInnerHTML={{

@@ -9,9 +9,9 @@ export const SignUpPage = (c: Context) => {
     <BaseLayout
       c={c}
       title="Sign Up"
-      loadVendorScripts={{ clerk: true }}
       description="Create an account to get started."
       canonicalUrl={getCanonicalUrl(c.req.url)}
+      loadVendorScripts={{ clerk: true, clerkUi: true }}
     >
       <main class="container flex grow items-center justify-center py-6 md:py-10">
         <div className="relative w-full max-w-sm">
