@@ -4,12 +4,14 @@
   "exports": {
     "./test": "./src/test.ts",
     "./datetime": "./src/datetime.ts",
-    "./serialize": "./src/serialize.ts"
+    "./serialize": "./src/serialize.ts",
+    "./validation": "./src/validation.ts"
   },
   "dependencies": {
     "hono": "catalog:"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "catalog:"
+    "@cloudflare/workers-types": "catalog:",
+    "vitest": "catalog:"
   }
 }
