@@ -180,17 +180,15 @@ describe('Strictness: Exhaustive Negative Space', () => {
     },
   };
 
-  for (const role of ALL_ROLES) {
-    for (const resource of ALL_RESOURCES) {
-      for (const action of ALL_ACTIONS) {
-        const isAllowed = expectedGrants[role][resource].includes(action);
+  const deniedCombinations = ALL_ROLES.flatMap((role) =>
+    ALL_RESOURCES.flatMap((resource) =>
+      ALL_ACTIONS.filter((action) => !expectedGrants[role][resource].includes(action)).map(
+        (action) => [role, action, resource] as const,
+      ),
+    ),
+  );
 
-        if (!isAllowed) {
-          it(`strictly denies ${role} to ${action} on ${resource}`, () => {
-            expect(canUser(role, action, resource)).toBe(false);
-          });
-        }
-      }
-    }
-  }
+  it.each(deniedCombinations)('strictly denies %s to %s on %s', (role, action, resource) => {
+    expect(canUser(role, action, resource)).toBe(false);
+  });
 });
