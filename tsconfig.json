@@ -4,6 +4,7 @@
     { "path": "web" },
     { "path": "registry" },
     { "path": "packages/d1" },
+    { "path": "packages/rbac" },
     { "path": "packages/util" },
     { "path": "packages/manifest" }
   ]

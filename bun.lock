@@ -31,6 +31,12 @@
         "vitest": "catalog:",
       },
     },
+    "packages/rbac": {
+      "name": "@wpm/rbac",
+      "devDependencies": {
+        "vitest": "catalog:",
+      },
+    },
     "packages/util": {
       "name": "@wpm/util",
       "dependencies": {
@@ -612,6 +618,8 @@
     "@wpm/d1": ["@wpm/d1@workspace:packages/d1"],
 
     "@wpm/manifest": ["@wpm/manifest@workspace:packages/manifest"],
+
+    "@wpm/rbac": ["@wpm/rbac@workspace:packages/rbac"],
 
     "@wpm/registry": ["@wpm/registry@workspace:registry"],
 

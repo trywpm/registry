@@ -1,0 +1,12 @@
+{
+  "name": "@wpm/rbac",
+  "private": true,
+  "exports": {
+    ".": {
+      "import": "./src/index.ts"
+    }
+  },
+  "devDependencies": {
+    "vitest": "catalog:"
+  }
+}
