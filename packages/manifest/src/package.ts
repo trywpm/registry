@@ -47,6 +47,9 @@ export const SemverSchema = z
   .string()
   .min(5, 'version must be at least 5 characters')
   .max(64, 'version must be at most 64 characters')
+  .refine((v) => v === v.trim(), {
+    message: 'version cannot contain leading or trailing whitespace',
+  })
   .refine((v) => !v.startsWith('v'), {
     message: "version cannot start with 'v'",
   })
@@ -58,6 +61,9 @@ export const SemverConstraintSchema = z
   .string()
   .min(1, 'version constraint cannot be empty')
   .max(64, 'version constraint must be at most 64 characters')
+  .refine((v) => v === v.trim(), {
+    message: 'version constraint cannot contain leading or trailing whitespace',
+  })
   .refine((v) => !v.startsWith('v'), {
     message: "version constraint cannot start with 'v'",
   })
