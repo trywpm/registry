@@ -268,6 +268,19 @@ describe('PackageNameSchema', () => {
   ])('rejects non-string: $input', ({ input }) => {
     expect(accepts(PackageNameSchema, input)).toBe(false);
   });
+
+  it.each(['con', 'CON', 'Con', 'nul', 'lpt1', 'com9', 'wp', 'wp-admin', 'wp-content'])(
+    'rejects reserved name "%s"',
+    (name) => {
+      expect(PackageNameSchema.safeParse(name).success).toBe(false);
+    },
+  );
+
+  it('accepts names that contain reserved substrings', () => {
+    expect(PackageNameSchema.safeParse('wp-rocket').success).toBe(true);
+    expect(PackageNameSchema.safeParse('console-helper').success).toBe(true);
+    expect(PackageNameSchema.safeParse('plugins-loader').success).toBe(true);
+  });
 });
 
 // =====================================================================
@@ -1325,5 +1338,117 @@ describe('round-trip', () => {
     p.readme = ' \n# Title\u2028line\u2029line  \n ';
     const parsed = PackageSchema.parse(p);
     expect(parsed.readme).toBe('# Title line line');
+  });
+});
+
+// =====================================================================
+// Mutation-testing gaps
+// =====================================================================
+
+describe('mutation-testing gaps', () => {
+  describe('field-level .trim() is exercised', () => {
+    it('rejects description that meets min only without trim', () => {
+      const p = buildValidPackage();
+      p.description = '  ab  ';
+
+      expect(PackageSchema.safeParse(p).success).toBe(false);
+    });
+
+    it('rejects license that meets min only without trim', () => {
+      const p = buildValidPackage();
+      p.license = '  GP  ';
+
+      expect(PackageSchema.safeParse(p).success).toBe(false);
+    });
+
+    it('rejects tag item that meets min only without trim', () => {
+      const p = buildValidPackage();
+      p.tags = [' a '];
+
+      expect(PackageSchema.safeParse(p).success).toBe(false);
+    });
+
+    it('rejects team member that meets min only without trim', () => {
+      const p = buildValidPackage();
+      p.team = [' x '];
+
+      expect(PackageSchema.safeParse(p).success).toBe(false);
+    });
+  });
+
+  describe('readme transform trims whitespace produced by replace', () => {
+    it('trims whitespace exposed by control-char stripping', () => {
+      const p = buildValidPackage();
+      p.readme = 'content \x00 ';
+
+      const parsed = PackageSchema.parse(p);
+
+      expect(parsed.readme).toBe('content');
+    });
+  });
+
+  describe('cross-field check handles missing devDependencies', () => {
+    it('accepts deps set with devDeps undefined', () => {
+      const p = buildValidPackage();
+      p.dependencies = { 'a-pkg': '1.0.0', 'b-pkg': '1.0.0' };
+      delete p.devDependencies;
+
+      const result = PackageSchema.safeParse(p);
+
+      expect(result.success).toBe(true);
+    });
+
+    it('accepts devDeps set with deps undefined', () => {
+      const p = buildValidPackage();
+      delete p.dependencies;
+      p.devDependencies = { 'a-pkg': '1.0.0', 'b-pkg': '1.0.0' };
+
+      const result = PackageSchema.safeParse(p);
+
+      expect(result.success).toBe(true);
+    });
+  });
+
+  describe('error issue paths are precise', () => {
+    it('self-dep issue path is ["dependencies"]', () => {
+      const p = buildValidPackage();
+      p.dependencies = { [p.name]: '1.0.0' };
+
+      const result = PackageSchema.safeParse(p);
+      if (result.success) {
+        throw new Error('expected failure');
+      }
+
+      const issue = result.error.issues.find(
+        (i) => i.message === 'package cannot depend on itself',
+      );
+
+      expect(issue?.path).toEqual(['dependencies']);
+    });
+  });
+
+  describe('readme outer trim runs before max-length check', () => {
+    it('accepts 50KB content padded with whitespace', () => {
+      const p = buildValidPackage();
+      p.readme = ` ${'a'.repeat(50 * 1024)} `;
+
+      expect(PackageSchema.safeParse(p).success).toBe(true);
+    });
+  });
+
+  describe('homepage protocol regex is anchored on both sides', () => {
+    it('rejects scheme that ends with "https" (xhttps://)', () => {
+      const p = buildValidPackage();
+      p.homepage = 'xhttps://example.com/path';
+
+      expect(PackageSchema.safeParse(p).success).toBe(false);
+    });
+
+    it('rejects scheme that starts with "https" (httpsx://)', () => {
+      const p = buildValidPackage();
+      p.homepage = 'httpsx://example.com/path';
+
+      expect(PackageSchema.safeParse(p).success).toBe(false);
+    });
   });
 });
