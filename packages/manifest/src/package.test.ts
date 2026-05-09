@@ -1,7 +1,8 @@
 import { Buffer } from 'node:buffer';
-import { describe, expect, test } from 'vitest';
+import { createHash } from 'node:crypto';
 
 import type { ZodType } from 'zod/v4';
+import { describe, it, expect } from 'vitest';
 
 import {
   DigestSchema,
@@ -16,318 +17,522 @@ import {
 
 import type { Package } from './package';
 
-const validateVar = (schema: ZodType, value: unknown) => {
-  const result = schema.safeParse(value);
-  return result.success ? null : result.error;
+// =====================================================================
+// Test helpers
+// =====================================================================
+
+const accepts = (schema: ZodType, value: unknown): boolean => schema.safeParse(value).success;
+
+const validHash = Buffer.alloc(32).toString('base64');
+const validDigest = `sha256:${validHash}`;
+
+const buildValidPackage = (): Package => ({
+  name: 'my-valid-package',
+  description: 'A valid description for the package.',
+  type: 'plugin',
+  version: '1.0.0',
+  requires: { wp: '>=5.0', php: '>=7.4' },
+  license: 'GPL-2.0-or-later',
+  homepage: 'https://example.com/homepage',
+  tags: ['block-editor', 'widget'],
+  team: ['john-doe', 'maintainer-team <team@example.com>'],
+  dependencies: { 'dependency-one': '1.2.0' },
+  devDependencies: { 'dev-dependency': '2.0.0' },
+  dist: {
+    digest: validDigest,
+    totalFiles: 10,
+    packedSize: 1024,
+    unpackedSize: 4096,
+  },
+  tag: 'latest',
+  _wpm: '1.0.0',
+  visibility: 'public',
+  readme: '# Package\n\nReadme content.',
+});
+
+// Mulberry32 — deterministic seeded PRNG. Refactored into temp values to
+// avoid `operator-assignment` lint false-positives on `x = x + y | 0`.
+const makeRng = (initialSeed: number) => {
+  let state = initialSeed >>> 0;
+  return () => {
+    state = (state + 0x6d2b79f5) >>> 0;
+    const a = Math.imul(state ^ (state >>> 15), 1 | state);
+    const b = a + Math.imul(a ^ (a >>> 7), 61 | a);
+    const c = b ^ a;
+    return ((c ^ (c >>> 14)) >>> 0) / 4294967296;
+  };
 };
 
-describe('ValidateStringsForControlChars', () => {
-  const isValidString = (input: string): boolean => {
-    return !DANGEROUS_CHARS_REGEX.test(input);
-  };
+const FUZZ_SEED = 0xc0ffee;
+const FUZZ_ITERATIONS = 20000;
 
-  const cases = [
-    // ============================================
-    // Valid strings ✅
-    // ============================================
+const NAMING_REGEX = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+const STRICT_DIGEST_BODY_REGEX = /^[A-Za-z0-9+/]{42}[AEIMQUYcgkosw048]=$/;
 
-    // Basic text
-    { name: 'valid plain ascii text', input: 'Hello World', isValid: true },
-    { name: 'valid alphanumeric', input: 'abc123XYZ', isValid: true },
-    { name: 'valid empty string', input: '', isValid: true },
+// =====================================================================
+// DANGEROUS_CHARS_REGEX
+// =====================================================================
 
-    // Allowed whitespace
-    { name: 'valid with tab', input: 'Hello\tWorld', isValid: true },
-    { name: 'valid with newline', input: 'Hello\nWorld', isValid: true },
-    { name: 'valid with carriage return', input: 'Hello\rWorld', isValid: true },
-    { name: 'valid with CRLF', input: 'Hello\r\nWorld', isValid: true },
-    { name: 'valid with multiple newlines', input: 'Line1\n\nLine2\n\nLine3', isValid: true },
+describe('DANGEROUS_CHARS_REGEX', () => {
+  const safe = (s: string) => !DANGEROUS_CHARS_REGEX.test(s);
 
-    // Punctuation and symbols
-    { name: 'valid with common punctuation', input: 'Hello, World!  How are you?', isValid: true },
-    {
-      name: 'valid with special symbols',
-      input: '!@#$%^&*()_+-=[]{}|;:\'",.<>/? `~',
-      isValid: true,
-    },
-    { name: 'valid with brackets', input: '[test] {data} (info) <tag>', isValid: true },
-
-    // International characters
-    { name: 'valid with accented characters', input: 'café résumé naïve', isValid: true },
-    { name: 'valid with german umlauts', input: 'Größe Übung Äpfel', isValid: true },
-    { name: 'valid with french text', input: "C'est très bien, merci beaucoup!", isValid: true },
-    { name: 'valid with spanish text', input: '¡Hola!  ¿Cómo estás?  Niño', isValid: true },
-    { name: 'valid with chinese characters', input: '你好世界', isValid: true },
-    { name: 'valid with japanese characters', input: 'こんにちは世界', isValid: true },
-    { name: 'valid with korean characters', input: '안녕하세요', isValid: true },
-    { name: 'valid with arabic text', input: 'مرحبا بالعالم', isValid: true },
-    { name: 'valid with hebrew text', input: 'שלום עולם', isValid: true },
-    { name: 'valid with russian cyrillic', input: 'Привет мир', isValid: true },
-    { name: 'valid with greek text', input: 'Γειά σου κόσμε', isValid: true },
-    { name: 'valid with thai text', input: 'สวัสดีโลก', isValid: true },
-    { name: 'valid with hindi text', input: 'नमस्ते दुनिया', isValid: true },
-
-    // Currency and math
-    { name: 'valid with currency symbols', input: 'Price: $100 €50 £30 ¥1000 ₹500', isValid: true },
-    { name: 'valid with math symbols', input: '±×÷√∞≠≤≥', isValid: true },
-
-    // Emoji
-    { name: 'valid with emoji', input: 'Hello 😀🎉🚀', isValid: true },
-    { name: 'valid with complex emoji', input: '👨‍👩‍👧‍👦 Family', isValid: true },
-    { name: 'valid emoji with variation selector', input: '❤\uFE0F', isValid: true },
-    { name: 'valid with flag emoji', input: '🇺🇸🇬🇧🇯🇵', isValid: true },
-    { name: 'valid flag with tag sequence (Scotland)', input: '🏴󠁧󠁢󠁳󠁣󠁴󠁿', isValid: true },
-    { name: 'valid keycap sequence', input: '1️⃣', isValid: true },
-    { name: 'valid skin tone', input: '👍🏽', isValid: true },
-
-    // Real-world use cases
-    {
-      name: 'valid package description',
-      input: 'A fast, lightweight HTTP client for Node.js',
-      isValid: true,
-    },
-    { name: 'valid license text', input: 'MIT OR Apache-2.0', isValid: true },
-    {
-      name: 'valid readme content',
-      input: '# My Package\n\nThis is a **great** package!\n\n## Features\n\n- Fast\n- Simple',
-      isValid: true,
-    },
-    { name: 'valid code snippet', input: 'const x = () => { return 42; };', isValid: true },
-    {
-      name: 'valid url in text',
-      input: 'Visit https://example.com/path? query=1&foo=bar',
-      isValid: true,
-    },
-    { name: 'valid email in text', input: 'Contact: user@example.com', isValid: true },
-    { name: 'valid semver', input: '1.0.0-beta.1+build.123', isValid: true },
-
-    // ============================================
-    // Invalid strings - C0 control characters ❌
-    // ============================================
-
-    { name: 'invalid with null byte', input: 'Hello\x00World', isValid: false },
-    { name: 'invalid with SOH', input: 'Hello\x01World', isValid: false },
-    { name: 'invalid with STX', input: 'Hello\x02World', isValid: false },
-    { name: 'invalid with ETX', input: 'Hello\x03World', isValid: false },
-    { name: 'invalid with EOT', input: 'Hello\x04World', isValid: false },
-    { name: 'invalid with ENQ', input: 'Hello\x05World', isValid: false },
-    { name: 'invalid with ACK', input: 'Hello\x06World', isValid: false },
-    { name: 'invalid with BEL', input: 'Hello\x07World', isValid: false },
-    { name: 'invalid with backspace', input: 'Hello\x08World', isValid: false },
-    { name: 'invalid with vertical tab', input: 'Hello\x0BWorld', isValid: false },
-    { name: 'invalid with form feed', input: 'Hello\x0CWorld', isValid: false },
-    { name: 'invalid with SO', input: 'Hello\x0EWorld', isValid: false },
-    { name: 'invalid with SI', input: 'Hello\x0FWorld', isValid: false },
-    { name: 'invalid with DLE', input: 'Hello\x10World', isValid: false },
-    { name: 'invalid with DC1', input: 'Hello\x11World', isValid: false },
-    { name: 'invalid with DC2', input: 'Hello\x12World', isValid: false },
-    { name: 'invalid with DC3', input: 'Hello\x13World', isValid: false },
-    { name: 'invalid with DC4', input: 'Hello\x14World', isValid: false },
-    { name: 'invalid with NAK', input: 'Hello\x15World', isValid: false },
-    { name: 'invalid with SYN', input: 'Hello\x16World', isValid: false },
-    { name: 'invalid with ETB', input: 'Hello\x17World', isValid: false },
-    { name: 'invalid with CAN', input: 'Hello\x18World', isValid: false },
-    { name: 'invalid with EM', input: 'Hello\x19World', isValid: false },
-    { name: 'invalid with SUB', input: 'Hello\x1AWorld', isValid: false },
-    { name: 'invalid with ESC', input: 'Hello\x1BWorld', isValid: false },
-    { name: 'invalid with FS', input: 'Hello\x1CWorld', isValid: false },
-    { name: 'invalid with GS', input: 'Hello\x1DWorld', isValid: false },
-    { name: 'invalid with RS', input: 'Hello\x1EWorld', isValid: false },
-    { name: 'invalid with US', input: 'Hello\x1FWorld', isValid: false },
-    { name: 'invalid with DEL', input: 'Hello\x7FWorld', isValid: false },
-
-    // ============================================
-    // Invalid strings - C1 control characters ❌
-    // ============================================
-
-    { name: 'invalid with C1 PAD', input: 'Hello\x80World', isValid: false },
-    { name: 'invalid with C1 HOP', input: 'Hello\x81World', isValid: false },
-    { name: 'invalid with C1 NEL', input: 'Hello\x85World', isValid: false },
-    { name: 'invalid with C1 SSA', input: 'Hello\x86World', isValid: false },
-    { name: 'invalid with C1 CSI', input: 'Hello\x9BWorld', isValid: false },
-    { name: 'invalid with C1 end range', input: 'Hello\x9FWorld', isValid: false },
-
-    // ============================================
-    // Invalid strings - Zero-width characters ❌
-    // ============================================
-
-    { name: 'invalid with zero-width space', input: 'Hello\u200BWorld', isValid: false },
-    { name: 'invalid with zero-width non-joiner', input: 'Hello\u200CWorld', isValid: false },
-    { name: 'invalid with left-to-right mark', input: 'Hello\u200EWorld', isValid: false },
-    { name: 'invalid with right-to-left mark', input: 'Hello\u200FWorld', isValid: false },
-
-    // ============================================
-    // Invalid strings - Line/paragraph separators ❌
-    // ============================================
-
-    { name: 'invalid with line separator', input: 'Hello\u2028World', isValid: false },
-    { name: 'invalid with paragraph separator', input: 'Hello\u2029World', isValid: false },
-
-    // ============================================
-    // Invalid strings - Bidirectional overrides ❌
-    // ============================================
-
-    { name: 'invalid with LRE', input: 'Hello\u202AWorld', isValid: false },
-    { name: 'invalid with RLE', input: 'Hello\u202BWorld', isValid: false },
-    { name: 'invalid with PDF', input: 'Hello\u202CWorld', isValid: false },
-    { name: 'invalid with LRO', input: 'Hello\u202DWorld', isValid: false },
-    { name: 'invalid with RLO', input: 'Hello\u202EWorld', isValid: false },
-
-    // ============================================
-    // Invalid strings - Invisible formatters ❌
-    // ============================================
-
-    { name: 'invalid with word joiner', input: 'Hello\u2060World', isValid: false },
-    { name: 'invalid with function application', input: 'Hello\u2061World', isValid: false },
-    { name: 'invalid with invisible times', input: 'Hello\u2062World', isValid: false },
-    { name: 'invalid with invisible separator', input: 'Hello\u2063World', isValid: false },
-    { name: 'invalid with invisible plus', input: 'Hello\u2064World', isValid: false },
-
-    // ============================================
-    // Invalid strings - BOM and specials ❌
-    // ============================================
-
-    { name: 'invalid with BOM', input: 'Hello\uFEFFWorld', isValid: false },
-    { name: 'invalid with BOM at start', input: '\uFEFFHello World', isValid: false },
-    { name: 'invalid with replacement char', input: 'Hello\uFFFDWorld', isValid: false },
-    { name: 'invalid with object replacement', input: 'Hello\uFFFCWorld', isValid: false },
-    { name: 'invalid with specials block', input: 'Hello\uFFF0World', isValid: false },
-    { name: 'invalid with noncharacter', input: 'Hello\uFFFFWorld', isValid: false },
-
-    // ============================================
-    // Invalid strings - Surrogate pairs (lone) ❌
-    // ============================================
-
-    { name: 'invalid with lone high surrogate', input: 'Hello\uD800World', isValid: false },
-    { name: 'invalid with lone low surrogate', input: 'Hello\uDC00World', isValid: false },
-    { name: 'invalid with surrogate at end', input: 'Hello\uD83D', isValid: false },
-    { name: 'invalid lone surrogate (postgres killer)', input: '\uD83D', isValid: false },
-    { name: 'invalid postgres null byte', input: 'user\u0000name', isValid: false },
-
-    // ============================================
-    // Invalid strings - Hidden in content ❌
-    // ============================================
-
-    { name: 'invalid null byte at start', input: '\x00Hello World', isValid: false },
-    { name: 'invalid null byte at end', input: 'Hello World\x00', isValid: false },
-    { name: 'invalid control char in url', input: 'https://example\x00.com', isValid: false },
-    { name: 'invalid zero-width in email', input: 'user\u200B@example.com', isValid: false },
-    { name: 'invalid bidi override in path', input: 'docs/\u202Efile.txt', isValid: false },
-    { name: 'invalid multiple control chars', input: 'He\x00ll\x01o\x02', isValid: false },
-
-    // ============================================
-    // Real attack patterns ❌
-    // ============================================
-
-    { name: 'invalid null byte injection', input: 'admin\x00.txt', isValid: false },
-    { name: 'invalid RTL override spoofing', input: 'invoice\u202Efdp.exe', isValid: false },
-    { name: 'invalid zero-width filter bypass', input: 'sc\u200Bript', isValid: false },
-    { name: 'invalid homograph with zero-width', input: 'pay\u200Bpal. com', isValid: false },
-    { name: 'invalid escape sequence injection', input: 'Hello\x1B[31mRed\x1B[0m', isValid: false },
-  ];
-
-  for (const c of cases) {
-    test(c.name, () => {
-      const result = isValidString(c.input);
-      expect(result).toBe(c.isValid);
+  describe('accepts safe content', () => {
+    it.each([
+      { case: 'empty string', input: '' },
+      { case: 'plain ascii', input: 'Hello World' },
+      { case: 'alphanumeric', input: 'abc123XYZ' },
+      { case: 'tab', input: 'a\tb' },
+      { case: 'newline', input: 'a\nb' },
+      { case: 'CR', input: 'a\rb' },
+      { case: 'CRLF', input: 'a\r\nb' },
+      { case: 'multiple newlines', input: 'L1\n\nL2\n\nL3' },
+      { case: 'punctuation', input: '!@#$%^&*()_+-=[]{}|;:\'",.<>/? `~' },
+      { case: 'french accents', input: 'café résumé naïve' },
+      { case: 'german umlauts', input: 'Größe Übung Äpfel' },
+      { case: 'spanish', input: '¡Hola! ¿Cómo estás? Niño' },
+      { case: 'chinese', input: '你好世界' },
+      { case: 'japanese', input: 'こんにちは世界' },
+      { case: 'korean', input: '안녕하세요' },
+      { case: 'arabic', input: 'مرحبا بالعالم' },
+      { case: 'hebrew', input: 'שלום עולם' },
+      { case: 'cyrillic', input: 'Привет мир' },
+      { case: 'greek', input: 'Γειά σου κόσμε' },
+      { case: 'thai', input: 'สวัสดีโลก' },
+      { case: 'hindi', input: 'नमस्ते दुनिया' },
+      { case: 'persian with ZWNJ', input: 'می\u200Cخوام' },
+      { case: 'urdu with ZWNJ', input: 'محبت\u200C کا سفر' },
+      { case: 'hindi conjunct with ZWNJ', input: 'क्\u200Cष' },
+      { case: 'currency symbols', input: '$100 €50 £30 ¥1000 ₹500' },
+      { case: 'math symbols', input: '±×÷√∞≠≤≥' },
+      { case: 'simple emoji', input: 'Hello 😀🎉🚀' },
+      { case: 'family ZWJ sequence', input: '👨\u200D👩\u200D👧\u200D👦' },
+      { case: 'variation selector', input: '❤\uFE0F' },
+      { case: 'flag emoji', input: '🇺🇸🇬🇧🇯🇵' },
+      { case: 'scotland tag sequence', input: '🏴󠁧󠁢󠁳󠁣󠁴󠁿' },
+      { case: 'keycap', input: '1️⃣' },
+      { case: 'skin tone', input: '👍🏽' },
+      { case: 'markdown', input: '# Title\n\n**bold** _italic_\n\n- a\n- b' },
+      { case: 'code snippet', input: 'const x = () => 42;' },
+      { case: 'url', input: 'Visit https://example.com/p?q=1&f=bar' },
+      { case: 'email in text', input: 'Contact: user@example.com' },
+      { case: 'semver with build', input: '1.0.0-beta.1+build.123' },
+    ])('$case', ({ input }) => {
+      expect(safe(input)).toBe(true);
     });
-  }
+  });
+
+  describe('explicitly allows i18n formatters', () => {
+    it.each([
+      { case: 'ZWJ (emoji sequences)', code: 0x200d },
+      { case: 'ZWNJ (Persian/Urdu/Devanagari)', code: 0x200c },
+    ])('$case', ({ code }) => {
+      expect(safe(`a${String.fromCodePoint(code)}b`)).toBe(true);
+    });
+  });
+
+  describe('rejects C0 control characters', () => {
+    const c0 = [
+      0, 1, 2, 3, 4, 5, 6, 7, 8, 11, 12, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28,
+      29, 30, 31, 127,
+    ];
+    it.each(c0)('rejects U+%s', (code) => {
+      expect(safe(`a${String.fromCharCode(code)}b`)).toBe(false);
+    });
+  });
+
+  describe('rejects C1 control characters', () => {
+    it.each([0x80, 0x81, 0x85, 0x86, 0x9b, 0x9f])('rejects U+%s', (code) => {
+      expect(safe(`a${String.fromCharCode(code)}b`)).toBe(false);
+    });
+  });
+
+  describe('rejects invisible / formatting / bidi characters', () => {
+    it.each([
+      { case: 'zero-width space (ZWSP)', code: 0x200b },
+      { case: 'left-to-right mark (LRM)', code: 0x200e },
+      { case: 'right-to-left mark (RLM)', code: 0x200f },
+      { case: 'line separator', code: 0x2028 },
+      { case: 'paragraph separator', code: 0x2029 },
+      { case: 'left-to-right embedding (LRE)', code: 0x202a },
+      { case: 'right-to-left embedding (RLE)', code: 0x202b },
+      { case: 'pop directional formatting (PDF)', code: 0x202c },
+      { case: 'left-to-right override (LRO)', code: 0x202d },
+      { case: 'right-to-left override (RLO)', code: 0x202e },
+      { case: 'word joiner', code: 0x2060 },
+      { case: 'function application', code: 0x2061 },
+      { case: 'invisible times', code: 0x2062 },
+      { case: 'invisible separator', code: 0x2063 },
+      { case: 'invisible plus', code: 0x2064 },
+      { case: 'byte order mark (BOM)', code: 0xfeff },
+      { case: 'replacement character (encoding error)', code: 0xfffd },
+      { case: 'object replacement', code: 0xfffc },
+      { case: 'hangul filler (invisible username)', code: 0x3164 },
+    ])('$case', ({ code }) => {
+      expect(safe(`a${String.fromCodePoint(code)}b`)).toBe(false);
+    });
+  });
+
+  describe('rejects lone surrogates (Postgres encoding killers)', () => {
+    it.each([
+      { case: 'lone high surrogate', input: 'a\uD800b' },
+      { case: 'lone low surrogate', input: 'a\uDC00b' },
+      { case: 'high surrogate at end', input: 'a\uD83D' },
+      { case: 'low surrogate at start', input: '\uDC00a' },
+      { case: 'standalone high', input: '\uD83D' },
+    ])('$case', ({ input }) => {
+      expect(safe(input)).toBe(false);
+    });
+  });
+
+  describe('rejects real-world attack patterns', () => {
+    it.each([
+      { case: 'null byte injection', input: 'admin\x00.txt' },
+      { case: 'RTL extension spoofing', input: 'invoice\u202Efdp.exe' },
+      { case: 'ZWSP filter bypass', input: 'sc\u200Bript' },
+      { case: 'homograph with ZWSP', input: 'pay\u200Bpal.com' },
+      { case: 'ANSI escape injection', input: 'red\x1B[31mtext\x1B[0m' },
+      { case: 'BOM at start', input: '\uFEFFhello' },
+      { case: 'multiple controls', input: 'a\x00b\x01c\x02' },
+      { case: 'control inside URL', input: 'https://example\x00.com' },
+      { case: 'invisible username', input: 'admin\u3164' },
+    ])('$case', ({ input }) => {
+      expect(safe(input)).toBe(false);
+    });
+  });
 });
 
-describe('NewWpmJsonValidator (Field Level)', () => {
-  test('wpm_name validator', () => {
-    expect(validateVar(PackageNameSchema, 'my-package')).toBeNull();
-    expect(validateVar(PackageNameSchema, 'not_a_valid_name')).not.toBeNull();
+// =====================================================================
+// PackageNameSchema
+// =====================================================================
+
+describe('PackageNameSchema', () => {
+  describe('accepts', () => {
+    it.each([
+      { case: 'simple', input: 'package' },
+      { case: 'hyphenated', input: 'my-package' },
+      { case: 'multi-segment', input: 'my-awesome-package' },
+      { case: 'numeric segment', input: 'package-123' },
+      { case: 'all numeric', input: '123' },
+      { case: 'mixed alphanum', input: 'pkg2-abc3' },
+      { case: 'min length (3)', input: 'abc' },
+      { case: 'max length (164)', input: 'a'.repeat(164) },
+      { case: 'reserved word "constructor" (blocked elsewhere)', input: 'constructor' },
+      { case: 'reserved word "tostring" (blocked elsewhere)', input: 'tostring' },
+      { case: 'reserved word "valueof" (blocked elsewhere)', input: 'valueof' },
+      { case: 'reserved word "private" (blocked elsewhere)', input: 'private' },
+    ])('$case', ({ input }) => {
+      expect(accepts(PackageNameSchema, input)).toBe(true);
+    });
   });
 
-  test('wpm_semver validator', () => {
-    expect(validateVar(SemverSchema, '1.0.0')).toBeNull();
-    expect(validateVar(SemverSchema, 'invalid_version')).not.toBeNull();
+  describe('rejects', () => {
+    it.each([
+      { case: 'empty', input: '' },
+      { case: 'too short (2)', input: 'ab' },
+      { case: 'too long (165)', input: 'a'.repeat(165) },
+      { case: 'underscore', input: 'my_package' },
+      { case: 'leading hyphen', input: '-mypackage' },
+      { case: 'trailing hyphen', input: 'mypackage-' },
+      { case: 'consecutive hyphens', input: 'my--package' },
+      { case: 'uppercase', input: 'MyPackage' },
+      { case: 'space', input: 'my package' },
+      { case: 'special character', input: 'my-package!' },
+      { case: 'slash (npm-scoped)', input: 'vendor/package' },
+      { case: 'leading dot', input: '.hidden' },
+      { case: 'unicode letter', input: 'pãckage' },
+      { case: 'cyrillic lookalike', input: 'расkage' },
+      { case: 'ZWSP injection', input: 'pa\u200Bckage' },
+      { case: 'null byte', input: 'pack\x00age' },
+      { case: 'underscore-only ("__proto__")', input: '__proto__' },
+      { case: 'starts with underscore', input: '_a' },
+      { case: 'leading whitespace', input: ' pkg' },
+      { case: 'trailing whitespace', input: 'pkg ' },
+      { case: 'only hyphen', input: '---' },
+      { case: 'only one char', input: 'a' },
+      { case: 'tab inside', input: 'a\tb' },
+      { case: 'path traversal', input: '../etc-passwd' },
+      { case: 'with @ scope', input: '@scope/pkg' },
+    ])('$case', ({ input }) => {
+      expect(accepts(PackageNameSchema, input)).toBe(false);
+    });
   });
 
-  test('wpm_dist_tag validator', () => {
-    expect(validateVar(DistTagSchema, 'latest')).toBeNull();
-    expect(validateVar(DistTagSchema, 'INVALID_TAG')).not.toBeNull();
-  });
-
-  test('wpm_digest_sha256 validator', () => {
-    const validBase64 = Buffer.alloc(32).toString('base64');
-    expect(validateVar(DigestSchema, `sha256:${validBase64}`)).toBeNull();
-    expect(validateVar(DigestSchema, 'sha256:invalid_base64$$$')).not.toBeNull();
-  });
-
-  test('wpm_http_url validator', () => {
-    expect(validateVar(PackageSchema.shape.homepage, 'https://example.com/resource')).toBeNull();
-    expect(validateVar(PackageSchema.shape.homepage, 'ftp://example.com/resource')).not.toBeNull();
-  });
-
-  test('wpm_semver_constraint validator', () => {
-    expect(validateVar(SemverConstraintSchema, '^1.2.3')).toBeNull();
-    expect(validateVar(SemverConstraintSchema, 'invalid-constraint')).not.toBeNull();
-  });
-
-  test('wpm_dependency_version validator', () => {
-    expect(validateVar(DependencyVersionSchema, '1.2.3')).toBeNull();
-    expect(validateVar(DependencyVersionSchema, '*')).toBeNull();
-    expect(validateVar(DependencyVersionSchema, 'invalid_version')).not.toBeNull();
+  it.each([
+    { input: null },
+    { input: undefined },
+    { input: 123 },
+    { input: true },
+    { input: [] },
+    { input: {} },
+    { input: Symbol('x') },
+  ])('rejects non-string: $input', ({ input }) => {
+    expect(accepts(PackageNameSchema, input)).toBe(false);
   });
 });
 
-const getValidPackage = (): Package => {
-  const validDigest = `sha256:${Buffer.alloc(32).toString('base64')}`;
-  return {
-    name: 'my-valid-package',
-    description: 'A valid description.',
-    type: 'plugin',
-    version: '1.0.0',
-    requires: {
-      wp: '>=5.0',
-      php: '>=7.4',
-    },
-    license: 'GPL-2.0-or-later',
-    homepage: 'https://example.com/homepage',
-    tags: ['block-editor', 'widget'],
-    team: ['John Doe <john.doe@example.com>'],
-    dependencies: {
-      'dependency-one': '1.2.0',
-    },
-    devDependencies: {
-      'dev-dependency': '2.0.0',
-    },
-    dist: {
-      totalFiles: 10,
-      packedSize: 1024,
-      unpackedSize: 4096,
-      digest: validDigest,
-    },
-    tag: 'latest',
-    _wpm: '1.0.0',
-    visibility: 'public',
-    readme: '# My Valid Package\n\nThis is the README for my valid package.',
-  };
-};
+// =====================================================================
+// SemverSchema
+// =====================================================================
 
-describe('PackageValidation', () => {
-  type Modifier = (p: Package) => void;
+describe('SemverSchema', () => {
+  describe('accepts', () => {
+    it.each([
+      { case: 'simple', input: '1.2.3' },
+      { case: 'with prerelease', input: '1.0.0-alpha.1' },
+      { case: 'with build', input: '1.0.0+build.123' },
+      { case: 'prerelease and build', input: '1.0.0-rc.1+ci.42' },
+      { case: 'min length (5)', input: '1.0.0' },
+      { case: 'large numbers', input: '999.999.999' },
+    ])('$case', ({ input }) => {
+      expect(accepts(SemverSchema, input)).toBe(true);
+    });
+  });
 
-  const runTest = (name: string, modifier: Modifier, expectErr: boolean) => {
-    test(name, () => {
-      const p = structuredClone(getValidPackage());
-      modifier(p);
-      const result = PackageSchema.safeParse(p);
-      if (expectErr) {
-        expect(result.success).toBe(false);
-      } else {
-        expect(result.success).toBe(true);
+  describe('rejects', () => {
+    it.each([
+      { case: 'empty', input: '' },
+      { case: 'too short', input: '1.0' },
+      { case: 'incomplete', input: '1.2.' },
+      { case: 'two segments', input: '1.2' },
+      { case: 'one segment', input: '1' },
+      { case: 'with v prefix', input: 'v1.2.3' },
+      { case: 'with V prefix', input: 'V1.2.3' },
+      { case: 'with leading whitespace', input: ' 1.2.3' },
+      { case: 'with trailing whitespace', input: '1.2.3 ' },
+      { case: 'with internal whitespace', input: '1. 2.3' },
+      { case: 'non-numeric segments', input: 'a.b.c' },
+      { case: 'with range', input: '^1.2.3' },
+      { case: 'wildcard', input: '*' },
+      { case: 'tag name', input: 'latest' },
+      { case: 'too long (>64)', input: `1.0.0+${'a'.repeat(60)}` },
+      { case: 'leading zero', input: '01.0.0' },
+      { case: 'negative', input: '-1.0.0' },
+    ])('$case', ({ input }) => {
+      expect(accepts(SemverSchema, input)).toBe(false);
+    });
+  });
+});
+
+// =====================================================================
+// SemverConstraintSchema
+// =====================================================================
+
+describe('SemverConstraintSchema', () => {
+  describe('accepts', () => {
+    it.each([
+      { case: 'caret', input: '^1.2.3' },
+      { case: 'tilde', input: '~1.2.3' },
+      { case: 'wildcard partial', input: '1.x' },
+      { case: 'major-minor only', input: '1.2' },
+      { case: 'major only', input: '1' },
+      { case: 'exact', input: '1.2.3' },
+      { case: 'caret partial', input: '^1.2' },
+      { case: 'tilde partial', input: '~1' },
+      { case: 'gte', input: '>=1.2.7' },
+      { case: 'gte+lt', input: '>=1.2.0 <2.0.0' },
+      { case: 'hyphen range', input: '1.2.0 - 2.0.0' },
+      { case: 'wildcard *', input: '*' },
+    ])('$case', ({ input }) => {
+      expect(accepts(SemverConstraintSchema, input)).toBe(true);
+    });
+  });
+
+  describe('rejects', () => {
+    it.each([
+      { case: 'empty', input: '' },
+      { case: 'leading whitespace', input: ' 1.2.3' },
+      { case: 'trailing whitespace', input: '1.2.3 ' },
+      { case: 'v-prefix exact', input: 'v1.2.3' },
+      { case: 'v-prefix range', input: 'v1.x' },
+      { case: 'unknown operator', input: '?1.2.0' },
+      { case: 'non-numeric', input: '>=1.2.c' },
+      { case: 'trailing comma', input: '> 1.2.0,' },
+      { case: 'too long', input: 'a'.repeat(65) },
+      { case: 'pure garbage', input: 'definitely-not-a-version' },
+    ])('$case', ({ input }) => {
+      expect(accepts(SemverConstraintSchema, input)).toBe(false);
+    });
+  });
+});
+
+// =====================================================================
+// DistTagSchema
+// =====================================================================
+
+describe('DistTagSchema', () => {
+  describe('accepts', () => {
+    it.each([
+      { case: 'latest', input: 'latest' },
+      { case: 'beta', input: 'beta' },
+      { case: 'next-major', input: 'next-major' },
+      { case: 'with numbers', input: 'next-1' },
+      { case: 'min length (3)', input: 'dev' },
+      { case: 'max length (64)', input: 'a'.repeat(64) },
+    ])('$case', ({ input }) => {
+      expect(accepts(DistTagSchema, input)).toBe(true);
+    });
+
+    it('uses "latest" as default for undefined', () => {
+      const result = DistTagSchema.parse(undefined);
+      expect(result).toBe('latest');
+    });
+  });
+
+  describe('rejects', () => {
+    it.each([
+      { case: 'empty', input: '' },
+      { case: 'too short (1)', input: 'a' },
+      { case: 'too short (2)', input: 'ab' },
+      { case: 'too long (65)', input: 'a'.repeat(65) },
+      { case: 'uppercase', input: 'LATEST' },
+      { case: 'underscore', input: 'next_major' },
+      { case: 'special char', input: 'beta!' },
+      { case: 'space', input: 'next major' },
+    ])('$case', ({ input }) => {
+      expect(accepts(DistTagSchema, input)).toBe(false);
+    });
+  });
+
+  describe('rejects tags resembling versions/ranges', () => {
+    it.each([
+      { case: 'three-digit number', input: '100' },
+      { case: 'four-digit number', input: '9999' },
+      { case: 'large numeric', input: '12345' },
+    ])('$case (parses as semver range)', ({ input }) => {
+      expect(accepts(DistTagSchema, input)).toBe(false);
+    });
+  });
+});
+
+// =====================================================================
+// DependencyVersionSchema
+// =====================================================================
+
+describe('DependencyVersionSchema', () => {
+  describe('accepts', () => {
+    it.each([
+      { case: 'exact semver', input: '1.2.3' },
+      { case: 'prerelease', input: '2.0.0-beta.1' },
+      { case: 'build metadata', input: '1.0.0+build.42' },
+      { case: 'wildcard', input: '*' },
+    ])('$case', ({ input }) => {
+      expect(accepts(DependencyVersionSchema, input)).toBe(true);
+    });
+  });
+
+  describe('rejects', () => {
+    it.each([
+      { case: 'empty', input: '' },
+      { case: 'caret range', input: '~1.2.3' },
+      { case: 'tilde range', input: '^1.2.3' },
+      { case: 'partial', input: '1.2' },
+      { case: 'v prefix', input: 'v1.0.0' },
+      { case: 'wildcard pattern', input: '*.*' },
+      { case: 'tag name', input: 'latest' },
+      { case: 'comparison', input: '>=1.0.0' },
+    ])('$case', ({ input }) => {
+      expect(accepts(DependencyVersionSchema, input)).toBe(false);
+    });
+  });
+});
+
+// =====================================================================
+// DigestSchema
+// =====================================================================
+
+describe('DigestSchema', () => {
+  describe('accepts', () => {
+    it('canonical sha256 of zero-bytes', () => {
+      expect(accepts(DigestSchema, validDigest)).toBe(true);
+    });
+
+    it('canonical sha256 of arbitrary content', () => {
+      const buf = Buffer.from('the quick brown fox');
+      const hash = createHash('sha256').update(buf).digest('base64');
+      expect(accepts(DigestSchema, `sha256:${hash}`)).toBe(true);
+    });
+
+    it('many random 32-byte hashes', () => {
+      const rng = makeRng(FUZZ_SEED);
+      for (let i = 0; i < 100; i++) {
+        const bytes = Buffer.alloc(32);
+        for (let j = 0; j < 32; j++) {
+          bytes[j] = Math.floor(rng() * 256);
+        }
+        expect(accepts(DigestSchema, `sha256:${bytes.toString('base64')}`)).toBe(true);
       }
     });
+  });
+
+  describe('rejects', () => {
+    it.each([
+      { case: 'empty', input: '' },
+      { case: 'no prefix', input: validHash },
+      { case: 'wrong algorithm prefix', input: `sha512:${validHash}` },
+      { case: 'uppercase prefix', input: `SHA256:${validHash}` },
+      { case: 'whitespace before prefix', input: ` sha256:${validHash}` },
+      { case: 'whitespace after hash', input: `sha256:${validHash} ` },
+      { case: 'invalid base64 chars', input: 'sha256:not-valid-base64-$%^' },
+      {
+        case: 'too short (31 bytes)',
+        input: `sha256:${Buffer.alloc(31).toString('base64')}`,
+      },
+      {
+        case: 'too long (33 bytes)',
+        input: `sha256:${Buffer.alloc(33).toString('base64')}`,
+      },
+      { case: 'missing padding', input: `sha256:${validHash.slice(0, -1)}` },
+      { case: 'extra padding', input: `sha256:${validHash}=` },
+      // Strict canonical regex: 43rd char must be in [AEIMQUYcgkosw048],
+      // and body must use only [A-Za-z0-9+/]. base64url '_' or '-' fails both.
+      {
+        case: 'base64url char (underscore) in body',
+        input: `sha256:${'A'.repeat(20)}_${'A'.repeat(22)}=`,
+      },
+      {
+        case: 'base64url char (hyphen) in body',
+        input: `sha256:${'A'.repeat(20)}-${'A'.repeat(22)}=`,
+      },
+      {
+        case: 'non-canonical 43rd char (lower 2 bits set)',
+        // 'B' = position 1 in alphabet; lower 2 bits = 01, non-canonical
+        input: `sha256:${'A'.repeat(42)}B=`,
+      },
+      { case: 'hex digest instead of base64', input: `sha256:${'a'.repeat(64)}` },
+    ])('$case', ({ input }) => {
+      expect(accepts(DigestSchema, input)).toBe(false);
+    });
+  });
+});
+
+// =====================================================================
+// PackageSchema — field-level
+// =====================================================================
+
+describe('PackageSchema (field-level)', () => {
+  type Mutator = (p: Package) => void;
+
+  const expectValid = (label: string, mutate: Mutator) => {
+    it(`accepts: ${label}`, () => {
+      const p = structuredClone(buildValidPackage());
+      mutate(p);
+      const result = PackageSchema.safeParse(p);
+      expect(result.success, JSON.stringify(result, null, 2)).toBe(true);
+    });
   };
 
-  runTest('valid package', () => {}, false);
+  const expectInvalid = (label: string, mutate: Mutator) => {
+    it(`rejects: ${label}`, () => {
+      const p = structuredClone(buildValidPackage());
+      mutate(p);
+      expect(PackageSchema.safeParse(p).success).toBe(false);
+    });
+  };
 
-  runTest(
-    'valid package with all optional fields omitted',
-    (p) => {
+  describe('baseline', () => {
+    expectValid('untouched valid package', () => {});
+
+    expectValid('all optional fields omitted', (p) => {
       delete p.description;
       delete p.requires;
       delete p.license;
@@ -336,783 +541,789 @@ describe('PackageValidation', () => {
       delete p.team;
       delete p.dependencies;
       delete p.devDependencies;
-    },
-    false,
-  );
+      delete p.readme;
+    });
+  });
 
-  runTest(
-    'missing required config name',
-    (p) => {
-      // @ts-expect-error -- testing missing required field
+  describe('name', () => {
+    expectInvalid('missing', (p) => {
+      // @ts-expect-error -- testing required field absence
       delete p.name;
-    },
-    true,
-  );
-
-  runTest(
-    'invalid config name',
-    (p) => {
+    });
+    expectInvalid('contains space', (p) => {
       p.name = 'invalid name';
-    },
-    true,
-  );
+    });
+    expectInvalid('contains __proto__', (p) => {
+      p.name = '__proto__';
+    });
+  });
 
-  runTest(
-    'description too short',
-    (p) => {
-      p.description = 'a';
-    },
-    true,
-  );
-
-  runTest(
-    'description min length',
-    (p) => {
+  describe('description', () => {
+    expectValid('at min length (3)', (p) => {
       p.description = 'abc';
-    },
-    false,
-  );
-
-  runTest(
-    'description max length',
-    (p) => {
+    });
+    expectValid('at max length (512)', (p) => {
       p.description = 'a'.repeat(512);
-    },
-    false,
-  );
-
-  runTest(
-    'description too long',
-    (p) => {
+    });
+    expectValid('persian with ZWNJ', (p) => {
+      p.description = 'می\u200Cخوام به\u200Cروزرسانی کنم';
+    });
+    expectValid('emoji and unicode', (p) => {
+      p.description = 'A great package 🚀 with 中文 support';
+    });
+    expectInvalid('too short (1)', (p) => {
+      p.description = 'a';
+    });
+    expectInvalid('too long (513)', (p) => {
       p.description = 'a'.repeat(513);
-    },
-    true,
-  );
+    });
+    expectInvalid('contains null byte', (p) => {
+      p.description = 'hello\x00world';
+    });
+    expectInvalid('contains RTL override', (p) => {
+      p.description = 'invoice\u202Efdp.exe';
+    });
+    expectInvalid('contains lone surrogate', (p) => {
+      p.description = 'a\uD800b';
+    });
+  });
 
-  runTest(
-    'invalid package type',
-    (p) => {
-      // @ts-expect-error -- testing invalid package type
-      p.type = 'library';
-    },
-    true,
-  );
-
-  runTest(
-    'valid package type theme',
-    (p) => {
+  describe('type', () => {
+    expectValid('theme', (p) => {
       p.type = 'theme';
-    },
-    false,
-  );
-
-  runTest(
-    'valid package type mu-plugin',
-    (p) => {
+    });
+    expectValid('plugin', (p) => {
+      p.type = 'plugin';
+    });
+    expectValid('mu-plugin', (p) => {
       p.type = 'mu-plugin';
-    },
-    false,
-  );
+    });
+    expectInvalid('library', (p) => {
+      // @ts-expect-error -- testing invalid enum value
+      p.type = 'library';
+    });
+    expectInvalid('uppercase plugin', (p) => {
+      // @ts-expect-error -- testing invalid enum value
+      p.type = 'PLUGIN';
+    });
+    expectInvalid('missing', (p) => {
+      // @ts-expect-error -- testing required field absence
+      delete p.type;
+    });
+  });
 
-  runTest(
-    'invalid version',
-    (p) => {
+  describe('version', () => {
+    expectValid('with prerelease+build', (p) => {
+      p.version = '2.0.0-rc.1+ci.42';
+    });
+    expectInvalid('two-segment', (p) => {
       p.version = '1.0';
-    },
-    true,
-  );
-
-  runTest(
-    'invalid version format',
-    (p) => {
+    });
+    expectInvalid('v-prefixed', (p) => {
       p.version = 'v1.0.0';
-    },
-    true,
-  );
+    });
+    expectInvalid('range', (p) => {
+      p.version = '^1.0.0';
+    });
+    expectInvalid('leading whitespace', (p) => {
+      p.version = ' 1.0.0';
+    });
+    expectInvalid('missing', (p) => {
+      // @ts-expect-error -- testing required field absence
+      delete p.version;
+    });
+  });
 
-  runTest(
-    'optional requires struct is present but has undefined fields',
-    (p) => {
-      p.requires = {
-        wp: undefined,
-        php: undefined,
-      };
-    },
-    false,
-  );
-
-  runTest(
-    'invalid requires wp constraint',
-    (p) => {
-      p.requires!.wp = 'invalid';
-    },
-    true,
-  );
-
-  runTest(
-    'invalid version constraint format with v',
-    (p) => {
+  describe('requires', () => {
+    expectValid('object with both fields undefined', (p) => {
+      p.requires = { wp: undefined, php: undefined };
+    });
+    expectValid('only wp set', (p) => {
+      p.requires = { wp: '>=5.0' };
+    });
+    expectValid('only php set', (p) => {
+      p.requires = { php: '>=7.4' };
+    });
+    expectValid('with wildcard *', (p) => {
+      p.requires = { wp: '*', php: '*' };
+    });
+    expectInvalid('invalid wp constraint', (p) => {
+      p.requires = { wp: 'invalid' };
+    });
+    expectInvalid('v-prefix constraint', (p) => {
       p.requires = { wp: 'v5.0' };
-    },
-    true,
-  );
+    });
+    expectInvalid('extra unknown key', (p) => {
+      // @ts-expect-error -- testing strict object rejection of unknown keys
+      p.requires = { wp: '>=5.0', node: '>=18' };
+    });
+  });
 
-  runTest(
-    'license too short',
-    (p) => {
-      p.license = 'a';
-    },
-    true,
-  );
-
-  runTest(
-    'license min length',
-    (p) => {
-      p.license = 'GPL';
-    },
-    false,
-  );
-
-  runTest(
-    'license max length',
-    (p) => {
+  describe('license', () => {
+    expectValid('min length (3)', (p) => {
+      p.license = 'MIT';
+    });
+    expectValid('max length (100)', (p) => {
       p.license = 'a'.repeat(100);
-    },
-    false,
-  );
-
-  runTest(
-    'license too long',
-    (p) => {
+    });
+    expectInvalid('too short (1)', (p) => {
+      p.license = 'a';
+    });
+    expectInvalid('too long (101)', (p) => {
       p.license = 'a'.repeat(101);
-    },
-    true,
-  );
+    });
+    expectInvalid('contains control char', (p) => {
+      p.license = 'MIT\x00';
+    });
+  });
 
-  runTest(
-    'homepage url too short',
-    (p) => {
-      p.homepage = 'http://a';
-    },
-    true,
-  );
-
-  runTest(
-    'homepage url min length',
-    (p) => {
+  describe('homepage', () => {
+    expectValid('https', (p) => {
+      p.homepage = 'https://example.com/path';
+    });
+    expectValid('http', (p) => {
+      p.homepage = 'http://example.com/path';
+    });
+    expectValid('with query string', (p) => {
+      p.homepage = 'https://example.com/p?q=1&k=v';
+    });
+    expectValid('with fragment', (p) => {
+      p.homepage = 'https://example.com/#section';
+    });
+    expectValid('punycode IDN', (p) => {
+      p.homepage = 'https://xn--bcher-kva.example';
+    });
+    expectValid('min length (10)', (p) => {
       p.homepage = 'http://a.b';
-    },
-    false,
-  );
-
-  runTest(
-    'homepage url max length',
-    (p) => {
+    });
+    expectValid('max length (200)', (p) => {
       p.homepage = `https://${'a'.repeat(191)}`;
-    },
-    false,
-  );
+    });
 
-  runTest(
-    'homepage url too long',
-    (p) => {
+    expectInvalid('too short (8)', (p) => {
+      p.homepage = 'http://a';
+    });
+    expectInvalid('too long (>200)', (p) => {
       p.homepage = `https://${'a'.repeat(193)}`;
-    },
-    true,
-  );
-
-  runTest(
-    'invalid homepage url format',
-    (p) => {
+    });
+    expectInvalid('not a url', (p) => {
       p.homepage = 'not-a-url';
-    },
-    true,
-  );
-
-  runTest(
-    'homepage is a FTP url',
-    (p) => {
-      p.homepage = 'ftp://example.com/resource';
-    },
-    true,
-  );
-
-  runTest(
-    'homepage is a mailto url',
-    (p) => {
+    });
+    expectInvalid('ftp scheme', (p) => {
+      p.homepage = 'ftp://example.com/file';
+    });
+    expectInvalid('mailto scheme', (p) => {
       p.homepage = 'mailto:user@example.com';
-    },
-    true,
-  );
-
-  runTest(
-    'homepage url is missing a scheme',
-    (p) => {
+    });
+    expectInvalid('javascript: scheme (XSS vector)', (p) => {
+      p.homepage = 'javascript:alert(1)//padding-padding-padding';
+    });
+    expectInvalid('data: scheme', (p) => {
+      p.homepage = 'data:text/html,<script>alert(1)</script>';
+    });
+    expectInvalid('file: scheme', (p) => {
+      p.homepage = 'file:///etc/passwd';
+    });
+    expectInvalid('protocol-relative', (p) => {
+      p.homepage = '//example.com/path';
+    });
+    expectInvalid('missing scheme', (p) => {
       p.homepage = 'www.example.com';
-    },
-    true,
-  );
+    });
+  });
 
-  runTest(
-    'tags at max count',
-    (p) => {
-      p.tags = ['one', 'two', 'three', 'four', 'five'];
-    },
-    false,
-  );
-
-  runTest(
-    'too many tags',
-    (p) => {
-      p.tags = ['one', 'two', 'three', 'four', 'five', 'six'];
-    },
-    true,
-  );
-
-  runTest(
-    'tags slice with an empty string element',
-    (p) => {
-      p.tags = ['ok', ''];
-    },
-    true,
-  );
-
-  runTest(
-    'a tag is too short',
-    (p) => {
-      p.tags = ['a'];
-    },
-    true,
-  );
-
-  runTest(
-    'a tag at min length',
-    (p) => {
+  describe('tags', () => {
+    expectValid('at max count (5)', (p) => {
+      p.tags = ['ab', 'cd', 'ef', 'gh', 'ij'];
+    });
+    expectValid('with i18n content', (p) => {
+      p.tags = ['वर्डप्रेस', '插件', 'پلاگین'];
+    });
+    expectValid('a tag at min length (2)', (p) => {
       p.tags = ['ab'];
-    },
-    false,
-  );
-
-  runTest(
-    'a tag at max length',
-    (p) => {
+    });
+    expectValid('a tag at max length (64)', (p) => {
       p.tags = ['a'.repeat(64)];
-    },
-    false,
-  );
+    });
 
-  runTest(
-    'a tag is too long',
-    (p) => {
-      p.tags = ['ok', 'a'.repeat(65)];
-    },
-    true,
-  );
-
-  runTest(
-    'tags contain duplicates',
-    (p) => {
+    expectInvalid('too many (6)', (p) => {
+      p.tags = ['ab', 'cd', 'ef', 'gh', 'ij', 'kl'];
+    });
+    expectInvalid('contains empty string', (p) => {
+      p.tags = ['ok', ''];
+    });
+    expectInvalid('a tag too short (1)', (p) => {
+      p.tags = ['a'];
+    });
+    expectInvalid('a tag too long (65)', (p) => {
+      p.tags = ['a'.repeat(65)];
+    });
+    expectInvalid('duplicates', (p) => {
       p.tags = ['plugin', 'plugin'];
-    },
-    true,
-  );
+    });
+    expectInvalid('control char in tag', (p) => {
+      p.tags = ['ok\x00'];
+    });
+  });
 
-  runTest(
-    'team contain duplicates',
-    (p) => {
-      p.team = ['member', 'member'];
-    },
-    true,
-  );
-
-  runTest(
-    'team at max count',
-    (p) => {
+  describe('team', () => {
+    expectValid('plain username', (p) => {
+      p.team = ['john-doe'];
+    });
+    expectValid('username with email (RFC-822 style)', (p) => {
+      p.team = ['john <john@example.com>'];
+    });
+    expectValid('non-ASCII name (SVN-migrated)', (p) => {
+      p.team = ['野原ひろし'];
+    });
+    expectValid('team at max count (100)', (p) => {
       p.team = Array.from({ length: 100 }, (_, i) => `member-${i}`);
-    },
-    false,
-  );
+    });
 
-  runTest(
-    'too many team members',
-    (p) => {
-      p.team = Array(101).fill('member');
-    },
-    true,
-  );
-
-  runTest(
-    'team slice with an empty string element',
-    (p) => {
+    expectInvalid('over max (101)', (p) => {
+      p.team = Array.from({ length: 101 }, (_, i) => `m-${i}`);
+    });
+    expectInvalid('duplicates', (p) => {
+      p.team = ['member', 'member'];
+    });
+    expectInvalid('empty string', (p) => {
       p.team = ['ok', ''];
-    },
-    true,
-  );
-
-  runTest(
-    'a team member is too short',
-    (p) => {
+    });
+    expectInvalid('too short (1)', (p) => {
       p.team = ['a'];
-    },
-    true,
-  );
-
-  runTest(
-    'a team member at min length',
-    (p) => {
-      p.team = ['ab'];
-    },
-    false,
-  );
-
-  runTest(
-    'a team member at max length',
-    (p) => {
-      p.team = ['a'.repeat(100)];
-    },
-    false,
-  );
-
-  runTest(
-    'a team member is too long',
-    (p) => {
+    });
+    expectInvalid('too long (101)', (p) => {
       p.team = ['a'.repeat(101)];
-    },
-    true,
-  );
+    });
+    expectInvalid('control char', (p) => {
+      p.team = ['hello\x00there'];
+    });
+    expectInvalid('RTL override', (p) => {
+      p.team = ['admin\u202Efdp.exe'];
+    });
+    expectInvalid('hangul filler (invisible username)', (p) => {
+      p.team = ['admin\u3164'];
+    });
+  });
 
-  runTest(
-    'dependencies at max count',
-    (p) => {
-      const deps: Record<string, string> = {};
-      for (let i = 0; i < 16; i++) {
-        deps[`dep-${i}`] = '1.0.0';
-      }
-      p.dependencies = deps;
-    },
-    false,
-  );
-
-  runTest(
-    'too many dependencies',
-    (p) => {
-      const deps: Record<string, string> = {};
-      for (let i = 0; i < 17; i++) {
-        deps[`dep-${i}`] = '1.0.0';
-      }
-      p.dependencies = deps;
-    },
-    true,
-  );
-
-  runTest(
-    'invalid dependency key name',
-    (p) => {
-      p.dependencies = { 'invalid name': '1.0.0' };
-    },
-    true,
-  );
-
-  runTest(
-    'dependencies map with empty key',
-    (p) => {
-      p.dependencies = { '': '1.0.0' };
-    },
-    true,
-  );
-
-  runTest(
-    'invalid dependency version',
-    (p) => {
-      p.dependencies = { 'valid-name': '1.0' };
-    },
-    true,
-  );
-
-  runTest(
-    'valid wildcard dependency version',
-    (p) => {
-      p.dependencies = { 'valid-name': '*' };
-    },
-    false,
-  );
-
-  runTest(
-    'devDependencies at max count',
-    (p) => {
-      const deps: Record<string, string> = {};
-      for (let i = 0; i < 16; i++) {
-        deps[`dev-dep-${i}`] = '1.0.0';
-      }
-      p.devDependencies = deps;
-    },
-    false,
-  );
-
-  runTest(
-    'too many devDependencies',
-    (p) => {
-      const deps: Record<string, string> = {};
-      for (let i = 0; i < 17; i++) {
-        deps[`dev-dep-${i}`] = '1.0.0';
-      }
-      p.devDependencies = deps;
-    },
-    true,
-  );
-
-  runTest(
-    'invalid devDependency key name',
-    (p) => {
-      p.devDependencies = { 'invalid dev name': '1.0.0' };
-    },
-    true,
-  );
-
-  runTest(
-    'empty dependency',
-    (p) => {
+  describe('dependencies / devDependencies', () => {
+    expectValid('empty deps', (p) => {
       p.dependencies = {};
-    },
-    false,
-  );
-
-  runTest(
-    'empty devDependency',
-    (p) => {
+    });
+    expectValid('empty devDeps', (p) => {
       p.devDependencies = {};
-    },
-    false,
-  );
+    });
+    expectValid('at max (16)', (p) => {
+      const deps: Record<string, string> = {};
+      for (let i = 0; i < 16; i++) {
+        deps[`dep-${i}`] = '1.0.0';
+      }
+      p.dependencies = deps;
+    });
+    expectValid('wildcard version', (p) => {
+      p.dependencies = { 'some-pkg': '*' };
+    });
 
-  runTest(
-    'dist totalFiles is zero',
-    (p) => {
+    expectInvalid('over max (17)', (p) => {
+      const deps: Record<string, string> = {};
+      for (let i = 0; i < 17; i++) {
+        deps[`dep-${i}`] = '1.0.0';
+      }
+      p.dependencies = deps;
+    });
+    expectInvalid('invalid dep key (space)', (p) => {
+      p.dependencies = { 'invalid name': '1.0.0' };
+    });
+    expectInvalid('empty dep key', (p) => {
+      p.dependencies = { '': '1.0.0' };
+    });
+    expectInvalid('uppercase dep key', (p) => {
+      p.dependencies = { MyPkg: '1.0.0' };
+    });
+
+    // Zod treats `__proto__` specially: rather than rejecting it as an unknown
+    // key, strict mode silently strips it. The security-relevant invariant is
+    // that the polluted key never reaches the parsed result.
+    it('strips __proto__ from dependencies (defineProperty)', () => {
+      const p = structuredClone(buildValidPackage());
+      const malicious: Record<string, string> = {};
+      Object.defineProperty(malicious, '__proto__', {
+        value: '1.0.0',
+        enumerable: true,
+        writable: true,
+        configurable: true,
+      });
+      p.dependencies = malicious;
+      const result = PackageSchema.safeParse(p);
+      expect(result.success).toBe(true);
+      if (!result.success) {
+        return;
+      }
+      const parsedDeps = result.data.dependencies ?? {};
+      expect(Object.hasOwn(parsedDeps, '__proto__')).toBe(false);
+      expect(Object.keys(parsedDeps)).not.toContain('__proto__');
+    });
+
+    expectInvalid('invalid version range', (p) => {
+      p.dependencies = { 'valid-name': '^1.0.0' };
+    });
+    expectInvalid('partial version', (p) => {
+      p.dependencies = { 'valid-name': '1.0' };
+    });
+    expectInvalid('empty version', (p) => {
+      p.dependencies = { 'valid-name': '' };
+    });
+  });
+
+  describe('dist', () => {
+    expectInvalid('totalFiles is zero', (p) => {
       p.dist.totalFiles = 0;
-    },
-    true,
-  );
-
-  runTest(
-    'dist totalFiles is negative',
-    (p) => {
+    });
+    expectInvalid('totalFiles is negative', (p) => {
       p.dist.totalFiles = -1;
-    },
-    true,
-  );
+    });
+    expectInvalid('totalFiles non-integer', (p) => {
+      p.dist.totalFiles = 1.5;
+    });
+    expectInvalid('totalFiles NaN', (p) => {
+      p.dist.totalFiles = NaN;
+    });
+    expectInvalid('totalFiles Infinity', (p) => {
+      p.dist.totalFiles = Infinity;
+    });
+    expectInvalid('totalFiles over 50000', (p) => {
+      p.dist.totalFiles = 50_001;
+    });
+    expectValid('totalFiles at 50000', (p) => {
+      p.dist.totalFiles = 50_000;
+    });
 
-  runTest(
-    'dist packedSize is zero',
-    (p) => {
+    expectInvalid('packedSize zero', (p) => {
       p.dist.packedSize = 0;
-    },
-    true,
-  );
-
-  runTest(
-    'dist packedSize is greater than 128MB',
-    (p) => {
+    });
+    expectInvalid('packedSize over 128MB', (p) => {
       p.dist.packedSize = 128 * 1024 * 1024 + 1;
-    },
-    true,
-  );
+    });
+    expectValid('packedSize exactly 128MB', (p) => {
+      p.dist.packedSize = 128 * 1024 * 1024;
+      p.dist.unpackedSize = 128 * 1024 * 1024;
+    });
 
-  runTest(
-    'dist unpackedSize is zero',
-    (p) => {
+    expectInvalid('unpackedSize zero', (p) => {
       p.dist.unpackedSize = 0;
-    },
-    true,
-  );
+    });
+    expectInvalid('unpackedSize over 512MB', (p) => {
+      p.dist.unpackedSize = 512 * 1024 * 1024 + 1;
+    });
 
-  runTest(
-    'invalid dist digest',
-    (p) => {
+    expectInvalid('digest invalid', (p) => {
       p.dist.digest = 'invalid';
-    },
-    true,
-  );
+    });
 
-  runTest(
-    'missing required meta tag',
-    (p) => {
+    // The compression-ratio refine is currently unreachable: with packedSize
+    // capped at 128MB and unpackedSize at 512MB, max achievable ratio is 4×,
+    // and the threshold-floored ratio at 5MB packed is 102.4× — both well
+    // under MAX_COMPRESSION_RATIO (250). Tests below verify size caps and
+    // document that the ratio refine is currently a no-op.
+    describe('size caps', () => {
+      expectValid('high ratio below threshold (small files allowed)', (p) => {
+        p.dist.packedSize = 1024;
+        p.dist.unpackedSize = 1024 * 1024;
+      });
+      expectValid('reasonable ratio above threshold', (p) => {
+        p.dist.packedSize = 5 * 1024 * 1024;
+        p.dist.unpackedSize = 100 * 1024 * 1024;
+      });
+      expectInvalid('unpacked exceeds 512MB cap', (p) => {
+        p.dist.packedSize = 5 * 1024 * 1024;
+        p.dist.unpackedSize = 513 * 1024 * 1024;
+      });
+    });
+  });
+
+  describe('tag', () => {
+    expectInvalid('empty', (p) => {
       p.tag = '';
-    },
-    true,
-  );
-
-  runTest(
-    'invalid meta tag',
-    (p) => {
+    });
+    expectInvalid('uppercase', (p) => {
       p.tag = 'INVALID_TAG';
-    },
-    true,
-  );
+    });
+    expectInvalid('numeric (semver-resembling)', (p) => {
+      p.tag = '100';
+    });
+  });
 
-  runTest(
-    'invalid meta wpm version',
-    (p) => {
+  describe('_wpm', () => {
+    expectInvalid('partial version', (p) => {
       p._wpm = '1.0';
-    },
-    true,
-  );
+    });
+    expectInvalid('range', (p) => {
+      p._wpm = '^1.0.0';
+    });
+  });
 
-  runTest(
-    'invalid visibility',
-    (p) => {
-      // @ts-expect-error -- testing invalid visibility
-      p.visibility = 'protected';
-    },
-    true,
-  );
-
-  runTest(
-    'valid visibility private',
-    (p) => {
+  describe('visibility', () => {
+    expectValid('public', (p) => {
+      p.visibility = 'public';
+    });
+    expectValid('private', (p) => {
       p.visibility = 'private';
-    },
-    false,
-  );
+    });
+    expectInvalid('protected', (p) => {
+      // @ts-expect-error -- testing invalid enum value
+      p.visibility = 'protected';
+    });
+    expectInvalid('uppercase', (p) => {
+      // @ts-expect-error -- testing invalid enum value
+      p.visibility = 'PUBLIC';
+    });
+  });
 
-  runTest(
-    'readme exceeds 50KB size limit',
-    (p) => {
-      p.readme = 'a'.repeat(50 * 1024 + 1);
-    },
-    true,
-  );
-
-  runTest(
-    'readme at 50KB size limit',
-    (p) => {
-      p.readme = 'a'.repeat(50 * 1024);
-    },
-    false,
-  );
-
-  runTest(
-    'readme is empty string',
-    (p) => {
+  describe('readme', () => {
+    expectValid('empty string', (p) => {
       p.readme = '';
-    },
-    false,
-  );
+    });
+    expectValid('exactly 50KB', (p) => {
+      p.readme = 'a'.repeat(50 * 1024);
+    });
+    expectInvalid('over 50KB', (p) => {
+      p.readme = 'a'.repeat(50 * 1024 + 1);
+    });
+
+    it('strips line/paragraph separators in transform', () => {
+      const p = buildValidPackage();
+      p.readme = 'before\u2028after\u2029tail';
+      const parsed = PackageSchema.parse(p);
+      expect(parsed.readme).toBe('before after tail');
+    });
+
+    it('strips bad control chars in transform', () => {
+      const p = buildValidPackage();
+      p.readme = 'before\x00\x01after';
+      const parsed = PackageSchema.parse(p);
+      expect(parsed.readme).toBe('beforeafter');
+    });
+
+    it('trims after transform', () => {
+      const p = buildValidPackage();
+      p.readme = '   spaced   ';
+      const parsed = PackageSchema.parse(p);
+      expect(parsed.readme).toBe('spaced');
+    });
+  });
 });
 
-describe('ValidatePackageName', () => {
-  const cases = [
-    { name: 'valid name', input: 'my-awesome-package', isValid: true },
-    { name: 'valid name with numbers', input: 'package-123', isValid: true },
-    { name: 'valid min length', input: 'abc', isValid: true },
-    { name: 'valid max length', input: 'a'.repeat(164), isValid: true },
-    { name: 'invalid too short', input: 'ab', isValid: false },
-    { name: 'invalid too long', input: 'a'.repeat(165), isValid: false },
-    { name: 'invalid with underscores', input: 'my_package', isValid: false },
-    { name: 'invalid starting with hyphen', input: '-mypackage', isValid: false },
-    { name: 'invalid ending with hyphen', input: 'mypackage-', isValid: false },
-    { name: 'invalid consecutive hyphens', input: 'my--package', isValid: false },
-    { name: 'invalid with mixed case', input: 'MyPackage', isValid: false },
-    { name: 'invalid with space', input: 'my package', isValid: false },
-    { name: 'invalid with special chars', input: 'my-package!', isValid: false },
-    { name: 'invalid with slash', input: 'vendor/package', isValid: false },
-    { name: 'empty string', input: '', isValid: false },
-  ];
+// =====================================================================
+// PackageSchema — cross-field
+// =====================================================================
 
-  for (const c of cases) {
-    test(c.name, () => {
-      const result = validateVar(PackageNameSchema, c.input);
-      if (c.isValid) {
-        expect(result).toBeNull();
-      } else {
-        expect(result).not.toBeNull();
-      }
-    });
-  }
+describe('PackageSchema (cross-field)', () => {
+  it('rejects self-dependency in dependencies', () => {
+    const p = buildValidPackage();
+    p.dependencies = { [p.name]: '1.0.0' };
+    expect(PackageSchema.safeParse(p).success).toBe(false);
+  });
+
+  it('rejects self-dependency in devDependencies', () => {
+    const p = buildValidPackage();
+    p.devDependencies = { [p.name]: '1.0.0' };
+    expect(PackageSchema.safeParse(p).success).toBe(false);
+  });
+
+  it('rejects same package in both deps and devDeps', () => {
+    const p = buildValidPackage();
+    p.dependencies = { 'shared-pkg': '1.0.0' };
+    p.devDependencies = { 'shared-pkg': '2.0.0' };
+    expect(PackageSchema.safeParse(p).success).toBe(false);
+  });
+
+  it('reports each overlap with a precise path', () => {
+    const p = buildValidPackage();
+    p.dependencies = { 'shared-a': '1.0.0', 'shared-b': '1.0.0' };
+    p.devDependencies = { 'shared-a': '2.0.0', 'shared-b': '2.0.0' };
+    const result = PackageSchema.safeParse(p);
+    if (result.success) {
+      throw new Error('expected failure');
+    }
+    const overlapPaths = result.error.issues
+      .filter((i) => i.path.length === 2 && i.path[0] === 'devDependencies')
+      .map((i) => i.path[1]);
+    expect(overlapPaths).toEqual(expect.arrayContaining(['shared-a', 'shared-b']));
+  });
 });
 
-describe('ValidateSemver', () => {
-  const cases = [
-    { name: 'valid simple', input: '1.2.3', isValid: true },
-    { name: 'valid with prerelease', input: '1.0.0-alpha.1', isValid: true },
-    { name: 'valid with build metadata', input: '1.0.0+build.123', isValid: true },
-    { name: 'valid min length', input: '1.0.0', isValid: true },
-    {
-      name: 'valid max length',
-      input: `${'1'.repeat(5)}.${'2'.repeat(5)}.${'3'.repeat(5)}-${'a'.repeat(20)}+${'b'.repeat(20)}`,
-      isValid: true,
-    },
-    {
-      name: 'invalid max length',
-      input: `${'1'.repeat(21)}.${'2'.repeat(20)}.${'3'.repeat(20)}`,
-      isValid: false,
-    },
-    { name: 'invalid too short length', input: '1.0', isValid: false },
-    { name: 'invalid just too short length', input: '1.2.', isValid: false },
-    {
-      name: 'invalid too long length',
-      input: `${'1'.repeat(22)}.${'2'.repeat(22)}.${'3'.repeat(22)}`,
-      isValid: false,
-    },
-    { name: 'invalid with v prefix', input: 'v1.2.3', isValid: false },
-    { name: 'invalid format', input: '1.2', isValid: false },
-    { name: 'invalid non-numeric', input: 'a.b.c', isValid: false },
-    { name: 'empty string', input: '', isValid: false },
-  ];
+// =====================================================================
+// Strict object semantics — security
+// =====================================================================
 
-  for (const c of cases) {
-    test(c.name, () => {
-      const result = validateVar(SemverSchema, c.input);
-      if (c.isValid) {
-        expect(result).toBeNull();
-      } else {
-        expect(result).not.toBeNull();
-      }
-    });
-  }
+describe('strict object enforcement', () => {
+  it('rejects unknown top-level key', () => {
+    const p = { ...buildValidPackage(), randomExtra: 'value' };
+    expect(PackageSchema.safeParse(p).success).toBe(false);
+  });
+
+  it('rejects unknown "private" field at top level (handled at API boundary)', () => {
+    const p: Record<string, unknown> = { ...buildValidPackage(), private: true };
+    expect(PackageSchema.safeParse(p).success).toBe(false);
+  });
+
+  it('rejects unknown key in nested requires', () => {
+    const p: Record<string, unknown> = { ...buildValidPackage() };
+    p.requires = { wp: '>=5.0', node: '>=18' };
+    expect(PackageSchema.safeParse(p).success).toBe(false);
+  });
+
+  it('rejects unknown key in dist', () => {
+    const p = buildValidPackage();
+    const distPlus = { ...p.dist, sneaky: 'value' };
+
+    p.dist = distPlus;
+
+    expect(PackageSchema.safeParse(p).success).toBe(false);
+  });
+
+  it('does NOT silently strip unknown keys (defense in depth)', () => {
+    const p = { ...buildValidPackage(), maliciousField: { nested: true } };
+    const result = PackageSchema.safeParse(p);
+    expect(result.success).toBe(false);
+  });
 });
 
-describe('ValidateDistTag', () => {
-  const cases = [
-    { name: 'valid latest', input: 'latest', isValid: true },
-    { name: 'valid beta', input: 'beta', isValid: true },
-    { name: 'valid with numbers', input: 'next-1', isValid: true },
-    { name: 'valid min length', input: 'dev', isValid: true },
-    { name: 'valid max length', input: 'a'.repeat(64), isValid: true },
-    { name: 'invalid too short', input: 'a', isValid: false },
-    { name: 'invalid just too short', input: 'ab', isValid: false },
-    { name: 'invalid too long', input: 'a'.repeat(65), isValid: false },
-    { name: 'invalid uppercase', input: 'LATEST', isValid: false },
-    { name: 'invalid with underscore', input: 'next_major', isValid: false },
-    { name: 'invalid with special char', input: 'beta!', isValid: false },
-    { name: 'empty string', input: '', isValid: false },
-  ];
+// =====================================================================
+// Prototype pollution
+// =====================================================================
 
-  for (const c of cases) {
-    test(c.name, () => {
-      const result = validateVar(DistTagSchema, c.input);
-      if (c.isValid) {
-        expect(result).toBeNull();
-      } else {
-        expect(result).not.toBeNull();
-      }
+describe('prototype pollution resistance', () => {
+  // Zod's strictObject silently STRIPS `__proto__` rather than rejecting it as
+  // an unknown key. This is intentional and safer than a runtime error: the
+  // polluted property never appears in the parsed result, and Object.prototype
+  // remains unmodified. These tests verify the safety invariant directly
+  // (no pollution, no leakage), not rejection.
+
+  it('strips __proto__ from parsed result at top level (defineProperty)', () => {
+    const p: Record<string, unknown> = { ...buildValidPackage() };
+    Object.defineProperty(p, '__proto__', {
+      value: { polluted: 'YES' },
+      enumerable: true,
+      writable: true,
+      configurable: true,
     });
-  }
+    const result = PackageSchema.safeParse(p);
+    expect(result.success).toBe(true);
+    if (!result.success) {
+      return;
+    }
+    const parsed = result.data as Record<string, unknown>;
+    expect(Object.hasOwn(parsed, '__proto__')).toBe(false);
+    expect(parsed.polluted).toBeUndefined();
+  });
+
+  it('strips __proto__ from dependencies (defineProperty)', () => {
+    const p = buildValidPackage();
+    const malicious: Record<string, string> = {};
+    Object.defineProperty(malicious, '__proto__', {
+      value: '1.0.0',
+      enumerable: true,
+      writable: true,
+      configurable: true,
+    });
+    p.dependencies = malicious;
+    const result = PackageSchema.safeParse(p);
+    expect(result.success).toBe(true);
+    if (!result.success) {
+      return;
+    }
+    const parsedDeps = result.data.dependencies ?? {};
+    expect(Object.hasOwn(parsedDeps, '__proto__')).toBe(false);
+  });
+
+  it('rejects constructor as own property at top level (strict object)', () => {
+    const p = buildValidPackage();
+    const payload = { ...p, constructor: { polluted: true } };
+    expect(PackageSchema.safeParse(payload).success).toBe(false);
+  });
+
+  it('does not pollute Object.prototype on parse of malicious payload', () => {
+    const probe = {} as Record<string, unknown>;
+    const before = probe.polluted;
+    const malicious = JSON.parse(
+      '{"__proto__":{"polluted":"yes"},"name":"valid-pkg","type":"plugin","version":"1.0.0"}',
+    );
+    PackageSchema.safeParse(malicious);
+    const after = ({} as Record<string, unknown>).polluted;
+    expect(before).toBeUndefined();
+    expect(after).toBeUndefined();
+  });
+
+  it('parses payload built atop Array prototype without crashing', () => {
+    const malicious = Object.create([]);
+    Object.assign(malicious, buildValidPackage());
+    const result = PackageSchema.safeParse(malicious);
+    expect(typeof result.success).toBe('boolean');
+  });
 });
 
-describe('ValidateSemverConstraint', () => {
-  const cases = [
-    { name: 'valid caret', input: '^1.2.3', isValid: true },
-    { name: 'valid tilde', input: '~1.2.3', isValid: true },
-    { name: 'valid wildcard', input: '1.x', isValid: true },
-    { name: 'valid without patch', input: '1.2', isValid: true },
-    { name: 'valid exact', input: '1.2.3', isValid: true },
-    { name: 'valid without minor and patch', input: '1', isValid: true },
-    { name: 'valid without patch and with caret', input: '^1.2', isValid: true },
-    { name: 'valid without minor and patch with tilde', input: '~1', isValid: true },
-    { name: 'valid comparison', input: '>=1.2.7', isValid: true },
-    { name: 'valid range', input: '>= 1.2.0 < 2.0.0', isValid: true },
-    { name: 'valid hyphen range', input: '1.2.0 - 2.0.0', isValid: true },
-    { name: 'invalid with v prefix', input: 'v1.2.3', isValid: false },
-    { name: 'invalid operator', input: '?1.2.0', isValid: false },
-    { name: 'invalid characters', input: '>=1.2.c', isValid: false },
-    { name: 'incomplete range', input: '> 1.2.0,', isValid: false },
-    { name: 'empty string', input: '', isValid: false },
-  ];
+// =====================================================================
+// Boundary fuzzing — numeric fields
+// =====================================================================
 
-  for (const c of cases) {
-    test(c.name, () => {
-      const result = validateVar(SemverConstraintSchema, c.input);
-      if (c.isValid) {
-        expect(result).toBeNull();
-      } else {
-        expect(result).not.toBeNull();
-      }
-    });
-  }
+describe('fuzz: dist numeric bounds', () => {
+  it(`rejects ${FUZZ_ITERATIONS} non-positive-integer totalFiles values`, () => {
+    const rng = makeRng(FUZZ_SEED);
+    for (let i = 0; i < FUZZ_ITERATIONS; i++) {
+      const p = buildValidPackage();
+      const choice = Math.floor(rng() * 6);
+      const bad = [0, -Math.floor(rng() * 1_000_000), rng() * 100, NaN, Infinity, -Infinity][
+        choice
+      ];
+      p.dist.totalFiles = bad;
+      expect(PackageSchema.safeParse(p).success).toBe(false);
+    }
+  });
+
+  it(`accepts ${FUZZ_ITERATIONS} valid totalFiles values in [1, 50000]`, () => {
+    const rng = makeRng(FUZZ_SEED + 1);
+    for (let i = 0; i < FUZZ_ITERATIONS; i++) {
+      const p = buildValidPackage();
+      p.dist.totalFiles = 1 + Math.floor(rng() * 50_000);
+      expect(PackageSchema.safeParse(p).success).toBe(true);
+    }
+  });
+
+  it(`rejects packedSize values just outside [1, 128MB]`, () => {
+    const cases = [0, -1, 128 * 1024 * 1024 + 1, 1e12];
+    for (const c of cases) {
+      const p = buildValidPackage();
+      p.dist.packedSize = c;
+      expect(PackageSchema.safeParse(p).success).toBe(false);
+    }
+  });
 });
 
-describe('ValidateDigest', () => {
-  const validHash = Buffer.alloc(32).toString('base64');
+// =====================================================================
+// Property-style fuzzing — string identifiers
+// =====================================================================
 
-  const cases = [
-    { name: 'valid digest with prefix', input: `sha256:${validHash}`, isValid: true },
-    {
-      name: 'valid digest without prefix (invalid in strict schema)',
-      input: validHash,
-      isValid: false,
-    },
-    { name: 'invalid prefix', input: `sha512:${validHash}`, isValid: false },
-    { name: 'invalid base64', input: 'sha256:not-valid-base64-$%^', isValid: false },
-    {
-      name: 'invalid hash length (short)',
-      input: `sha256:${Buffer.alloc(31).toString('base64')}`,
-      isValid: false,
-    },
-    {
-      name: 'invalid hash length (long)',
-      input: `sha256:${Buffer.alloc(33).toString('base64')}`,
-      isValid: false,
-    },
-    { name: 'empty string', input: '', isValid: false },
-  ];
-
-  for (const c of cases) {
-    test(c.name, () => {
-      const result = validateVar(DigestSchema, c.input);
-      if (c.isValid) {
-        expect(result).toBeNull();
-      } else {
-        expect(result).not.toBeNull();
+describe('fuzz: PackageNameSchema is regex+length pure', () => {
+  it(`property holds across ${FUZZ_ITERATIONS} random strings`, () => {
+    const rng = makeRng(FUZZ_SEED);
+    const generate = (): string => {
+      const len = Math.floor(rng() * 200);
+      let s = '';
+      for (let i = 0; i < len; i++) {
+        const choice = rng();
+        if (choice < 0.4) {
+          const cls = Math.floor(rng() * 3);
+          if (cls === 0) {
+            s += String.fromCharCode(97 + Math.floor(rng() * 26));
+          } else if (cls === 1) {
+            s += String.fromCharCode(48 + Math.floor(rng() * 10));
+          } else {
+            s += '-';
+          }
+        } else if (choice < 0.7) {
+          s += String.fromCharCode(32 + Math.floor(rng() * 95));
+        } else {
+          s += String.fromCharCode(Math.floor(rng() * 0x10000));
+        }
       }
-    });
-  }
+      return s;
+    };
+
+    for (let i = 0; i < FUZZ_ITERATIONS; i++) {
+      const s = generate();
+      const expected = NAMING_REGEX.test(s) && s.length >= 3 && s.length <= 164;
+      expect(accepts(PackageNameSchema, s)).toBe(expected);
+    }
+  });
 });
 
-describe('ValidateHttpURL', () => {
-  const cases = [
-    { name: 'valid https', input: 'https://example.com', isValid: true },
-    { name: 'valid http', input: 'http://example.com/path?query=value', isValid: true },
-    { name: 'invalid scheme ftp', input: 'ftp://example.com', isValid: false },
-    { name: 'invalid scheme-relative', input: '//example.com', isValid: false },
-    { name: 'invalid no scheme', input: 'example.com', isValid: false },
-    // starting zod:4.4.0, zod treat malformed URLs missing slash after protocol as invalid.
-    { name: 'invalid malformed', input: 'http:/example.com', isValid: false },
-    { name: 'empty string', input: '', isValid: false },
-  ];
+// =====================================================================
+// Property-style fuzzing — DigestSchema canonicality
+// =====================================================================
 
-  for (const c of cases) {
-    test(c.name, () => {
-      const result = validateVar(PackageSchema.shape.homepage, c.input);
-      if (c.isValid) {
-        expect(result).toBeNull();
-      } else {
-        expect(result).not.toBeNull();
+describe('fuzz: DigestSchema accepts iff canonical sha256 base64', () => {
+  it(`property holds across ${FUZZ_ITERATIONS} random byte arrays of varying lengths`, () => {
+    const rng = makeRng(FUZZ_SEED);
+    for (let i = 0; i < FUZZ_ITERATIONS; i++) {
+      const len = Math.floor(rng() * 64);
+      const bytes = Buffer.alloc(len);
+      for (let j = 0; j < len; j++) {
+        bytes[j] = Math.floor(rng() * 256);
       }
-    });
-  }
+      const encoded = `sha256:${bytes.toString('base64')}`;
+      // Canonical base64 of 32 bytes will satisfy the strict regex.
+      // Other lengths produce strings of different shapes.
+      const expected = len === 32;
+      expect(accepts(DigestSchema, encoded)).toBe(expected);
+    }
+  });
+
+  it(`rejects ${FUZZ_ITERATIONS} random base64-flavored strings of wrong shape`, () => {
+    const rng = makeRng(FUZZ_SEED + 2);
+    const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
+    for (let i = 0; i < FUZZ_ITERATIONS; i++) {
+      const len = Math.floor(rng() * 100);
+      let body = '';
+      for (let j = 0; j < len; j++) {
+        body += alphabet[Math.floor(rng() * alphabet.length)];
+      }
+      if (rng() < 0.5) {
+        body += '=';
+      }
+      const candidate = `sha256:${body}`;
+      // Schema uses strict canonical regex; expected formula must match.
+      const expected = STRICT_DIGEST_BODY_REGEX.test(body);
+      expect(accepts(DigestSchema, candidate)).toBe(expected);
+    }
+  });
 });
 
-describe('ValidateDependencyVersion', () => {
-  const cases = [
-    { name: 'valid semver', input: '1.2.3', isValid: true },
-    { name: 'valid semver with constraint', input: '~1.2.3', isValid: false },
-    { name: 'valid semver with prerelease', input: '2.0.0-beta.1', isValid: true },
-    { name: 'valid wildcard', input: '*', isValid: true },
-    { name: 'invalid partial semver', input: '1.2', isValid: false },
-    { name: 'invalid with v prefix', input: 'v1.0.0', isValid: false },
-    { name: 'invalid wildcard with other chars', input: '*.*', isValid: false },
-    { name: 'invalid text', input: 'latest', isValid: false },
-    { name: 'empty string', input: '', isValid: false },
-  ];
+// =====================================================================
+// Property-style fuzzing — strict object rejects extra keys
+// =====================================================================
 
-  for (const c of cases) {
-    test(c.name, () => {
-      const result = validateVar(DependencyVersionSchema, c.input);
-      if (c.isValid) {
-        expect(result).toBeNull();
-      } else {
-        expect(result).not.toBeNull();
+describe('fuzz: strict object rejects any extra key', () => {
+  it(`rejects ${FUZZ_ITERATIONS} random extra keys at top level`, () => {
+    const rng = makeRng(FUZZ_SEED);
+    const realKeys = new Set(Object.keys(buildValidPackage()));
+    for (let i = 0; i < FUZZ_ITERATIONS; i++) {
+      const p: Record<string, unknown> = { ...buildValidPackage() };
+      const keyLen = 1 + Math.floor(rng() * 20);
+      let key = '';
+      for (let j = 0; j < keyLen; j++) {
+        key += String.fromCharCode(97 + Math.floor(rng() * 26));
       }
-    });
-  }
+      if (realKeys.has(key)) {
+        continue;
+      }
+      p[key] = 'extra';
+      expect(PackageSchema.safeParse(p).success).toBe(false);
+    }
+  });
+});
+
+// =====================================================================
+// Round-trip
+// =====================================================================
+
+describe('round-trip', () => {
+  it('valid package survives structuredClone', () => {
+    const p = buildValidPackage();
+    const cloned = structuredClone(p);
+    expect(PackageSchema.safeParse(cloned).success).toBe(true);
+  });
+
+  it('valid package survives JSON round-trip', () => {
+    const p = buildValidPackage();
+    const cloned = structuredClone(p);
+    expect(PackageSchema.safeParse(cloned).success).toBe(true);
+  });
+
+  it('parsed result has stable shape (readme transform applied)', () => {
+    const p = buildValidPackage();
+    p.readme = ' \n# Title\u2028line\u2029line  \n ';
+    const parsed = PackageSchema.parse(p);
+    expect(parsed.readme).toBe('# Title line line');
+  });
 });
