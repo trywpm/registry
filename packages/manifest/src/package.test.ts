@@ -1075,7 +1075,8 @@ describe('ValidateHttpURL', () => {
     { name: 'invalid scheme ftp', input: 'ftp://example.com', isValid: false },
     { name: 'invalid scheme-relative', input: '//example.com', isValid: false },
     { name: 'invalid no scheme', input: 'example.com', isValid: false },
-    { name: 'valid malformed', input: 'http:/example.com', isValid: true },
+    // starting zod:4.4.0, zod treat malformed URLs missing slash after protocol as invalid.
+    { name: 'invalid malformed', input: 'http:/example.com', isValid: false },
     { name: 'empty string', input: '', isValid: false },
   ];
 
