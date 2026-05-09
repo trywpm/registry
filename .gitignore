@@ -10,6 +10,7 @@ worker-types.d.ts
 !Makefile
 !.gitignore
 !bun.lock
+!bunfig.toml
 !package.json
 !tsconfig.json
 !.editorconfig
