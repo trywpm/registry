@@ -13,9 +13,9 @@ import {
   DANGEROUS_CHARS_REGEX,
   SemverConstraintSchema,
   DependencyVersionSchema,
-} from './package';
+} from '.';
 
-import type { Package } from './package';
+import type { Package } from '.';
 
 // =====================================================================
 // Test helpers
