@@ -7,8 +7,10 @@
   },
   "dependencies": {
     "@wpm/manifest": "workspace:*",
+    "@wpm/rbac": "workspace:*",
     "@wpm/util": "workspace:*",
-    "hono": "catalog:"
+    "hono": "catalog:",
+    "postgres": "catalog:"
   },
   "devDependencies": {
     "typescript": "catalog:",
