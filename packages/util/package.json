@@ -5,6 +5,7 @@
     "./test": "./src/test.ts",
     "./datetime": "./src/datetime.ts",
     "./serialize": "./src/serialize.ts",
+    "./constants": "./src/constants.ts",
     "./validation": "./src/validation.ts"
   },
   "dependencies": {
