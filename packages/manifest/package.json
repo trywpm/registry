@@ -5,6 +5,7 @@
     "./package": "./src/package.ts"
   },
   "dependencies": {
+    "@wpm/util": "workspace:*",
     "semver": "catalog:",
     "zod": "catalog:"
   },

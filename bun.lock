@@ -21,6 +21,7 @@
     "packages/manifest": {
       "name": "@wpm/manifest",
       "dependencies": {
+        "@wpm/util": "workspace:*",
         "semver": "catalog:",
         "zod": "catalog:",
       },
