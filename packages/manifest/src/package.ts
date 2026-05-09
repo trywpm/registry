@@ -34,6 +34,44 @@ const WEIRD_LINE_BREAKS_REGEX = /[\u2028\u2029]/g;
 const BAD_CHARS_REGEX = /[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F-\u009F\uFFFD\uFFFC]/g;
 const CONTROL_CHAR_ERROR = 'contains invalid control characters or invisible formatting';
 
+const reserved = new Set([
+  // windows reserved filenames
+  'con',
+  'prn',
+  'aux',
+  'nul',
+  'com0',
+  'com1',
+  'com2',
+  'com3',
+  'com4',
+  'com5',
+  'com6',
+  'com7',
+  'com8',
+  'com9',
+  'lpt0',
+  'lpt1',
+  'lpt2',
+  'lpt3',
+  'lpt4',
+  'lpt5',
+  'lpt6',
+  'lpt7',
+  'lpt8',
+  'lpt9',
+
+  // wp reserved names
+  'wp',
+  'plugins',
+  'themes',
+  'wp-admin',
+  'wp-config',
+  'wp-content',
+  'mu-plugins',
+  'wp-includes',
+]);
+
 export const PackageNameSchema = z
   .string()
   .min(3, 'package name must be at least 3 characters')
@@ -41,7 +79,10 @@ export const PackageNameSchema = z
   .regex(
     PACKAGE_NAME_REGEX,
     'package name must consist of lowercase alphanumeric characters separated by hyphens',
-  );
+  )
+  .refine((name) => !reserved.has(name.toLowerCase()), {
+    error: (issue) => `${String(issue.input)} is a restricted package name`,
+  });
 
 export const SemverSchema = z
   .string()
