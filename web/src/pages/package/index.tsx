@@ -17,7 +17,7 @@ import { PackageHeader } from '@/components/package-header';
 import { PackageSidebar } from '@/components/package-sidebar';
 import { getCachedReadme, getCanonicalUrl } from '@/lib/utils';
 
-import type { Package } from '@wpm/manifest/package';
+import type { Package } from '@wpm/manifest';
 
 export const PackagePage = async (c: Context) => {
   const name = c.req.param('name');

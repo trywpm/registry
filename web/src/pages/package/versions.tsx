@@ -1,5 +1,5 @@
 import type { Context } from 'hono';
-import type { Package } from '@wpm/manifest/package';
+import type { Package } from '@wpm/manifest';
 
 import { Badge } from '@/components/badge';
 import { BaseLayout } from '@/layouts/base';
