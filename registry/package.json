@@ -3,7 +3,7 @@
   "private": true,
   "scripts": {
     "start": "vp run typegen && wrangler dev",
-    "typegen": "wrangler types worker-types.d.ts"
+    "typegen": "wrangler types worker-types.d.ts --env-file .env.example"
   },
   "dependencies": {
     "@wpm/manifest": "workspace:*",
