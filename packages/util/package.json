@@ -2,6 +2,7 @@
   "name": "@wpm/util",
   "private": true,
   "exports": {
+    "./s3": "./src/s3.ts",
     "./test": "./src/test.ts",
     "./datetime": "./src/datetime.ts",
     "./serialize": "./src/serialize.ts",
