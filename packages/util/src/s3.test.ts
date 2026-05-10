@@ -6,7 +6,7 @@ import { describe, it, expect, beforeAll, afterAll, afterEach, vi } from 'vitest
 
 import { Presigner } from './s3';
 
-import type { PresignerConfig, PresignPutArgs } from './s3';
+import type { PresignerConfig, PutArgs } from './s3';
 
 const FIXED_AMZ = '20260510T123456Z';
 const fixedClock = (): number => FIXED_DATE.getTime();
@@ -114,14 +114,14 @@ describe('Presigner — input validation', () => {
     { case: 'expiresIn > 7d', args: { key: 'x', expiresIn: 604801 } },
     { case: 'non-integer expires', args: { key: 'x', expiresIn: 60.5 } },
   ])('rejects $case', async ({ args }) => {
-    await expect(p.presignGet(args)).rejects.toThrow();
+    await expect(p.get(args)).rejects.toThrow();
   });
 
   it.each([
     { case: 'expiresIn = 1', expiresIn: 1 },
     { case: 'expiresIn = 7 days', expiresIn: 604800 },
   ])('accepts boundary: $case', async ({ expiresIn }) => {
-    await expect(p.presignGet({ key: 'x', expiresIn })).resolves.toEqual(expect.any(String));
+    await expect(p.get({ key: 'x', expiresIn })).resolves.toEqual(expect.any(String));
   });
 });
 
@@ -129,7 +129,7 @@ describe('presignGet — URL shape', () => {
   let url = '';
   beforeAll(async () => {
     const p = new Presigner(CFG);
-    url = await p.presignGet({ key: 'photos/cat.png', expiresIn: 3600 });
+    url = await p.get({ key: 'photos/cat.png', expiresIn: 3600 });
   });
 
   it('is parseable', () => {
@@ -179,8 +179,8 @@ describe('presignGet — determinism and sensitivity', () => {
   it('same inputs → same signature', async () => {
     const a = new Presigner(CFG);
     const b = new Presigner(CFG);
-    const u1 = await a.presignGet({ key: 'x', expiresIn: 60 });
-    const u2 = await b.presignGet({ key: 'x', expiresIn: 60 });
+    const u1 = await a.get({ key: 'x', expiresIn: 60 });
+    const u2 = await b.get({ key: 'x', expiresIn: 60 });
     expect(sigOf(u1)).toBe(sigOf(u2));
   });
 
@@ -189,14 +189,14 @@ describe('presignGet — determinism and sensitivity', () => {
     { mutate: 'expiresIn', a: { key: 'x', expiresIn: 60 }, b: { key: 'x', expiresIn: 61 } },
   ])('different $mutate → different signatures', async ({ a, b }) => {
     const p = new Presigner(CFG);
-    expect(sigOf(await p.presignGet(a))).not.toBe(sigOf(await p.presignGet(b)));
+    expect(sigOf(await p.get(a))).not.toBe(sigOf(await p.get(b)));
   });
 
   it('different secret → different signatures', async () => {
     const p1 = new Presigner({ ...CFG, secretAccessKey: 'a'.repeat(40) });
     const p2 = new Presigner({ ...CFG, secretAccessKey: 'b'.repeat(40) });
-    const u1 = await p1.presignGet({ key: 'x', expiresIn: 60 });
-    const u2 = await p2.presignGet({ key: 'x', expiresIn: 60 });
+    const u1 = await p1.get({ key: 'x', expiresIn: 60 });
+    const u2 = await p2.get({ key: 'x', expiresIn: 60 });
     expect(sigOf(u1)).not.toBe(sigOf(u2));
   });
 });
@@ -220,7 +220,7 @@ describe('presignGet — key encoding', () => {
     { name: 'tilde unreserved', key: '~bak.txt', pathSeg: '~bak.txt' },
     { name: 'dash dot underscore', key: 'a-b_c.d', pathSeg: 'a-b_c.d' },
   ])('encodes $name', async ({ key, pathSeg }) => {
-    const url = await p.presignGet({ key, expiresIn: 60 });
+    const url = await p.get({ key, expiresIn: 60 });
     expect(new URL(url).pathname).toBe(`/my-bucket/${pathSeg}`);
     expect(sigOf(url)).toMatch(HEX64);
   });
@@ -230,39 +230,39 @@ describe('presignPut — Go SDK feature parity', () => {
   const p = new Presigner(CFG);
 
   it('returns { url, headers } including host', async () => {
-    const out = await p.presignPut({ key: 'x', expiresIn: 60 });
+    const out = await p.put({ key: 'x', expiresIn: 60 });
     expect(typeof out.url).toBe('string');
     expect(out.headers['host']).toBe('localhost:9000');
   });
 
   it('only `host` is signed when no extra options', async () => {
-    const out = await p.presignPut({ key: 'x', expiresIn: 60 });
+    const out = await p.put({ key: 'x', expiresIn: 60 });
     expect(paramOf(out.url, 'X-Amz-SignedHeaders')).toBe('host');
   });
 
   it.each([
     {
       name: 'contentType',
-      args: { contentType: 'image/png' } as Partial<PresignPutArgs>,
+      args: { contentType: 'image/png' } as Partial<PutArgs>,
       signed: ['content-type'],
     },
     {
       name: 'contentLength',
-      args: { contentLength: 1234 } as Partial<PresignPutArgs>,
+      args: { contentLength: 1234 } as Partial<PutArgs>,
       signed: ['content-length'],
     },
     {
       name: 'sha256',
-      args: { sha256: 'n4bQgYhMfWWaL+qgxVrQFaO/TxsrC4Is0V1sFbDwCgg=' } as Partial<PresignPutArgs>,
+      args: { sha256: 'n4bQgYhMfWWaL+qgxVrQFaO/TxsrC4Is0V1sFbDwCgg=' } as Partial<PutArgs>,
       signed: ['x-amz-checksum-sha256', 'x-amz-sdk-checksum-algorithm'],
     },
     {
       name: 'ifNoneMatch',
-      args: { ifNoneMatch: true } as Partial<PresignPutArgs>,
+      args: { ifNoneMatch: true } as Partial<PutArgs>,
       signed: ['if-none-match'],
     },
   ])('$name is signed (not query-hoisted)', async ({ args, signed }) => {
-    const out = await p.presignPut({ key: 'x', expiresIn: 60, ...args });
+    const out = await p.put({ key: 'x', expiresIn: 60, ...args });
     const sh = paramOf(out.url, 'X-Amz-SignedHeaders').split(';');
     for (const h of signed) {
       expect(sh).toContain(h);
@@ -272,23 +272,23 @@ describe('presignPut — Go SDK feature parity', () => {
 
   it('sha256 also sets x-amz-sdk-checksum-algorithm to SHA256', async () => {
     const digest = 'n4bQgYhMfWWaL+qgxVrQFaO/TxsrC4Is0V1sFbDwCgg=';
-    const out = await p.presignPut({ key: 'x', expiresIn: 60, sha256: digest });
+    const out = await p.put({ key: 'x', expiresIn: 60, sha256: digest });
     expect(out.headers['x-amz-checksum-sha256']).toBe(digest);
     expect(out.headers['x-amz-sdk-checksum-algorithm']).toBe('SHA256');
   });
 
   it('ifNoneMatch true → If-None-Match: *', async () => {
-    const out = await p.presignPut({ key: 'x', expiresIn: 60, ifNoneMatch: true });
+    const out = await p.put({ key: 'x', expiresIn: 60, ifNoneMatch: true });
     expect(out.headers['if-none-match']).toBe('*');
   });
 
   it('contentType is NOT hoisted to query string', async () => {
-    const out = await p.presignPut({ key: 'x', expiresIn: 60, contentType: 'image/png' });
+    const out = await p.put({ key: 'x', expiresIn: 60, contentType: 'image/png' });
     expect(new URL(out.url).searchParams.has('Content-Type')).toBe(false);
   });
 
   it('all options combined → SignedHeaders alphabetically sorted', async () => {
-    const out = await p.presignPut({
+    const out = await p.put({
       key: 'uploads/file.bin',
       expiresIn: 3600,
       contentType: 'application/octet-stream',
@@ -315,11 +315,11 @@ describe('presignPut — Go SDK feature parity', () => {
     { mutate: 'sha256', a: { sha256: 'AAAA' }, b: { sha256: 'BBBB' } },
   ] satisfies readonly {
     mutate: string;
-    a: Partial<PresignPutArgs>;
-    b: Partial<PresignPutArgs>;
+    a: Partial<PutArgs>;
+    b: Partial<PutArgs>;
   }[])('changing $mutate → different signatures', async ({ a, b }) => {
-    const ua = await p.presignPut({ key: 'x', expiresIn: 60, ...a });
-    const ub = await p.presignPut({ key: 'x', expiresIn: 60, ...b });
+    const ua = await p.put({ key: 'x', expiresIn: 60, ...a });
+    const ub = await p.put({ key: 'x', expiresIn: 60, ...b });
     expect(sigOf(ua.url)).not.toBe(sigOf(ub.url));
   });
 });
@@ -329,27 +329,27 @@ describe('presignPut — unhoistable headers (digest verification)', () => {
 
   const UNHOISTABLE = [
     {
-      input: { sha256: 'AAAA' } as Partial<PresignPutArgs>,
+      input: { sha256: 'AAAA' } as Partial<PutArgs>,
       header: 'x-amz-checksum-sha256',
       queryParam: 'X-Amz-Checksum-Sha256',
     },
     {
-      input: { sha256: 'AAAA' } as Partial<PresignPutArgs>,
+      input: { sha256: 'AAAA' } as Partial<PutArgs>,
       header: 'x-amz-sdk-checksum-algorithm',
       queryParam: 'X-Amz-Sdk-Checksum-Algorithm',
     },
     {
-      input: { contentType: 'image/png' } as Partial<PresignPutArgs>,
+      input: { contentType: 'image/png' } as Partial<PutArgs>,
       header: 'content-type',
       queryParam: 'Content-Type',
     },
     {
-      input: { contentLength: 1234 } as Partial<PresignPutArgs>,
+      input: { contentLength: 1234 } as Partial<PutArgs>,
       header: 'content-length',
       queryParam: 'Content-Length',
     },
     {
-      input: { ifNoneMatch: true } as Partial<PresignPutArgs>,
+      input: { ifNoneMatch: true } as Partial<PutArgs>,
       header: 'if-none-match',
       queryParam: 'If-None-Match',
     },
@@ -358,7 +358,7 @@ describe('presignPut — unhoistable headers (digest verification)', () => {
   it.each(UNHOISTABLE)(
     '$header is signed as a header, NEVER hoisted to query ($queryParam)',
     async ({ input, header, queryParam }) => {
-      const out = await p.presignPut({ key: 'x', expiresIn: 60, ...input });
+      const out = await p.put({ key: 'x', expiresIn: 60, ...input });
       const u = new URL(out.url);
       expect(out.headers[header]).toBeDefined();
       expect(paramOf(out.url, 'X-Amz-SignedHeaders').split(';')).toContain(header);
@@ -371,7 +371,7 @@ describe('presignPut — unhoistable headers (digest verification)', () => {
   );
 
   it("the URL's query string contains ONLY the 6 SigV4 metadata params", async () => {
-    const out = await p.presignPut({
+    const out = await p.put({
       key: 'uploads/data.bin',
       sha256: 'n4bQgYhMfWWaL+qgxVrQFaO/TxsrC4Is0V1sFbDwCgg=',
       expiresIn: 3600,
@@ -395,7 +395,7 @@ describe('presignPut — unhoistable headers (digest verification)', () => {
     const digestBytes = await crypto.subtle.digest('SHA-256', payload);
     const digestB64 = Buffer.from(digestBytes).toString('base64');
 
-    const out = await p.presignPut({
+    const out = await p.put({
       key: 'data.bin',
       sha256: digestB64,
       expiresIn: 60,
@@ -415,11 +415,11 @@ describe('Presigner — caching behavior', () => {
     const p = new Presigner(CFG);
     const spy = vi.spyOn(crypto.subtle, 'importKey');
 
-    await p.presignGet({ key: 'a', expiresIn: 60 });
+    await p.get({ key: 'a', expiresIn: 60 });
     const importsAfterCold = spy.mock.calls.length;
 
     for (let i = 0; i < 50; i++) {
-      await p.presignGet({ key: `k${i}`, expiresIn: 60 });
+      await p.get({ key: `k${i}`, expiresIn: 60 });
     }
 
     expect(spy.mock.calls.length).toBe(importsAfterCold);
@@ -428,9 +428,9 @@ describe('Presigner — caching behavior', () => {
   it('cache invalidates on UTC day rollover', async () => {
     let nowMs = new Date('2026-05-10T23:59:00.000Z').getTime();
     const p = new Presigner({ ...CFG, clock: (): number => nowMs });
-    const u1 = await p.presignGet({ key: 'x', expiresIn: 60 });
+    const u1 = await p.get({ key: 'x', expiresIn: 60 });
     nowMs = new Date('2026-05-11T00:00:30.000Z').getTime();
-    const u2 = await p.presignGet({ key: 'x', expiresIn: 60 });
+    const u2 = await p.get({ key: 'x', expiresIn: 60 });
 
     expect(sigOf(u1)).not.toBe(sigOf(u2));
     expect(paramOf(u1, 'X-Amz-Credential')).toContain('/20260510/');
@@ -442,7 +442,7 @@ describe('Presigner — caching behavior', () => {
     const spy = vi.spyOn(crypto.subtle, 'sign');
 
     const urls = await Promise.all(
-      Array.from({ length: 32 }, (_, i) => p.presignGet({ key: `k${i}`, expiresIn: 60 })),
+      Array.from({ length: 32 }, (_, i) => p.get({ key: `k${i}`, expiresIn: 60 })),
     );
 
     expect(urls).toHaveLength(32);
@@ -460,7 +460,7 @@ describe('Signature regression baseline', () => {
       accessKeyId: 'AKIAIOSFODNN7EXAMPLE',
       secretAccessKey: 'wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY',
     });
-    const url = await p.presignGet({ key: 'test.txt', expiresIn: 86400 });
+    const url = await p.get({ key: 'test.txt', expiresIn: 86400 });
     expect(sigOf(url)).toBe('e94b227b9d5fe9ae64907b700468795cfd9f8f71a9eab52ed84df993e795fc5e');
   });
 });
@@ -511,7 +511,7 @@ describe('AWS SDK v3 oracle: structural equivalence', () => {
       new GetObjectCommand({ Bucket: BUCKET, Key: key }),
       { expiresIn: 3600 },
     );
-    const ourUrl = await ours.presignGet({ key, expiresIn: 3600 });
+    const ourUrl = await ours.get({ key, expiresIn: 3600 });
     expect(new URL(ourUrl).pathname).toBe(new URL(sdkUrl).pathname);
   });
 
@@ -524,7 +524,7 @@ describe('AWS SDK v3 oracle: structural equivalence', () => {
         new GetObjectCommand({ Bucket: BUCKET, Key: 'test.txt' }),
         { expiresIn: 3600 },
       );
-      const ourUrl = await ours.presignGet({ key: 'test.txt', expiresIn: 3600 });
+      const ourUrl = await ours.get({ key: 'test.txt', expiresIn: 3600 });
       expect(paramOf(ourUrl, paramName)).toBe(paramOf(sdkUrl, paramName));
     },
   );
@@ -536,7 +536,7 @@ describe('AWS SDK v3 oracle: structural equivalence', () => {
       new GetObjectCommand({ Bucket: BUCKET, Key: 'test.txt' }),
       { expiresIn: 3600 },
     );
-    const ourUrl = await ours.presignGet({ key: 'test.txt', expiresIn: 3600 });
+    const ourUrl = await ours.get({ key: 'test.txt', expiresIn: 3600 });
     expect(new URL(ourUrl).host).toBe(new URL(sdkUrl).host);
   });
 
@@ -547,7 +547,7 @@ describe('AWS SDK v3 oracle: structural equivalence', () => {
       new GetObjectCommand({ Bucket: BUCKET, Key: 'test.txt' }),
       { expiresIn: 3600 },
     );
-    const ourUrl = await ours.presignGet({ key: 'test.txt', expiresIn: 3600 });
+    const ourUrl = await ours.get({ key: 'test.txt', expiresIn: 3600 });
 
     expect(new URL(ourUrl).protocol).toBe('http:');
     expect(new URL(sdkUrl).protocol).toBe('http:');
@@ -562,7 +562,7 @@ describe('AWS SDK v3 oracle: structural equivalence', () => {
         new GetObjectCommand({ Bucket: BUCKET, Key: 'test.txt' }),
         { expiresIn },
       );
-      const ourUrl = await ours.presignGet({ key: 'test.txt', expiresIn });
+      const ourUrl = await ours.get({ key: 'test.txt', expiresIn });
       expect(paramOf(ourUrl, 'X-Amz-Expires')).toBe(paramOf(sdkUrl, 'X-Amz-Expires'));
       expect(paramOf(ourUrl, 'X-Amz-Expires')).toBe(String(expiresIn));
     },
@@ -630,7 +630,7 @@ describe('AWS SDK v3 oracle: unhoistable headers', () => {
     );
 
     const ours = new Presigner(CFG_NO_CLOCK);
-    const ourPut = await ours.presignPut({
+    const ourPut = await ours.put({
       key: 'x',
       expiresIn: 60,
       sha256: 'n4bQgYhMfWWaL+qgxVrQFaO/TxsrC4Is0V1sFbDwCgg=',
@@ -654,14 +654,14 @@ describe('AWS SDK v3 oracle: unhoistable headers', () => {
     {
       name: 'content-type',
       sdkOpts: { ContentType: 'image/png' },
-      ourOpts: { contentType: 'image/png' } as Partial<PresignPutArgs>,
+      ourOpts: { contentType: 'image/png' } as Partial<PutArgs>,
       header: 'content-type',
       sdkSignable: ['content-type'],
     },
     {
       name: 'if-none-match',
       sdkOpts: { IfNoneMatch: '*' },
-      ourOpts: { ifNoneMatch: true } as Partial<PresignPutArgs>,
+      ourOpts: { ifNoneMatch: true } as Partial<PutArgs>,
       header: 'if-none-match',
       sdkSignable: [],
     },
@@ -673,7 +673,7 @@ describe('AWS SDK v3 oracle: unhoistable headers', () => {
       },
       ourOpts: {
         sha256: 'n4bQgYhMfWWaL+qgxVrQFaO/TxsrC4Is0V1sFbDwCgg=',
-      } as Partial<PresignPutArgs>,
+      } as Partial<PutArgs>,
       header: 'x-amz-checksum-sha256',
       sdkSignable: [],
     },
@@ -690,7 +690,7 @@ describe('AWS SDK v3 oracle: unhoistable headers', () => {
         },
       );
       const ours = new Presigner(CFG_NO_CLOCK);
-      const ourPut = await ours.presignPut({ key: 'x', expiresIn: 60, ...ourOpts });
+      const ourPut = await ours.put({ key: 'x', expiresIn: 60, ...ourOpts });
 
       expect(paramOf(sdkUrl, 'X-Amz-SignedHeaders').split(';')).toContain(header);
       expect(paramOf(ourPut.url, 'X-Amz-SignedHeaders').split(';')).toContain(header);
@@ -706,10 +706,10 @@ const FUZZ_GET = ((): readonly { idx: number; key: string }[] => {
   return Array.from({ length: 100 }, (_, i) => ({ idx: i, key: randomKey(r) }));
 })();
 
-const FUZZ_PUT = ((): readonly { idx: number; args: PresignPutArgs }[] => {
+const FUZZ_PUT = ((): readonly { idx: number; args: PutArgs }[] => {
   const r = mulberry32(0xbadf00d);
-  return Array.from({ length: 50 }, (_, i): { idx: number; args: PresignPutArgs } => {
-    const args: { -readonly [K in keyof PresignPutArgs]: PresignPutArgs[K] } = {
+  return Array.from({ length: 50 }, (_, i): { idx: number; args: PutArgs } => {
+    const args: { -readonly [K in keyof PutArgs]: PutArgs[K] } = {
       key: randomKey(r),
       expiresIn: 60 + Math.floor(r() * 3600),
     };
@@ -733,7 +733,7 @@ describe('Fuzz: 100 random GET keys', () => {
   const p = new Presigner(CFG);
 
   it.each(FUZZ_GET)('#$idx produces a valid URL', async ({ key }) => {
-    const url = await p.presignGet({ key, expiresIn: 3600 });
+    const url = await p.get({ key, expiresIn: 3600 });
     const u = new URL(url);
     expect(u.protocol).toBe('http:');
     for (const name of REQUIRED_PARAMS) {
@@ -747,7 +747,7 @@ describe('Fuzz: 50 random PUT scenarios', () => {
   const p = new Presigner(CFG);
 
   it.each(FUZZ_PUT)('#$idx produces valid url+headers', async ({ args }) => {
-    const out = await p.presignPut(args);
+    const out = await p.put(args);
     const u = new URL(out.url);
 
     for (const name of REQUIRED_PARAMS) {
@@ -864,8 +864,7 @@ describe('Endpoint parsing', () => {
   ])('accepts $name', ({ endpoint, host, protocol }) => {
     const p = new Presigner({ ...CFG, endpoint });
     expect(p.host).toBe(host);
-    expect(new URL('http://x' /* dummy */).protocol).toBe(protocol === 'http:' ? 'http:' : 'http:'); // sanity
-    // verify protocol is preserved end-to-end via a generated URL
+    expect(new URL('http://x' /* dummy */).protocol).toBe(protocol === 'http:' ? 'http:' : 'http:');
   });
 
   it.each([
@@ -882,7 +881,7 @@ describe('Endpoint parsing', () => {
     { name: 'https endpoint → https URL', endpoint: 'https://s3.example.com', expected: 'https:' },
   ])('$name', async ({ endpoint, expected }) => {
     const p = new Presigner({ ...CFG, endpoint });
-    const url = await p.presignGet({ key: 'k', expiresIn: 60 });
+    const url = await p.get({ key: 'k', expiresIn: 60 });
     expect(new URL(url).protocol).toBe(expected);
   });
 });
@@ -890,21 +889,21 @@ describe('Endpoint parsing', () => {
 describe('Region defaulting', () => {
   it("defaults to 'auto' when not provided", async () => {
     const p = new Presigner({ ...CFG });
-    const url = await p.presignGet({ key: 'k', expiresIn: 60 });
+    const url = await p.get({ key: 'k', expiresIn: 60 });
     expect(paramOf(url, 'X-Amz-Credential')).toContain('/auto/');
   });
 
   it('respects explicit region', async () => {
     const p = new Presigner({ ...CFG, region: 'us-east-1' });
-    const url = await p.presignGet({ key: 'k', expiresIn: 60 });
+    const url = await p.get({ key: 'k', expiresIn: 60 });
     expect(paramOf(url, 'X-Amz-Credential')).toContain('/us-east-1/');
   });
 
   it('different regions → different signatures', async () => {
     const a = new Presigner({ ...CFG, region: 'us-east-1' });
     const b = new Presigner({ ...CFG, region: 'eu-west-1' });
-    const ua = await a.presignGet({ key: 'x', expiresIn: 60 });
-    const ub = await b.presignGet({ key: 'x', expiresIn: 60 });
+    const ua = await a.get({ key: 'x', expiresIn: 60 });
+    const ub = await b.get({ key: 'x', expiresIn: 60 });
     expect(sigOf(ua)).not.toBe(sigOf(ub));
   });
 });
@@ -941,8 +940,8 @@ describe('GET vs PUT differ', () => {
   const p = new Presigner(CFG);
 
   it('GET and PUT produce different signatures for the same key', async () => {
-    const get = await p.presignGet({ key: 'x', expiresIn: 60 });
-    const put = await p.presignPut({ key: 'x', expiresIn: 60 });
+    const get = await p.get({ key: 'x', expiresIn: 60 });
+    const put = await p.put({ key: 'x', expiresIn: 60 });
     expect(sigOf(get)).not.toBe(sigOf(put.url));
   });
 });
@@ -952,11 +951,11 @@ describe('Cache: derivation cost is constant after warmup', () => {
     const p = new Presigner(CFG);
     const importSpy = vi.spyOn(crypto.subtle, 'importKey');
 
-    await p.presignGet({ key: 'a', expiresIn: 60 });
+    await p.get({ key: 'a', expiresIn: 60 });
     const importsAfterCold = importSpy.mock.calls.length;
 
     for (let i = 0; i < 200; i++) {
-      await p.presignGet({ key: `k${i}`, expiresIn: 60 });
+      await p.get({ key: `k${i}`, expiresIn: 60 });
     }
     expect(importSpy.mock.calls.length).toBe(importsAfterCold);
   });

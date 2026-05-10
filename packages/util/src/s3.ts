@@ -95,12 +95,12 @@ export type PresignerConfig = {
   readonly clock?: () => number;
 };
 
-export type PresignGetArgs = {
+export type GetArgs = {
   readonly key: string;
   readonly expiresIn: number;
 };
 
-export type PresignPutArgs = {
+export type PutArgs = {
   readonly key: string;
   readonly sha256?: string;
   readonly expiresIn: number;
@@ -109,7 +109,7 @@ export type PresignPutArgs = {
   readonly contentLength?: number;
 };
 
-export type PresignPutResult = {
+export type PutResult = {
   readonly url: string;
   readonly headers: Readonly<Record<string, string>>;
 };
@@ -252,7 +252,7 @@ export class Presigner {
     return { url, signedHeaders, canonicalRequest, stringToSign, amzDate, ymd, signature };
   }
 
-  async presignGet(args: PresignGetArgs): Promise<string> {
+  async get(args: GetArgs): Promise<string> {
     const r = await this.sign({
       key: args.key,
       method: 'GET',
@@ -280,7 +280,7 @@ export class Presigner {
    *   verbatim on the actual PUT for the signature — and any digest check
    *   — to validate.
    */
-  async presignPut(args: PresignPutArgs): Promise<PresignPutResult> {
+  async put(args: PutArgs): Promise<PutResult> {
     const headers: Record<string, string> = {};
     if (args.contentType !== undefined) {
       headers['content-type'] = args.contentType;
