@@ -32,6 +32,13 @@
         "vitest": "catalog:",
       },
     },
+    "packages/middleware": {
+      "name": "@wpm/middleware",
+      "dependencies": {
+        "@wpm/util": "workspace:*",
+        "hono": "catalog:",
+      },
+    },
     "packages/rbac": {
       "name": "@wpm/rbac",
       "devDependencies": {
@@ -810,6 +817,8 @@
     "@wpm/d1": ["@wpm/d1@workspace:packages/d1"],
 
     "@wpm/manifest": ["@wpm/manifest@workspace:packages/manifest"],
+
+    "@wpm/middleware": ["@wpm/middleware@workspace:packages/middleware"],
 
     "@wpm/rbac": ["@wpm/rbac@workspace:packages/rbac"],
 
