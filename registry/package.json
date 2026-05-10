@@ -2,8 +2,8 @@
   "name": "@wpm/registry",
   "private": true,
   "scripts": {
-    "start": "wrangler dev",
-    "prestart": "wrangler types worker-types.d.ts"
+    "start": "vp run typegen && wrangler dev",
+    "typegen": "wrangler types worker-types.d.ts"
   },
   "dependencies": {
     "@wpm/manifest": "workspace:*",
