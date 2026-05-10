@@ -22,6 +22,10 @@
     {
       "binding": "readme",
       "bucket_name": "wpm-readme-storage"
+    },
+    {
+      "binding": "manifest",
+      "bucket_name": "wpm-manifest-storage"
     }
   ],
   "kv_namespaces": [
