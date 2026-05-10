@@ -5,7 +5,11 @@
       "@/*": ["./src/*"]
     }
   },
-  "include": ["src/**/*"],
+  "include": ["src/**/*", "worker-types.d.ts"],
   "exclude": ["node_modules", "dist"],
-  "references": [{ "path": "../packages/util" }, { "path": "../packages/manifest" }]
+  "references": [
+    { "path": "../packages/rbac" },
+    { "path": "../packages/util" },
+    { "path": "../packages/manifest" }
+  ]
 }
