@@ -18,6 +18,19 @@
         "@types/node": "catalog:",
       },
     },
+    "packages/db": {
+      "name": "@wpm/db",
+      "dependencies": {
+        "@wpm/manifest": "workspace:*",
+        "@wpm/rbac": "workspace:*",
+        "@wpm/util": "workspace:*",
+        "postgres": "catalog:",
+      },
+      "devDependencies": {
+        "@cloudflare/workers-types": "catalog:",
+        "vitest": "catalog:",
+      },
+    },
     "packages/manifest": {
       "name": "@wpm/manifest",
       "dependencies": {
@@ -815,6 +828,8 @@
     "@wallet-standard/wallet": ["@wallet-standard/wallet@1.1.0", "", { "dependencies": { "@wallet-standard/base": "^1.1.0" } }, "sha512-Gt8TnSlDZpAl+RWOOAB/kuvC7RpcdWAlFbHNoi4gsXsfaWa1QCT6LBcfIYTPdOZC9OVZUDwqGuGAcqZejDmHjg=="],
 
     "@wpm/d1": ["@wpm/d1@workspace:packages/d1"],
+
+    "@wpm/db": ["@wpm/db@workspace:packages/db"],
 
     "@wpm/manifest": ["@wpm/manifest@workspace:packages/manifest"],
 

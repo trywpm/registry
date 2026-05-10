@@ -1,0 +1,20 @@
+{
+  "name": "@wpm/db",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": {
+      "import": "./src/index.ts"
+    }
+  },
+  "dependencies": {
+    "@wpm/manifest": "workspace:*",
+    "@wpm/rbac": "workspace:*",
+    "@wpm/util": "workspace:*",
+    "postgres": "catalog:"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "catalog:",
+    "vitest": "catalog:"
+  }
+}
