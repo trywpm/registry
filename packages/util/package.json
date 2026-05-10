@@ -1,9 +1,12 @@
 {
   "name": "@wpm/util",
   "private": true,
+  "type": "module",
   "exports": {
     "./s3": "./src/s3.ts",
+    "./net": "./src/net.ts",
     "./test": "./src/test.ts",
+    "./token": "./src/token.ts",
     "./datetime": "./src/datetime.ts",
     "./serialize": "./src/serialize.ts",
     "./constants": "./src/constants.ts",
