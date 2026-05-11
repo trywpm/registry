@@ -5,14 +5,15 @@ import type { UserId, TokenId } from './types';
 import { Base } from './base';
 
 export type UserWithToken = {
+  userId: UserId;
   email: string;
-  status: UserStatus;
-  scopes: string[];
-  expiry: string | null;
-  user_id: UserId;
   username: string;
-  token_id: TokenId;
-  allowed_cidrs: string[] | null;
+  status: UserStatus;
+
+  tokenId: TokenId;
+  tokenScopes: string[];
+  tokenExpiry?: Date;
+  tokenCidrs?: string[];
 };
 
 export class Users extends Base {
@@ -22,14 +23,14 @@ export class Users extends Base {
       async () => {
         const [row] = await this.db<[UserWithToken?]>`
           SELECT
-            u.id AS user_id,
+            u.id AS userId,
             u.email,
             u.username,
             u.status,
-            t.id AS token_id,
-            t.scopes,
-            t.expiry,
-            t.allowed_cidrs
+            t.id AS tokenId,
+            t.scopes as tokenScopes,
+            t.expiry AS tokenExpiry,
+            t.allowed_cidrs AS tokenCidrs
           FROM "public"."users" u
           INNER JOIN "public"."token" t ON u.id = t.user_id
           WHERE t.token_hash = ${tokenHash}
