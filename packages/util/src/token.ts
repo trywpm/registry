@@ -85,3 +85,34 @@ export async function getAuthTokenHash(token: string, hmacKey: string): Promise<
 
   return Buffer.from(sig).toString('base64url');
 }
+
+// ---------------------------------------
+// Auth header parsing
+// ---------------------------------------
+
+// Parse wpm token.
+const TOKEN_REGEX = /^wpm_\w{60}$/;
+
+// "Bearer " + "wpm_" + 60 chars = 71
+const HEADER_LEN = 7 + PREFIX.length + 60;
+
+export function parseBearerToken(authHeader: string): string | null {
+  if (authHeader.length !== HEADER_LEN) {
+    return null;
+  }
+
+  if (
+    authHeader.charCodeAt(0) !== 0x42 || // B
+    authHeader.charCodeAt(1) !== 0x65 || // e
+    authHeader.charCodeAt(2) !== 0x61 || // a
+    authHeader.charCodeAt(3) !== 0x72 || // r
+    authHeader.charCodeAt(4) !== 0x65 || // e
+    authHeader.charCodeAt(5) !== 0x72 || // r
+    authHeader.charCodeAt(6) !== 0x20 // space
+  ) {
+    return null;
+  }
+
+  const token = authHeader.slice(7); // 7 is length of "Bearer "
+  return TOKEN_REGEX.test(token) ? token : null;
+}
