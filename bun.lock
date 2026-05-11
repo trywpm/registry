@@ -74,7 +74,9 @@
     "registry": {
       "name": "@wpm/registry",
       "dependencies": {
+        "@wpm/db": "workspace:*",
         "@wpm/manifest": "workspace:*",
+        "@wpm/middleware": "workspace:*",
         "@wpm/rbac": "workspace:*",
         "@wpm/util": "workspace:*",
         "hono": "catalog:",
