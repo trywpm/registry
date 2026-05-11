@@ -34,6 +34,12 @@ export type PackageIdAndVisibility = {
   visibility: Package['visibility'];
 };
 
+export type PackageAccess = {
+  role: PackageRole | null;
+  status: PackageStatus;
+  visibility: Package['visibility'];
+};
+
 export type PackageVersionInput = Omit<Package, 'name' | 'visibility' | 'tag' | 'readme'> & {
   released_by: UserId;
 };
@@ -127,18 +133,21 @@ export class Packages extends Base {
   }
 
   /** Returns the user's role on a package, or null if no access. */
-  async getUserRole(packageId: PackageId, userId: UserId): Promise<PackageRole | null> {
-    return this.cached<PackageRole>(
-      `pkg:role:${packageId}:${userId}`,
+  async getAccess(name: string, userId: UserId) {
+    return this.cached<PackageAccess>(
+      `pkg:access:ctx:${name}:${userId}`,
       async () => {
-        const [row] = await this.db<[{ role: PackageRole }?]>`
-          SELECT "role"
-          FROM "public"."package_access"
-          WHERE "package_id" = ${packageId} AND "user_id" = ${userId}
+        const [row] = await this.db<[PackageAccess?]>`
+          SELECT p.status, p.visibility, pa.role
+          FROM "package" p
+          LEFT JOIN "package_access" pa
+            ON p.id = pa.package_id AND pa.user_id = ${userId}
+          WHERE p.name = ${name} AND p.status != 'deleted'
         `;
-        return row?.role ?? null;
+
+        return row ?? null;
       },
-      { ttl: FIVE_MINUTES },
+      { ttl: 604800, cacheNull: true },
     );
   }
 
