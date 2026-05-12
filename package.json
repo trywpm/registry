@@ -11,5 +11,6 @@
   "overrides": {
     "vite": "catalog:",
     "vitest": "catalog:"
-  }
+  },
+  "packageManager": "pnpm@11.1.1"
 }
