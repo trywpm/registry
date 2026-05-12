@@ -4,8 +4,14 @@
     { "path": "web" },
     { "path": "registry" },
     { "path": "packages/d1" },
+    { "path": "packages/db" },
+    { "path": "packages/net" },
+    { "path": "packages/auth" },
     { "path": "packages/rbac" },
     { "path": "packages/util" },
+    { "path": "packages/types" },
+    { "path": "packages/storage" },
+    { "path": "packages/datetime" },
     { "path": "packages/manifest" }
   ]
 }
