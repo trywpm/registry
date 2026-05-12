@@ -222,13 +222,6 @@ export default defineConfig({
         },
       },
       {
-        files: ['web/**/*.astro'],
-        env: {
-          astro: true,
-          browser: true,
-        },
-      },
-      {
         files: ['web/**/*.tsx', 'web/**/*.jsx'],
         plugins: ['react', 'jsx-a11y', 'react-perf'],
         env: {
