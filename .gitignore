@@ -8,6 +8,7 @@ worker-types.d.ts
 
 # files
 !Makefile
+!README.md
 !.gitignore
 !bun.lock
 !bunfig.toml
