@@ -10,7 +10,6 @@ worker-types.d.ts
 !Makefile
 !README.md
 !.gitignore
-!bun.lock
 !bunfig.toml
 !package.json
 !tsconfig.json
@@ -18,9 +17,11 @@ worker-types.d.ts
 !.oxfmtrc.json
 !.oxlintrc.json
 !.gitattributes
+!pnpm-lock.yaml
 !vite.config.ts
 !docker-compose.yml
 !tsconfig.base.json
+!pnpm-workspace.yaml
 !.git-blame-ignore-revs
 
 # directories
