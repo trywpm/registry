@@ -9,7 +9,7 @@
     }
   },
   "exclude": ["node_modules", "dist"],
-  "include": ["src/**/*", ".astro/types.d.ts", "worker-types.d.ts"],
+  "include": ["src/**/*", "worker-types.d.ts"],
   "references": [
     { "path": "../packages/d1" },
     { "path": "../packages/util" },
