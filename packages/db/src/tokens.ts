@@ -1,4 +1,4 @@
-import type { TokenId } from './types';
+import type { TokenId } from '@wpm/types';
 
 import { Base } from './base';
 

@@ -1,8 +1,6 @@
 import type { Package } from '@wpm/manifest';
 import type { Role as PackageRole } from '@wpm/rbac';
-import type { PackageStatus } from '@wpm/util/constants';
-
-import type { PackageId, UserId } from './types';
+import type { PackageStatus, PackageId, UserId } from '@wpm/types';
 
 import { Base } from './base';
 

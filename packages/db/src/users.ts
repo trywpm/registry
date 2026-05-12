@@ -1,6 +1,4 @@
-import type { UserStatus } from '@wpm/util/constants';
-
-import type { UserId, TokenId } from './types';
+import type { UserStatus, UserId, TokenId } from '@wpm/types';
 
 import { Base } from './base';
 

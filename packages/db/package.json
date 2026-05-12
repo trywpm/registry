@@ -10,7 +10,7 @@
   "dependencies": {
     "@wpm/manifest": "workspace:*",
     "@wpm/rbac": "workspace:*",
-    "@wpm/util": "workspace:*",
+    "@wpm/types": "workspace:*",
     "postgres": "catalog:"
   },
   "devDependencies": {
