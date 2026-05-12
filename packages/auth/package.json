@@ -1,0 +1,13 @@
+{
+  "name": "@wpm/auth",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "catalog:",
+    "@types/node": "catalog:",
+    "vitest": "catalog:"
+  }
+}
