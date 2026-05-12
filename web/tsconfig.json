@@ -13,6 +13,7 @@
   "references": [
     { "path": "../packages/d1" },
     { "path": "../packages/util" },
+    { "path": "../packages/datetime" },
     { "path": "../packages/manifest" }
   ]
 }

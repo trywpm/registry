@@ -1,5 +1,5 @@
 import { html } from 'hono/html';
-import { serialize } from '@wpm/util/serialize';
+import { serialize } from '@wpm/util';
 
 import type { Context } from 'hono';
 import type { Child } from 'hono/jsx';

@@ -1,5 +1,5 @@
 import { Fragment } from 'hono/jsx';
-import { honoRender } from '@wpm/util/test';
+import { honoRender } from '@/lib/test-utils';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 import { Slot } from './slot';

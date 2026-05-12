@@ -1,6 +1,6 @@
 import type { Context } from 'hono';
 
-import { formatDate } from '@wpm/util/datetime';
+import { formatDate } from '@wpm/datetime';
 import { getCookie, setCookie } from 'hono/cookie';
 import { searchPackages, isType } from '@wpm/d1/search';
 import type { D1ResultWithNext, SearchPackageRow } from '@wpm/d1/search';

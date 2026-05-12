@@ -1,7 +1,7 @@
 import type { Context } from 'hono';
 
+import { readableTimeDiff } from '@wpm/datetime';
 import { getCookie, setCookie } from 'hono/cookie';
-import { readableTimeDiff } from '@wpm/util/datetime';
 import { getPackages, isAllowedSort, getPackagesCount } from '@wpm/d1/search';
 
 import {

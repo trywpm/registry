@@ -1,4 +1,4 @@
-import { honoRender } from '@wpm/util/test';
+import { honoRender } from '@/lib/test-utils';
 import { describe, it, expect } from 'vitest';
 
 import {

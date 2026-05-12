@@ -1,4 +1,4 @@
-import { readableTimeDiff } from '@wpm/util/datetime';
+import { readableTimeDiff } from '@wpm/datetime';
 
 import { Package } from '@/components/icon';
 import { Badge } from '@/components/badge';
