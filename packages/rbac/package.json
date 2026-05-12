@@ -1,6 +1,7 @@
 {
   "name": "@wpm/rbac",
   "private": true,
+  "type": "module",
   "exports": {
     ".": {
       "import": "./src/index.ts"

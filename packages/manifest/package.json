@@ -1,6 +1,7 @@
 {
   "name": "@wpm/manifest",
   "private": true,
+  "type": "module",
   "exports": {
     ".": "./src/index.ts"
   },

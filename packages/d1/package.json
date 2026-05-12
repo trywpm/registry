@@ -1,6 +1,7 @@
 {
   "name": "@wpm/d1",
   "private": true,
+  "type": "module",
   "exports": {
     "./search": "./src/search/index.ts"
   },
