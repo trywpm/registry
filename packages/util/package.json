@@ -3,23 +3,9 @@
   "private": true,
   "type": "module",
   "exports": {
-    "./s3": "./src/s3.ts",
-    "./net": "./src/net.ts",
-    "./test": "./src/test.ts",
-    "./token": "./src/token.ts",
-    "./datetime": "./src/datetime.ts",
-    "./serialize": "./src/serialize.ts",
-    "./constants": "./src/constants.ts",
-    "./validation": "./src/validation.ts"
-  },
-  "dependencies": {
-    "@aws-sdk/client-s3": "3.1045.0",
-    "@aws-sdk/s3-request-presigner": "3.1045.0",
-    "hono": "catalog:"
+    ".": "./src/index.ts"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "catalog:",
-    "@types/node": "catalog:",
     "vitest": "catalog:"
   }
 }
