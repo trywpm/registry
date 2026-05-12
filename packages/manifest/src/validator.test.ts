@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { isValidPackageName, isValidTagName, isValidSemver } from './validation';
+
+import { isValidPackageName, isValidTagName, isValidSemver } from './validator';
 
 const generateRandomString = (maxLength: number) => {
   const length = Math.floor(Math.random() * maxLength);

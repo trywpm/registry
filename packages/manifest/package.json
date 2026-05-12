@@ -5,7 +5,7 @@
     ".": "./src/index.ts"
   },
   "dependencies": {
-    "@wpm/util": "workspace:*",
+    "@wpm/types": "workspace:*",
     "semver": "catalog:",
     "zod": "catalog:"
   },
