@@ -1,13 +1,12 @@
 version: 2
-enable-beta-ecosystems: true
 updates:
-  - package-ecosystem: bun
+  - package-ecosystem: npm
     directory: '/'
     schedule:
       interval: weekly
       day: saturday
     labels:
-      - 'bun'
+      - 'js'
       - 'dependencies'
     ignore:
       - dependency-name: '@cloudflare/workers-types'
