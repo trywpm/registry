@@ -4,8 +4,7 @@
     "noEmit": false,
     "composite": true,
     "declarationDir": "dist",
-    "emitDeclarationOnly": true,
-    "types": ["@cloudflare/workers-types", "@types/node"]
+    "emitDeclarationOnly": true
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist"]
