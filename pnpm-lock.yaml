@@ -19,8 +19,8 @@ catalogs:
       specifier: 7.7.1
       version: 7.7.1
     hono:
-      specifier: 4.12.14
-      version: 4.12.14
+      specifier: 4.12.18
+      version: 4.12.18
     postgres:
       specifier: 3.4.9
       version: 3.4.9
@@ -205,7 +205,7 @@ importers:
         version: link:../packages/storage
       hono:
         specifier: 'catalog:'
-        version: 4.12.14
+        version: 4.12.18
       postgres:
         specifier: 'catalog:'
         version: 3.4.9
@@ -248,7 +248,7 @@ importers:
         version: 2.1.1
       hono:
         specifier: 'catalog:'
-        version: 4.12.14
+        version: 4.12.18
       htmx.org:
         specifier: 2.0.10
         version: 2.0.10
@@ -2706,8 +2706,8 @@ packages:
   hoist-non-react-statics@3.3.2:
     resolution: {integrity: sha512-/gGivxi8JPKWNm/W0jSmzcMPpfpPLc3dY/6GxhX2hQ9iGj3aDfklV4ET7NjKpSinLpJ5vafa9iiGIEZg10SfBw==}
 
-  hono@4.12.14:
-    resolution: {integrity: sha512-am5zfg3yu6sqn5yjKBNqhnTX7Cv+m00ox+7jbaKkrLMRJ4rAdldd1xPd/JzbBWspqaQv6RSTrgFN95EsfhC+7w==}
+  hono@4.12.18:
+    resolution: {integrity: sha512-RWzP96k/yv0PQfyXnWjs6zot20TqfpfsNXhOnev8d1InAxubW93L11/oNUc3tQqn2G0bSdAOBpX+2uDFHV7kdQ==}
     engines: {node: '>=16.9.0'}
 
   htmx.org@2.0.10:
@@ -5727,7 +5727,7 @@ snapshots:
 
   '@types/connect@3.4.38':
     dependencies:
-      '@types/node': 12.20.55
+      '@types/node': 25.6.2
 
   '@types/deep-eql@4.0.2': {}
 
@@ -5759,7 +5759,7 @@ snapshots:
 
   '@types/ws@7.4.7':
     dependencies:
-      '@types/node': 12.20.55
+      '@types/node': 25.6.2
 
   '@types/ws@8.18.1':
     dependencies:
@@ -6401,7 +6401,7 @@ snapshots:
     dependencies:
       react-is: 16.13.1
 
-  hono@4.12.14: {}
+  hono@4.12.18: {}
 
   htmx.org@2.0.10: {}
 
