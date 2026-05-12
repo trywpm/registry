@@ -8,11 +8,11 @@
   "include": ["src/**/*", "worker-types.d.ts"],
   "exclude": ["node_modules", "dist"],
   "references": [
-    { "path": "../packages/auth" },
     { "path": "../packages/db" },
-    { "path": "../packages/manifest" },
     { "path": "../packages/net" },
+    { "path": "../packages/auth" },
     { "path": "../packages/rbac" },
-    { "path": "../packages/storage" }
+    { "path": "../packages/storage" },
+    { "path": "../packages/manifest" }
   ]
 }
