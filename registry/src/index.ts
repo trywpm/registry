@@ -4,10 +4,10 @@ import type { UserWithToken } from '@wpm/db';
 import { Hono } from 'hono';
 import postgres from 'postgres';
 import { Registry } from '@wpm/db';
-import { Presigner } from '@wpm/util/s3';
-import { IPCidrMatcher } from '@wpm/util/net';
-import { getAuthTokenHash, parseBearerToken } from '@wpm/util/token';
-import { isValidPackageName, isValidSemver } from '@wpm/util/validation';
+import { Presigner } from '@wpm/storage';
+import { IPCidrMatcher } from '@wpm/net';
+import { getAuthTokenHash, parseBearerToken } from '@wpm/auth';
+import { isValidPackageName, isValidSemver } from '@wpm/manifest';
 
 const app = new Hono<{
   Bindings: Cloudflare.Env;

@@ -6,11 +6,12 @@
     "typegen": "wrangler types worker-types.d.ts --env-file .env.example"
   },
   "dependencies": {
+    "@wpm/auth": "workspace:*",
     "@wpm/db": "workspace:*",
     "@wpm/manifest": "workspace:*",
-    "@wpm/middleware": "workspace:*",
+    "@wpm/net": "workspace:*",
     "@wpm/rbac": "workspace:*",
-    "@wpm/util": "workspace:*",
+    "@wpm/storage": "workspace:*",
     "hono": "catalog:",
     "postgres": "catalog:"
   },
