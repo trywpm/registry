@@ -7,6 +7,7 @@ node_modules
 worker-types.d.ts
 
 # files
+!.nvmrc
 !Makefile
 !README.md
 !.gitignore
