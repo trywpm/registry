@@ -20,6 +20,9 @@ updates:
       types:
         patterns:
           - '@types/*'
+      clerk:
+        patterns:
+          - '@clerk/*'
       cloudflare:
         patterns:
           - 'wrangler'
