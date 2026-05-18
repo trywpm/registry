@@ -2,11 +2,11 @@ import { cn } from '@/lib/utils';
 import { Island } from '@/components/island';
 import type { JSX } from 'hono/jsx';
 
-// oxlint-disable jsx_a11y/label-has-associated-control - htmlFor is not needed here.
 function Label({ className, ...props }: JSX.IntrinsicElements['label']) {
   return (
     <Island name="label">
       <wpm-label style={{ display: 'contents' }}>
+        {/* oxlint-disable-next-line jsx-a11y/label-has-associated-control */}
         <label
           data-slot="label"
           className={cn(
