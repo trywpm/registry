@@ -20,6 +20,10 @@ updates:
       types:
         patterns:
           - '@types/*'
+      cloudflare:
+        patterns:
+          - 'wrangler'
+          - '@cloudflare/*'
     versioning-strategy: increase
 
   - package-ecosystem: github-actions
