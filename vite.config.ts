@@ -144,6 +144,7 @@ export default defineConfig({
           allow: ['warn', 'error'],
         },
       ],
+      'eslint/no-underscore-dangle': 'off',
       'eslint/no-constant-condition': 'off',
       'eslint/no-else-return': [
         'error',
