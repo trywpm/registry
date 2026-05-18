@@ -18,6 +18,12 @@ catalog:
   'vitest': npm:@voidzero-dev/vite-plus-test@0.1.21
   'vite-plus': 0.1.21
 
+'overrides':
+  'vite': 'catalog:'
+  'vitest': 'catalog:'
+  'ws@7': '8.20.1'
+  'ws@8': '8.20.1'
+
 packageConfigs:
   - match: ['*']
     saveExact: true
