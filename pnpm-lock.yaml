@@ -30,14 +30,8 @@ catalogs:
     typescript:
       specifier: 6.0.3
       version: 6.0.3
-    vite:
-      specifier: npm:@voidzero-dev/vite-plus-core@0.1.21
-      version: 0.1.21
     vite-plus:
       specifier: 0.1.21
-      version: 0.1.21
-    vitest:
-      specifier: npm:@voidzero-dev/vite-plus-test@0.1.21
       version: 0.1.21
     wrangler:
       specifier: 4.92.0
@@ -45,6 +39,12 @@ catalogs:
     zod:
       specifier: 4.4.3
       version: 4.4.3
+
+overrides:
+  vite: npm:@voidzero-dev/vite-plus-core@0.1.21
+  vitest: npm:@voidzero-dev/vite-plus-test@0.1.21
+  ws@7: 8.20.1
+  ws@8: 8.20.1
 
 importers:
 
@@ -72,7 +72,7 @@ importers:
         specifier: 'catalog:'
         version: 25.9.0
       vitest:
-        specifier: 'catalog:'
+        specifier: npm:@voidzero-dev/vite-plus-test@0.1.21
         version: '@voidzero-dev/vite-plus-test@0.1.21(@types/node@25.9.0)(bufferutil@4.1.0)(esbuild@0.27.3)(jiti@2.7.0)(terser@5.47.1)(typescript@6.0.3)(utf-8-validate@6.0.6)(vite@8.0.12(@types/node@25.9.0)(esbuild@0.27.3)(jiti@2.7.0)(terser@5.47.1)(yaml@2.9.0))(yaml@2.9.0)'
 
   packages/d1:
@@ -87,7 +87,7 @@ importers:
   packages/datetime:
     devDependencies:
       vitest:
-        specifier: 'catalog:'
+        specifier: npm:@voidzero-dev/vite-plus-test@0.1.21
         version: '@voidzero-dev/vite-plus-test@0.1.21(@types/node@25.9.0)(bufferutil@4.1.0)(esbuild@0.27.3)(jiti@2.7.0)(terser@5.47.1)(typescript@6.0.3)(utf-8-validate@6.0.6)(vite@8.0.12(@types/node@25.9.0)(esbuild@0.27.3)(jiti@2.7.0)(terser@5.47.1)(yaml@2.9.0))(yaml@2.9.0)'
 
   packages/db:
@@ -109,7 +109,7 @@ importers:
         specifier: 'catalog:'
         version: 4.20260123.0
       vitest:
-        specifier: 'catalog:'
+        specifier: npm:@voidzero-dev/vite-plus-test@0.1.21
         version: '@voidzero-dev/vite-plus-test@0.1.21(@types/node@25.9.0)(bufferutil@4.1.0)(esbuild@0.27.3)(jiti@2.7.0)(terser@5.47.1)(typescript@6.0.3)(utf-8-validate@6.0.6)(vite@8.0.12(@types/node@25.9.0)(esbuild@0.27.3)(jiti@2.7.0)(terser@5.47.1)(yaml@2.9.0))(yaml@2.9.0)'
 
   packages/manifest:
@@ -134,7 +134,7 @@ importers:
         specifier: 'catalog:'
         version: 7.7.1
       vitest:
-        specifier: 'catalog:'
+        specifier: npm:@voidzero-dev/vite-plus-test@0.1.21
         version: '@voidzero-dev/vite-plus-test@0.1.21(@types/node@25.9.0)(bufferutil@4.1.0)(esbuild@0.27.3)(jiti@2.7.0)(terser@5.47.1)(typescript@6.0.3)(utf-8-validate@6.0.6)(vite@8.0.12(@types/node@25.9.0)(esbuild@0.27.3)(jiti@2.7.0)(terser@5.47.1)(yaml@2.9.0))(yaml@2.9.0)'
 
   packages/net:
@@ -143,13 +143,13 @@ importers:
         specifier: 'catalog:'
         version: 25.9.0
       vitest:
-        specifier: 'catalog:'
+        specifier: npm:@voidzero-dev/vite-plus-test@0.1.21
         version: '@voidzero-dev/vite-plus-test@0.1.21(@types/node@25.9.0)(bufferutil@4.1.0)(esbuild@0.27.3)(jiti@2.7.0)(terser@5.47.1)(typescript@6.0.3)(utf-8-validate@6.0.6)(vite@8.0.12(@types/node@25.9.0)(esbuild@0.27.3)(jiti@2.7.0)(terser@5.47.1)(yaml@2.9.0))(yaml@2.9.0)'
 
   packages/rbac:
     devDependencies:
       vitest:
-        specifier: 'catalog:'
+        specifier: npm:@voidzero-dev/vite-plus-test@0.1.21
         version: '@voidzero-dev/vite-plus-test@0.1.21(@types/node@25.9.0)(bufferutil@4.1.0)(esbuild@0.27.3)(jiti@2.7.0)(terser@5.47.1)(typescript@6.0.3)(utf-8-validate@6.0.6)(vite@8.0.12(@types/node@25.9.0)(esbuild@0.27.3)(jiti@2.7.0)(terser@5.47.1)(yaml@2.9.0))(yaml@2.9.0)'
 
   packages/storage:
@@ -168,19 +168,19 @@ importers:
         specifier: 'catalog:'
         version: 25.9.0
       vitest:
-        specifier: 'catalog:'
+        specifier: npm:@voidzero-dev/vite-plus-test@0.1.21
         version: '@voidzero-dev/vite-plus-test@0.1.21(@types/node@25.9.0)(bufferutil@4.1.0)(esbuild@0.27.3)(jiti@2.7.0)(terser@5.47.1)(typescript@6.0.3)(utf-8-validate@6.0.6)(vite@8.0.12(@types/node@25.9.0)(esbuild@0.27.3)(jiti@2.7.0)(terser@5.47.1)(yaml@2.9.0))(yaml@2.9.0)'
 
   packages/types:
     devDependencies:
       vitest:
-        specifier: 'catalog:'
+        specifier: npm:@voidzero-dev/vite-plus-test@0.1.21
         version: '@voidzero-dev/vite-plus-test@0.1.21(@types/node@25.9.0)(bufferutil@4.1.0)(esbuild@0.27.3)(jiti@2.7.0)(terser@5.47.1)(typescript@6.0.3)(utf-8-validate@6.0.6)(vite@8.0.12(@types/node@25.9.0)(esbuild@0.27.3)(jiti@2.7.0)(terser@5.47.1)(yaml@2.9.0))(yaml@2.9.0)'
 
   packages/util:
     devDependencies:
       vitest:
-        specifier: 'catalog:'
+        specifier: npm:@voidzero-dev/vite-plus-test@0.1.21
         version: '@voidzero-dev/vite-plus-test@0.1.21(@types/node@25.9.0)(bufferutil@4.1.0)(esbuild@0.27.3)(jiti@2.7.0)(terser@5.47.1)(typescript@6.0.3)(utf-8-validate@6.0.6)(vite@8.0.12(@types/node@25.9.0)(esbuild@0.27.3)(jiti@2.7.0)(terser@5.47.1)(yaml@2.9.0))(yaml@2.9.0)'
 
   registry:
@@ -287,10 +287,10 @@ importers:
         specifier: 'catalog:'
         version: 6.0.3
       vite:
-        specifier: 'catalog:'
+        specifier: npm:@voidzero-dev/vite-plus-core@0.1.21
         version: '@voidzero-dev/vite-plus-core@0.1.21(@types/node@25.9.0)(esbuild@0.27.3)(jiti@2.7.0)(terser@5.47.1)(typescript@6.0.3)(yaml@2.9.0)'
       vitest:
-        specifier: 'catalog:'
+        specifier: npm:@voidzero-dev/vite-plus-test@0.1.21
         version: '@voidzero-dev/vite-plus-test@0.1.21(@types/node@25.9.0)(@voidzero-dev/vite-plus-core@0.1.21(@types/node@25.9.0)(esbuild@0.27.3)(jiti@2.7.0)(terser@5.47.1)(typescript@6.0.3)(yaml@2.9.0))(bufferutil@4.1.0)(esbuild@0.27.3)(jiti@2.7.0)(terser@5.47.1)(typescript@6.0.3)(utf-8-validate@6.0.6)(yaml@2.9.0)'
       wrangler:
         specifier: 'catalog:'
@@ -2606,12 +2606,12 @@ packages:
   isomorphic-ws@4.0.1:
     resolution: {integrity: sha512-BhBvN2MBpWTaSHdWRb/bwdZJ1WaehQ2L1KngkCkfLUGF0mAWAT1sQUQacEmQ0jXkFw/czDXPNQSL5u2/Krsz1w==}
     peerDependencies:
-      ws: '*'
+      ws: 8.20.1
 
   isows@1.0.7:
     resolution: {integrity: sha512-I1fSfDCZL5P0v33sVqeTDSpcstAg/N+wF5HS033mogOVIp4B+oHC7oOCsA3axAbBSGTJ8QubbNmnIRN/h8U7hg==}
     peerDependencies:
-      ws: '*'
+      ws: 8.20.1
 
   jayson@4.3.0:
     resolution: {integrity: sha512-AauzHcUcqs8OBnCHOkJY280VaTiCm57AbuO7lqzcw7JapGj50BisE3xhksye4zlTSR1+1tAz67wLTl8tEH1obQ==}
@@ -3504,42 +3504,6 @@ packages:
     resolution: {integrity: sha512-YVGIj2kamLSTxw6NsZjoBxfSwsn0ycdesmc4p+Q21c5zPuZ1pl+NfxVdxPtdHvmNVOQ6XSYG4AUtyt/Fi7D16Q==}
     engines: {node: '>=10'}
 
-  ws@7.5.10:
-    resolution: {integrity: sha512-+dbF1tHwZpXcbOJdVOkzLDxZP1ailvSxM6ZweXTegylPny803bFhA+vqBYw4s31NSAk4S2Qz+AKXK9a4wkdjcQ==}
-    engines: {node: '>=8.3.0'}
-    peerDependencies:
-      bufferutil: ^4.0.1
-      utf-8-validate: ^5.0.2
-    peerDependenciesMeta:
-      bufferutil:
-        optional: true
-      utf-8-validate:
-        optional: true
-
-  ws@8.18.0:
-    resolution: {integrity: sha512-8VbfWfHLbbwu3+N6OKsOMpBdT4kXPDDB9cJk2bJ6mh9ucxdlnNvH1e+roYkKmN9Nxw2yjz7VzeO9oOz2zJ04Pw==}
-    engines: {node: '>=10.0.0'}
-    peerDependencies:
-      bufferutil: ^4.0.1
-      utf-8-validate: '>=5.0.2'
-    peerDependenciesMeta:
-      bufferutil:
-        optional: true
-      utf-8-validate:
-        optional: true
-
-  ws@8.18.3:
-    resolution: {integrity: sha512-PEIGCY5tSlUt50cqyMXfCzX+oOPqN0vuGqWzbcJ2xvnkzkq46oOpz7dQaTDBdfICb4N14+GARUDw2XV2N4tvzg==}
-    engines: {node: '>=10.0.0'}
-    peerDependencies:
-      bufferutil: ^4.0.1
-      utf-8-validate: '>=5.0.2'
-    peerDependenciesMeta:
-      bufferutil:
-        optional: true
-      utf-8-validate:
-        optional: true
-
   ws@8.20.1:
     resolution: {integrity: sha512-It4dO0K5v//JtTXuPkfEOaI3uUN87iYPnqo/ZzqCoG3g8uhA66QUMs/SrM0YK7/NAu+r4LMh/9dq2A7k+rHs+w==}
     engines: {node: '>=10.0.0'}
@@ -4114,7 +4078,7 @@ snapshots:
       unenv: 2.0.0-rc.24
       vite: '@voidzero-dev/vite-plus-core@0.1.21(@types/node@25.9.0)(esbuild@0.27.3)(jiti@2.7.0)(terser@5.47.1)(typescript@6.0.3)(yaml@2.9.0)'
       wrangler: 4.92.0(bufferutil@4.1.0)(utf-8-validate@6.0.6)
-      ws: 8.18.0(bufferutil@4.1.0)(utf-8-validate@6.0.6)
+      ws: 8.20.1(bufferutil@4.1.0)(utf-8-validate@6.0.6)
     transitivePeerDependencies:
       - bufferutil
       - utf-8-validate
@@ -4725,7 +4689,7 @@ snapshots:
       nullthrows: 1.1.1
       open: 7.4.2
       serve-static: 1.16.3
-      ws: 7.5.10(bufferutil@4.1.0)(utf-8-validate@6.0.6)
+      ws: 8.20.1(bufferutil@4.1.0)(utf-8-validate@6.0.6)
     transitivePeerDependencies:
       - bufferutil
       - supports-color
@@ -5180,7 +5144,7 @@ snapshots:
 
   '@types/connect@3.4.38':
     dependencies:
-      '@types/node': 12.20.55
+      '@types/node': 25.8.0
 
   '@types/deep-eql@4.0.2': {}
 
@@ -5212,7 +5176,7 @@ snapshots:
 
   '@types/ws@7.4.7':
     dependencies:
-      '@types/node': 12.20.55
+      '@types/node': 25.8.0
 
   '@types/ws@8.18.1':
     dependencies:
@@ -5870,13 +5834,13 @@ snapshots:
 
   isexe@2.0.0: {}
 
-  isomorphic-ws@4.0.1(ws@7.5.10(bufferutil@4.1.0)(utf-8-validate@6.0.6)):
+  isomorphic-ws@4.0.1(ws@8.20.1(bufferutil@4.1.0)(utf-8-validate@6.0.6)):
     dependencies:
-      ws: 7.5.10(bufferutil@4.1.0)(utf-8-validate@6.0.6)
+      ws: 8.20.1(bufferutil@4.1.0)(utf-8-validate@6.0.6)
 
-  isows@1.0.7(ws@8.18.3(bufferutil@4.1.0)(utf-8-validate@6.0.6)):
+  isows@1.0.7(ws@8.20.1(bufferutil@4.1.0)(utf-8-validate@6.0.6)):
     dependencies:
-      ws: 8.18.3(bufferutil@4.1.0)(utf-8-validate@6.0.6)
+      ws: 8.20.1(bufferutil@4.1.0)(utf-8-validate@6.0.6)
 
   jayson@4.3.0(bufferutil@4.1.0)(utf-8-validate@6.0.6):
     dependencies:
@@ -5887,11 +5851,11 @@ snapshots:
       delay: 5.0.0
       es6-promisify: 5.0.0
       eyes: 0.1.8
-      isomorphic-ws: 4.0.1(ws@7.5.10(bufferutil@4.1.0)(utf-8-validate@6.0.6))
+      isomorphic-ws: 4.0.1(ws@8.20.1(bufferutil@4.1.0)(utf-8-validate@6.0.6))
       json-stringify-safe: 5.0.1
       stream-json: 1.9.1
       uuid: 8.3.2
-      ws: 7.5.10(bufferutil@4.1.0)(utf-8-validate@6.0.6)
+      ws: 8.20.1(bufferutil@4.1.0)(utf-8-validate@6.0.6)
     transitivePeerDependencies:
       - bufferutil
       - utf-8-validate
@@ -6209,7 +6173,7 @@ snapshots:
       serialize-error: 2.1.0
       source-map: 0.5.7
       throat: 5.0.0
-      ws: 7.5.10(bufferutil@4.1.0)(utf-8-validate@6.0.6)
+      ws: 8.20.1(bufferutil@4.1.0)(utf-8-validate@6.0.6)
       yargs: 17.7.2
     transitivePeerDependencies:
       - bufferutil
@@ -6235,7 +6199,7 @@ snapshots:
       sharp: 0.34.5
       undici: 7.24.8
       workerd: 1.20260515.1
-      ws: 8.18.0(bufferutil@4.1.0)(utf-8-validate@6.0.6)
+      ws: 8.20.1(bufferutil@4.1.0)(utf-8-validate@6.0.6)
       youch: 4.1.0-beta.10
     transitivePeerDependencies:
       - bufferutil
@@ -6476,7 +6440,7 @@ snapshots:
   react-devtools-core@6.1.5(bufferutil@4.1.0)(utf-8-validate@6.0.6):
     dependencies:
       shell-quote: 1.8.3
-      ws: 7.5.10(bufferutil@4.1.0)(utf-8-validate@6.0.6)
+      ws: 8.20.1(bufferutil@4.1.0)(utf-8-validate@6.0.6)
     transitivePeerDependencies:
       - bufferutil
       - utf-8-validate
@@ -6523,7 +6487,7 @@ snapshots:
       stacktrace-parser: 0.1.11
       tinyglobby: 0.2.16
       whatwg-fetch: 3.6.20
-      ws: 7.5.10(bufferutil@4.1.0)(utf-8-validate@6.0.6)
+      ws: 8.20.1(bufferutil@4.1.0)(utf-8-validate@6.0.6)
       yargs: 17.7.2
     transitivePeerDependencies:
       - '@babel/core'
@@ -6819,9 +6783,9 @@ snapshots:
       '@scure/bip32': 1.7.0
       '@scure/bip39': 1.6.0
       abitype: 1.2.3(typescript@6.0.3)(zod@4.4.3)
-      isows: 1.0.7(ws@8.18.3(bufferutil@4.1.0)(utf-8-validate@6.0.6))
+      isows: 1.0.7(ws@8.20.1(bufferutil@4.1.0)(utf-8-validate@6.0.6))
       ox: 0.14.20(typescript@6.0.3)(zod@4.4.3)
-      ws: 8.18.3(bufferutil@4.1.0)(utf-8-validate@6.0.6)
+      ws: 8.20.1(bufferutil@4.1.0)(utf-8-validate@6.0.6)
     optionalDependencies:
       typescript: 6.0.3
     transitivePeerDependencies:
@@ -6948,21 +6912,6 @@ snapshots:
       ansi-styles: 4.3.0
       string-width: 4.2.3
       strip-ansi: 6.0.1
-
-  ws@7.5.10(bufferutil@4.1.0)(utf-8-validate@6.0.6):
-    optionalDependencies:
-      bufferutil: 4.1.0
-      utf-8-validate: 6.0.6
-
-  ws@8.18.0(bufferutil@4.1.0)(utf-8-validate@6.0.6):
-    optionalDependencies:
-      bufferutil: 4.1.0
-      utf-8-validate: 6.0.6
-
-  ws@8.18.3(bufferutil@4.1.0)(utf-8-validate@6.0.6):
-    optionalDependencies:
-      bufferutil: 4.1.0
-      utf-8-validate: 6.0.6
 
   ws@8.20.1(bufferutil@4.1.0)(utf-8-validate@6.0.6):
     optionalDependencies:
