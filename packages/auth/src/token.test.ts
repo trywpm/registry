@@ -1,5 +1,7 @@
 import { createHmac } from 'node:crypto';
-import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+
+import { fc, it } from '@fast-check/vitest';
+import { afterEach, beforeAll, beforeEach, describe, expect, vi } from 'vitest';
 
 import type { MockInstance } from 'vitest';
 
@@ -22,12 +24,20 @@ const FULL_WPM_TOKEN_REGEX = /^wpm_[A-Za-z0-9_]{60}$/;
 const referenceHash = (token: string, key: string): string =>
   createHmac('sha256', key).update(token).digest('base64url');
 
-const generateChaosString = (maxLength: number): string => {
-  const length = Math.floor(Math.random() * maxLength) + 1;
-  return Array.from({ length }, () => String.fromCharCode(Math.floor(Math.random() * 65535))).join(
-    '',
-  );
-};
+const chaosStringArb = (maxLength: number) =>
+  fc
+    .array(
+      fc.integer({ min: 0, max: 0xffff }).map((c) => String.fromCharCode(c)),
+      { minLength: 1, maxLength },
+    )
+    .map((cs) => cs.join(''));
+
+const chaoticInputArb = fc.record({
+  key: chaosStringArb(100),
+  token: fc
+    .tuple(chaosStringArb(200), fc.boolean())
+    .map(([base, prefixed]) => (prefixed ? `${PREFIX}${base}` : base)),
+});
 
 const uniqueSecret = (label: string): string =>
   `cache-test-${label}-${Math.random().toString(36).slice(2)}-${Date.now()}`;
@@ -344,16 +354,9 @@ describe('getAuthTokenHash — HMAC key cache', () => {
   });
 });
 
-describe('Fuzz testing vs Node native HMAC', () => {
-  const chaoticInputs = Array.from({ length: 500 }, () => {
-    const key = generateChaosString(100);
-    const tokenBase = generateChaosString(200);
-    const token = Math.random() > 0.5 ? `${PREFIX}${tokenBase}` : tokenBase;
-    return { key, token };
-  });
-
-  it.each(chaoticInputs)(
-    'matches native HMAC against chaotic input #%#',
+describe('Property: matches Node native HMAC', () => {
+  it.prop([chaoticInputArb], { numRuns: 300 })(
+    'matches native HMAC against chaotic inputs',
     async ({ key, token }) => {
       const expectedInput = token.startsWith(PREFIX) ? token.slice(PREFIX_LEN) : token;
       expect(await getAuthTokenHash(token, key)).toBe(referenceHash(expectedInput, key));

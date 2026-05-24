@@ -1,8 +1,9 @@
 import { Buffer } from 'node:buffer';
 
+import { fc, it } from '@fast-check/vitest';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+import { describe, expect, beforeAll, afterAll, afterEach, vi } from 'vitest';
 import { S3Client, GetObjectCommand, PutObjectCommand } from '@aws-sdk/client-s3';
-import { describe, it, expect, beforeAll, afterAll, afterEach, vi } from 'vitest';
 
 import { Presigner } from './s3';
 
@@ -46,36 +47,6 @@ function paramOf(url: string, name: string): string {
 
 function sigOf(url: string): string {
   return paramOf(url, 'X-Amz-Signature');
-}
-
-function mulberry32(seed: number): () => number {
-  let s = seed;
-  return (): number => {
-    s = (s + 0x6d2b79f5) | 0;
-    let t = s;
-    t = Math.imul(t ^ (t >>> 15), t | 1);
-    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
-
-function randomKey(rand: () => number): string {
-  const len = 1 + Math.floor(rand() * 80);
-  let s = '';
-  while (s.length < len) {
-    const r = rand();
-    if (r < 0.5) {
-      s += String.fromCharCode(33 + Math.floor(rand() * 94));
-    } else if (r < 0.7) {
-      s += '/';
-    } else if (r < 0.85) {
-      s += String.fromCharCode(0xa0 + Math.floor(rand() * 0x300));
-    } else {
-      s += String.fromCodePoint(0x1f300 + Math.floor(rand() * 0x300));
-    }
-  }
-  s = s.replace(/^\/+/, '').replaceAll(/\/{2,}/g, '/');
-  return s.length > 0 ? s : 'x';
 }
 
 afterEach(() => {
@@ -701,72 +672,6 @@ describe('AWS SDK v3 oracle: unhoistable headers', () => {
   );
 });
 
-const FUZZ_GET = ((): readonly { idx: number; key: string }[] => {
-  const r = mulberry32(0xc0ffee);
-  return Array.from({ length: 100 }, (_, i) => ({ idx: i, key: randomKey(r) }));
-})();
-
-const FUZZ_PUT = ((): readonly { idx: number; args: PutArgs }[] => {
-  const r = mulberry32(0xbadf00d);
-  return Array.from({ length: 50 }, (_, i): { idx: number; args: PutArgs } => {
-    const args: { -readonly [K in keyof PutArgs]: PutArgs[K] } = {
-      key: randomKey(r),
-      expiresIn: 60 + Math.floor(r() * 3600),
-    };
-    if (r() < 0.5) {
-      args.contentType = 'application/octet-stream';
-    }
-    if (r() < 0.5) {
-      args.contentLength = Math.floor(r() * 1e9);
-    }
-    if (r() < 0.5) {
-      args.sha256 = Buffer.from(crypto.getRandomValues(new Uint8Array(32))).toString('base64');
-    }
-    if (r() < 0.5) {
-      args.ifNoneMatch = true;
-    }
-    return { idx: i, args };
-  });
-})();
-
-describe('Fuzz: 100 random GET keys', () => {
-  const p = new Presigner(CFG);
-
-  it.each(FUZZ_GET)('#$idx produces a valid URL', async ({ key }) => {
-    const url = await p.get({ key, expiresIn: 3600 });
-    const u = new URL(url);
-    expect(u.protocol).toBe('http:');
-    for (const name of REQUIRED_PARAMS) {
-      expect(u.searchParams.has(name)).toBe(true);
-    }
-    expect(sigOf(url)).toMatch(HEX64);
-  });
-});
-
-describe('Fuzz: 50 random PUT scenarios', () => {
-  const p = new Presigner(CFG);
-
-  it.each(FUZZ_PUT)('#$idx produces valid url+headers', async ({ args }) => {
-    const out = await p.put(args);
-    const u = new URL(out.url);
-
-    for (const name of REQUIRED_PARAMS) {
-      expect(u.searchParams.has(name)).toBe(true);
-    }
-    expect(sigOf(out.url)).toMatch(HEX64);
-
-    const sh = paramOf(out.url, 'X-Amz-SignedHeaders').split(';');
-    expect(sh).toEqual([...sh].toSorted());
-    expect(sh).toContain('host');
-
-    for (const h of sh) {
-      if (h !== 'host') {
-        expect(out.headers[h]).toBeDefined();
-      }
-    }
-  });
-});
-
 describe('AWS canonical request shape', () => {
   it('canonical request has 7 newline-separated sections in spec order', async () => {
     const p = new Presigner(CFG);
@@ -959,4 +864,85 @@ describe('Cache: derivation cost is constant after warmup', () => {
     }
     expect(importSpy.mock.calls.length).toBe(importsAfterCold);
   });
+});
+
+// ====== FUZZ TESTS ======
+
+const keyArb = fc
+  .array(
+    fc.oneof(
+      { weight: 50, arbitrary: fc.integer({ min: 33, max: 126 }) },
+      { weight: 20, arbitrary: fc.constant('/'.charCodeAt(0)) },
+      { weight: 15, arbitrary: fc.integer({ min: 0xa0, max: 0xa0 + 0x300 - 1 }) },
+      { weight: 15, arbitrary: fc.integer({ min: 0x1f300, max: 0x1f300 + 0x300 - 1 }) },
+    ),
+    { minLength: 1, maxLength: 80 },
+  )
+  .map((codes) => {
+    const s = codes
+      .map((c) => String.fromCodePoint(c))
+      .join('')
+      .replace(/^\/+/, '')
+      .replaceAll(/\/{2,}/g, '/');
+    return s.length > 0 ? s : 'x';
+  });
+
+// Only `key` and `expiresIn` are required; fc.record randomly includes or
+// omits the others (≈50/50), matching the original coin-flip-per-field shape.
+const putArgsArb: fc.Arbitrary<PutArgs> = fc.record(
+  {
+    key: keyArb,
+    expiresIn: fc.integer({ min: 60, max: 60 + 3599 }),
+    contentType: fc.constant('application/octet-stream'),
+    contentLength: fc.integer({ min: 0, max: 999_999_999 }),
+    sha256: fc
+      .uint8Array({ minLength: 32, maxLength: 32 })
+      .map((b) => Buffer.from(b).toString('base64')),
+    ifNoneMatch: fc.constant(true),
+  },
+  { requiredKeys: ['key', 'expiresIn'] },
+);
+
+describe('Property: random GET keys produce valid URLs', () => {
+  const p = new Presigner(CFG);
+
+  it.prop([keyArb], { numRuns: 300 })(
+    'any randomly generated key yields a valid presigned GET URL',
+    async (key) => {
+      const url = await p.get({ key, expiresIn: 3600 });
+      const u = new URL(url);
+      expect(u.protocol).toBe('http:');
+      for (const name of REQUIRED_PARAMS) {
+        expect(u.searchParams.has(name)).toBe(true);
+      }
+      expect(sigOf(url)).toMatch(HEX64);
+    },
+  );
+});
+
+describe('Property: random PUT scenarios produce valid url+headers', () => {
+  const p = new Presigner(CFG);
+
+  it.prop([putArgsArb], { numRuns: 300 })(
+    'any randomly generated PUT args yields a valid presigned URL and headers',
+    async (args) => {
+      const out = await p.put(args);
+      const u = new URL(out.url);
+
+      for (const name of REQUIRED_PARAMS) {
+        expect(u.searchParams.has(name)).toBe(true);
+      }
+      expect(sigOf(out.url)).toMatch(HEX64);
+
+      const sh = paramOf(out.url, 'X-Amz-SignedHeaders').split(';');
+      expect(sh).toEqual([...sh].toSorted());
+      expect(sh).toContain('host');
+
+      for (const h of sh) {
+        if (h !== 'host') {
+          expect(out.headers[h]).toBeDefined();
+        }
+      }
+    },
+  );
 });

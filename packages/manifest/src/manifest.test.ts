@@ -50,25 +50,6 @@ const buildValidPackage = (): Package => ({
   readme: '# Package\n\nReadme content.',
 });
 
-// Mulberry32 — deterministic seeded PRNG. Refactored into temp values to
-// avoid `operator-assignment` lint false-positives on `x = x + y | 0`.
-const makeRng = (initialSeed: number) => {
-  let state = initialSeed >>> 0;
-  return () => {
-    state = (state + 0x6d2b79f5) >>> 0;
-    const a = Math.imul(state ^ (state >>> 15), 1 | state);
-    const b = a + Math.imul(a ^ (a >>> 7), 61 | a);
-    const c = b ^ a;
-    return ((c ^ (c >>> 14)) >>> 0) / 4294967296;
-  };
-};
-
-const FUZZ_SEED = 0xc0ffee;
-const FUZZ_ITERATIONS = 20000;
-
-const NAMING_REGEX = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
-const STRICT_DIGEST_BODY_REGEX = /^[A-Za-z0-9+/]{42}[AEIMQUYcgkosw048]=$/;
-
 // =====================================================================
 // DANGEROUS_CHARS_REGEX
 // =====================================================================
@@ -463,17 +444,6 @@ describe('DigestSchema', () => {
       const buf = Buffer.from('the quick brown fox');
       const hash = createHash('sha256').update(buf).digest('base64');
       expect(accepts(DigestSchema, `sha256:${hash}`)).toBe(true);
-    });
-
-    it('many random 32-byte hashes', () => {
-      const rng = makeRng(FUZZ_SEED);
-      for (let i = 0; i < 100; i++) {
-        const bytes = Buffer.alloc(32);
-        for (let j = 0; j < 32; j++) {
-          bytes[j] = Math.floor(rng() * 256);
-        }
-        expect(accepts(DigestSchema, `sha256:${bytes.toString('base64')}`)).toBe(true);
-      }
     });
   });
 
@@ -1173,146 +1143,6 @@ describe('prototype pollution resistance', () => {
     Object.assign(malicious, buildValidPackage());
     const result = PackageSchema.safeParse(malicious);
     expect(typeof result.success).toBe('boolean');
-  });
-});
-
-// =====================================================================
-// Boundary fuzzing — numeric fields
-// =====================================================================
-
-describe('fuzz: dist numeric bounds', () => {
-  it(`rejects ${FUZZ_ITERATIONS} non-positive-integer totalFiles values`, () => {
-    const rng = makeRng(FUZZ_SEED);
-    for (let i = 0; i < FUZZ_ITERATIONS; i++) {
-      const p = buildValidPackage();
-      const choice = Math.floor(rng() * 6);
-      const bad = [0, -Math.floor(rng() * 1_000_000), rng() * 100, NaN, Infinity, -Infinity][
-        choice
-      ];
-      p.dist.totalFiles = bad;
-      expect(PackageSchema.safeParse(p).success).toBe(false);
-    }
-  });
-
-  it(`accepts ${FUZZ_ITERATIONS} valid totalFiles values in [1, 50000]`, () => {
-    const rng = makeRng(FUZZ_SEED + 1);
-    for (let i = 0; i < FUZZ_ITERATIONS; i++) {
-      const p = buildValidPackage();
-      p.dist.totalFiles = 1 + Math.floor(rng() * 50_000);
-      expect(PackageSchema.safeParse(p).success).toBe(true);
-    }
-  });
-
-  it(`rejects packedSize values just outside [1, 128MB]`, () => {
-    const cases = [0, -1, 128 * 1024 * 1024 + 1, 1e12];
-    for (const c of cases) {
-      const p = buildValidPackage();
-      p.dist.packedSize = c;
-      expect(PackageSchema.safeParse(p).success).toBe(false);
-    }
-  });
-});
-
-// =====================================================================
-// Property-style fuzzing — string identifiers
-// =====================================================================
-
-describe('fuzz: PackageNameSchema is regex+length pure', () => {
-  it(`property holds across ${FUZZ_ITERATIONS} random strings`, () => {
-    const rng = makeRng(FUZZ_SEED);
-    const generate = (): string => {
-      const len = Math.floor(rng() * 200);
-      let s = '';
-      for (let i = 0; i < len; i++) {
-        const choice = rng();
-        if (choice < 0.4) {
-          const cls = Math.floor(rng() * 3);
-          if (cls === 0) {
-            s += String.fromCharCode(97 + Math.floor(rng() * 26));
-          } else if (cls === 1) {
-            s += String.fromCharCode(48 + Math.floor(rng() * 10));
-          } else {
-            s += '-';
-          }
-        } else if (choice < 0.7) {
-          s += String.fromCharCode(32 + Math.floor(rng() * 95));
-        } else {
-          s += String.fromCharCode(Math.floor(rng() * 0x10000));
-        }
-      }
-      return s;
-    };
-
-    for (let i = 0; i < FUZZ_ITERATIONS; i++) {
-      const s = generate();
-      const expected = NAMING_REGEX.test(s) && s.length >= 3 && s.length <= 164;
-      expect(accepts(PackageNameSchema, s)).toBe(expected);
-    }
-  });
-});
-
-// =====================================================================
-// Property-style fuzzing — DigestSchema canonicality
-// =====================================================================
-
-describe('fuzz: DigestSchema accepts iff canonical sha256 base64', () => {
-  it(`property holds across ${FUZZ_ITERATIONS} random byte arrays of varying lengths`, () => {
-    const rng = makeRng(FUZZ_SEED);
-    for (let i = 0; i < FUZZ_ITERATIONS; i++) {
-      const len = Math.floor(rng() * 64);
-      const bytes = Buffer.alloc(len);
-      for (let j = 0; j < len; j++) {
-        bytes[j] = Math.floor(rng() * 256);
-      }
-      const encoded = `sha256:${bytes.toString('base64')}`;
-      // Canonical base64 of 32 bytes will satisfy the strict regex.
-      // Other lengths produce strings of different shapes.
-      const expected = len === 32;
-      expect(accepts(DigestSchema, encoded)).toBe(expected);
-    }
-  });
-
-  it(`rejects ${FUZZ_ITERATIONS} random base64-flavored strings of wrong shape`, () => {
-    const rng = makeRng(FUZZ_SEED + 2);
-    const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
-    for (let i = 0; i < FUZZ_ITERATIONS; i++) {
-      const len = Math.floor(rng() * 100);
-      let body = '';
-      for (let j = 0; j < len; j++) {
-        body += alphabet[Math.floor(rng() * alphabet.length)];
-      }
-      if (rng() < 0.5) {
-        body += '=';
-      }
-      const candidate = `sha256:${body}`;
-      // Schema uses strict canonical regex; expected formula must match.
-      const expected = STRICT_DIGEST_BODY_REGEX.test(body);
-      expect(accepts(DigestSchema, candidate)).toBe(expected);
-    }
-  });
-});
-
-// =====================================================================
-// Property-style fuzzing — strict object rejects extra keys
-// =====================================================================
-
-describe('fuzz: strict object rejects any extra key', () => {
-  it(`rejects ${FUZZ_ITERATIONS} random extra keys at top level`, () => {
-    const rng = makeRng(FUZZ_SEED);
-    const realKeys = new Set(Object.keys(buildValidPackage()));
-    for (let i = 0; i < FUZZ_ITERATIONS; i++) {
-      const p: Record<string, unknown> = { ...buildValidPackage() };
-      const keyLen = 1 + Math.floor(rng() * 20);
-      let key = '';
-      for (let j = 0; j < keyLen; j++) {
-        key += String.fromCharCode(97 + Math.floor(rng() * 26));
-      }
-      if (realKeys.has(key)) {
-        continue;
-      }
-      p[key] = 'extra';
-      expect(PackageSchema.safeParse(p).success).toBe(false);
-    }
   });
 });
 

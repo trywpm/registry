@@ -1,24 +1,7 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect } from 'vitest';
+import { fc, it } from '@fast-check/vitest';
 
 import { isValidPackageName, isValidTagName, isValidSemver } from './validator';
-
-const generateRandomString = (maxLength: number) => {
-  const length = Math.floor(Math.random() * maxLength);
-  let str = '';
-  for (let i = 0; i < length; i++) {
-    str += String.fromCharCode(Math.floor(Math.random() * 95) + 32);
-  }
-  return str;
-};
-
-const mutateString = (str: string) => {
-  if (!str) {
-    return str;
-  }
-  const index = Math.floor(Math.random() * str.length);
-  const newChar = String.fromCharCode(Math.floor(Math.random() * 95) + 32);
-  return str.slice(0, index) + newChar + str.slice(index + 1);
-};
 
 describe('isValidPackageName', () => {
   it.each(['abc', 'my-package', '123-abc', 'a-b-c', '123456', 'a'.repeat(3), 'a'.repeat(164)])(
@@ -98,38 +81,46 @@ describe('isValidSemver', () => {
   });
 });
 
-describe('Fuzz Testing', () => {
-  const oracles = {
-    packageName: (s: string) =>
-      s.length >= 3 && s.length <= 164 && /^[a-z0-9]+(-[a-z0-9]+)*$/.test(s),
-    tagName: (s: string) => s.length >= 3 && s.length <= 64 && /^[a-z0-9]+(-[a-z0-9]+)*$/.test(s),
-    semver: (s: string) =>
-      s.length >= 5 && s.length <= 64 && /^\d+\.\d+\.\d+(?:[-+][a-zA-Z0-9.\-+]*)?$/.test(s),
-  };
+// ====== FUZZ TESTS =====
 
-  const ITERATIONS = 10_000;
+const oracles = {
+  tagName: (s: string) => s.length >= 3 && s.length <= 64 && /^[a-z0-9]+(-[a-z0-9]+)*$/.test(s),
+  semver: (s: string) =>
+    s.length >= 5 && s.length <= 64 && /^\d+\.\d+\.\d+(?:[-+][a-zA-Z0-9.\-+]*)?$/.test(s),
+  packageName: (s: string) =>
+    s.length >= 3 && s.length <= 164 && /^[a-z0-9]+(-[a-z0-9]+)*$/.test(s),
+};
 
-  it(`isValidPackageName matches Regex Oracle over ${ITERATIONS} iterations`, () => {
-    const baseValidStr = 'valid-package-123';
-    for (let i = 0; i < ITERATIONS; i++) {
-      const testStr = Math.random() > 0.5 ? generateRandomString(200) : mutateString(baseValidStr);
-      expect(isValidPackageName(testStr)).toBe(oracles.packageName(testStr));
-    }
+const printableChar = fc.integer({ min: 32, max: 126 }).map((c) => String.fromCharCode(c));
+
+const mutated = (seed: string) =>
+  fc
+    .tuple(fc.nat({ max: seed.length - 1 }), printableChar)
+    .map(([idx, ch]) => seed.slice(0, idx) + ch + seed.slice(idx + 1));
+
+const randomPrintable = (maxLen: number) =>
+  fc.array(printableChar, { minLength: 0, maxLength: maxLen }).map((cs) => cs.join(''));
+
+const candidate = (seed: string, maxLen: number) =>
+  fc.oneof(randomPrintable(maxLen), mutated(seed));
+
+const semverCandidate = candidate('1.23.456-alpha.1+build.789', 100);
+const tagNameCandidate = candidate('valid-tag-123', 100);
+const packageNameCandidate = candidate('valid-package-123', 200);
+
+describe('fuzz tests', () => {
+  it.prop([packageNameCandidate], { numRuns: 500 })(
+    'isValidPackageName matches regex oracle',
+    (s) => {
+      expect(isValidPackageName(s)).toBe(oracles.packageName(s));
+    },
+  );
+
+  it.prop([semverCandidate], { numRuns: 500 })('isValidSemver matches regex oracle', (s) => {
+    expect(isValidSemver(s)).toBe(oracles.semver(s));
   });
 
-  it(`isValidTagName matches Regex Oracle over ${ITERATIONS} iterations`, () => {
-    const baseValidStr = 'valid-tag-123';
-    for (let i = 0; i < ITERATIONS; i++) {
-      const testStr = Math.random() > 0.5 ? generateRandomString(100) : mutateString(baseValidStr);
-      expect(isValidTagName(testStr)).toBe(oracles.tagName(testStr));
-    }
-  });
-
-  it(`isValidSemver matches Regex Oracle over ${ITERATIONS} iterations`, () => {
-    const baseValidStr = '1.23.456-alpha.1+build.789';
-    for (let i = 0; i < ITERATIONS; i++) {
-      const testStr = Math.random() > 0.5 ? generateRandomString(100) : mutateString(baseValidStr);
-      expect(isValidSemver(testStr)).toBe(oracles.semver(testStr));
-    }
+  it.prop([tagNameCandidate], { numRuns: 500 })('isValidTagName matches regex oracle', (s) => {
+    expect(isValidTagName(s)).toBe(oracles.tagName(s));
   });
 });

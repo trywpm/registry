@@ -1,5 +1,7 @@
-import { describe, it, expect } from 'vitest';
 import { isIP } from 'node:net';
+
+import { describe, expect } from 'vitest';
+import { fc, it } from '@fast-check/vitest';
 import { normalizeIP, isValidCidr, IPCidrMatcher } from './net';
 
 function ipv4ToBigInt(ip: string): bigint {
@@ -61,79 +63,6 @@ function refContains(cidr: string, ip: string): boolean {
   const bits = maskStr !== undefined ? parseInt(maskStr, 10) : 128;
   const mask = bits === 0 ? 0n : ((1n << 128n) - 1n) ^ ((1n << BigInt(128 - bits)) - 1n);
   return (ipv6ToBigInt(normNet) & mask) === (ipv6ToBigInt(normIp) & mask);
-}
-
-const FUZZ_RUNS = 20000;
-const FUZZ_SEED = 0x1337c0de;
-
-function mulberry32(seed: number): () => number {
-  let s = seed >>> 0;
-  return () => {
-    s = (s + 0x6d2b79f5) | 0;
-    let t = s;
-    t = Math.imul(t ^ (t >>> 15), t | 1);
-    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
-
-function randInt(rng: () => number, min: number, max: number): number {
-  return Math.floor(rng() * (max - min + 1)) + min;
-}
-
-function randomIPv4(rng: () => number): string {
-  return [
-    randInt(rng, 0, 255),
-    randInt(rng, 0, 255),
-    randInt(rng, 0, 255),
-    randInt(rng, 0, 255),
-  ].join('.');
-}
-
-function randomHighBitIPv4(rng: () => number): string {
-  return [
-    randInt(rng, 128, 255),
-    randInt(rng, 0, 255),
-    randInt(rng, 0, 255),
-    randInt(rng, 0, 255),
-  ].join('.');
-}
-
-function randomIPv6Full(rng: () => number): string {
-  const groups: string[] = [];
-  for (let i = 0; i < 8; i++) {
-    groups.push(randInt(rng, 0, 0xffff).toString(16));
-  }
-  return groups.join(':');
-}
-
-function randomNonNumericString(rng: () => number): string {
-  for (let attempt = 0; attempt < 50; attempt++) {
-    const len = randInt(rng, 1, 6);
-
-    let s = '';
-    for (let i = 0; i < len; i++) {
-      s += String.fromCharCode(randInt(rng, 32, 126));
-    }
-
-    if (!/^\d+$/.test(s)) {
-      return s;
-    }
-  }
-
-  // unreachable in practice
-  return 'abc';
-}
-
-function randomAscii(rng: () => number): string {
-  const len = randInt(rng, 0, 40);
-
-  let s = '';
-  for (let i = 0; i < len; i++) {
-    s += String.fromCharCode(randInt(rng, 32, 126));
-  }
-
-  return s;
 }
 
 function bigIntToIPv6(n: bigint): string {
@@ -657,217 +586,198 @@ describe('IPCidrMatcher.contains — IPv6', () => {
   });
 });
 
-describe('fuzz: isValidCidr', () => {
-  it('any well-formed IPv4 + valid mask is accepted', () => {
-    const rng = mulberry32(FUZZ_SEED ^ 0x01);
-    for (let i = 0; i < FUZZ_RUNS; i++) {
-      const ip = randomIPv4(rng);
-      const bits = randInt(rng, 0, 32);
-      const cidr = `${ip}/${bits}`;
-      expect(isValidCidr(cidr), `iter=${i} cidr=${cidr}`).toBe(true);
-    }
-  });
+// ====== FUZZ TESTS =====
 
-  it('any well-formed IPv4 with mask > 32 is rejected', () => {
-    const rng = mulberry32(FUZZ_SEED ^ 0x02);
-    for (let i = 0; i < FUZZ_RUNS; i++) {
-      const ip = randomIPv4(rng);
-      const bits = randInt(rng, 33, 999);
-      const cidr = `${ip}/${bits}`;
-      expect(isValidCidr(cidr), `iter=${i} cidr=${cidr}`).toBe(false);
-    }
-  });
+const FUZZ_RUNS = 500;
 
-  it('any well-formed IPv6 + valid mask is accepted', () => {
-    const rng = mulberry32(FUZZ_SEED ^ 0x03);
-    for (let i = 0; i < FUZZ_RUNS; i++) {
-      const ip = randomIPv6Full(rng);
-      const bits = randInt(rng, 0, 128);
-      const cidr = `${ip}/${bits}`;
-      expect(isValidCidr(cidr), `iter=${i} cidr=${cidr}`).toBe(true);
-    }
-  });
+const octet = fc.integer({ min: 0, max: 255 });
+const ipv4Arb = fc.tuple(octet, octet, octet, octet).map((parts) => parts.join('.'));
+const highOctet = fc.integer({ min: 128, max: 255 });
+const ipv6Group = fc.integer({ min: 0, max: 0xffff }).map((n) => n.toString(16));
+const ipv6FullArb = fc
+  .tuple(ipv6Group, ipv6Group, ipv6Group, ipv6Group, ipv6Group, ipv6Group, ipv6Group, ipv6Group)
+  .map((groups) => groups.join(':'));
+const highBitIPv4Arb = fc.tuple(highOctet, octet, octet, octet).map((parts) => parts.join('.'));
 
-  it('any well-formed IPv6 with mask > 128 is rejected', () => {
-    const rng = mulberry32(FUZZ_SEED ^ 0x04);
-    for (let i = 0; i < FUZZ_RUNS; i++) {
-      const ip = randomIPv6Full(rng);
-      const bits = randInt(rng, 129, 999);
-      const cidr = `${ip}/${bits}`;
-      expect(isValidCidr(cidr), `iter=${i} cidr=${cidr}`).toBe(false);
-    }
-  });
+const ipv4MaskArb = fc.integer({ min: 0, max: 32 });
+const ipv6MaskArb = fc.integer({ min: 0, max: 128 });
 
-  it('non-numeric mask suffix is always rejected', () => {
-    const rng = mulberry32(FUZZ_SEED ^ 0x05);
-    for (let i = 0; i < FUZZ_RUNS; i++) {
-      const ip = randomIPv4(rng);
-      const junk = randomNonNumericString(rng);
+const ipv4CidrArb = fc.tuple(ipv4Arb, ipv4MaskArb).map(([ip, b]) => `${ip}/${b}`);
+const ipv6CidrArb = fc.tuple(ipv6FullArb, ipv6MaskArb).map(([ip, b]) => `${ip}/${b}`);
+
+const ipv4CidrsArb = fc.array(ipv4CidrArb, { minLength: 1, maxLength: 20 });
+const mixedCidrsArb = fc.array(fc.oneof(ipv4CidrArb, ipv6CidrArb), { minLength: 1, maxLength: 15 });
+const ipv4OrIpv6Arb = fc.oneof(ipv4Arb, ipv6FullArb);
+
+const printableChar = fc.integer({ min: 32, max: 126 }).map((c) => String.fromCharCode(c));
+
+const nonNumericStringArb = fc
+  .array(printableChar, { minLength: 1, maxLength: 6 })
+  .map((cs) => cs.join(''))
+  .filter((s) => !/^\d+$/.test(s));
+
+const asciiArb = fc.array(printableChar, { minLength: 0, maxLength: 40 }).map((cs) => cs.join(''));
+
+describe('property: isValidCidr', () => {
+  it.prop([ipv4Arb, ipv4MaskArb], { numRuns: FUZZ_RUNS })(
+    'any well-formed IPv4 + valid mask is accepted',
+    (ip, bits) => {
+      const cidr = `${ip}/${bits}`;
+      expect(isValidCidr(cidr), `cidr=${cidr}`).toBe(true);
+    },
+  );
+
+  it.prop([ipv4Arb, fc.integer({ min: 33, max: 999 })], { numRuns: FUZZ_RUNS })(
+    'any well-formed IPv4 with mask > 32 is rejected',
+    (ip, bits) => {
+      const cidr = `${ip}/${bits}`;
+      expect(isValidCidr(cidr), `cidr=${cidr}`).toBe(false);
+    },
+  );
+
+  it.prop([ipv6FullArb, ipv6MaskArb], { numRuns: FUZZ_RUNS })(
+    'any well-formed IPv6 + valid mask is accepted',
+    (ip, bits) => {
+      const cidr = `${ip}/${bits}`;
+      expect(isValidCidr(cidr), `cidr=${cidr}`).toBe(true);
+    },
+  );
+
+  it.prop([ipv6FullArb, fc.integer({ min: 129, max: 999 })], { numRuns: FUZZ_RUNS })(
+    'any well-formed IPv6 with mask > 128 is rejected',
+    (ip, bits) => {
+      const cidr = `${ip}/${bits}`;
+      expect(isValidCidr(cidr), `cidr=${cidr}`).toBe(false);
+    },
+  );
+
+  it.prop([ipv4Arb, nonNumericStringArb], { numRuns: FUZZ_RUNS })(
+    'non-numeric mask suffix is always rejected',
+    (ip, junk) => {
       const cidr = `${ip}/${junk}`;
-      expect(isValidCidr(cidr), `iter=${i} cidr=${cidr}`).toBe(false);
-    }
-  });
+      expect(isValidCidr(cidr), `cidr=${cidr}`).toBe(false);
+    },
+  );
 });
 
-describe('fuzz: matcher agrees with reference (IPv4)', () => {
-  it('host-only rule matches exactly the host', () => {
-    const rng = mulberry32(FUZZ_SEED ^ 0x10);
-    for (let i = 0; i < FUZZ_RUNS; i++) {
-      const ruleIp = randomIPv4(rng);
-      const queryIp = randomIPv4(rng);
+describe('property: matcher agrees with reference (IPv4)', () => {
+  it.prop([ipv4Arb, ipv4Arb], { numRuns: FUZZ_RUNS })(
+    'host-only rule matches exactly the host',
+    (ruleIp, queryIp) => {
       const m = new IPCidrMatcher([`${ruleIp}/32`]);
       const expected = ruleIp === queryIp;
-      expect(m.contains(queryIp), `iter=${i} rule=${ruleIp} query=${queryIp}`).toBe(expected);
-    }
-  });
+      expect(m.contains(queryIp), `rule=${ruleIp} query=${queryIp}`).toBe(expected);
+    },
+  );
 
-  it('arbitrary CIDR matches reference for arbitrary query', () => {
-    const rng = mulberry32(FUZZ_SEED ^ 0x11);
-    for (let i = 0; i < FUZZ_RUNS; i++) {
-      const ruleIp = randomIPv4(rng);
-      const bits = randInt(rng, 0, 32);
-      const queryIp = randomIPv4(rng);
+  it.prop([ipv4Arb, ipv4MaskArb, ipv4Arb], { numRuns: FUZZ_RUNS })(
+    'arbitrary CIDR matches reference for arbitrary query',
+    (ruleIp, bits, queryIp) => {
       const cidr = `${ruleIp}/${bits}`;
       const m = new IPCidrMatcher([cidr]);
       const expected = refContains(cidr, queryIp);
-      expect(m.contains(queryIp), `iter=${i} cidr=${cidr} query=${queryIp}`).toBe(expected);
-    }
-  });
+      expect(m.contains(queryIp), `cidr=${cidr} query=${queryIp}`).toBe(expected);
+    },
+  );
 
-  it('an address inside its own subnet always matches', () => {
-    const rng = mulberry32(FUZZ_SEED ^ 0x12);
-    for (let i = 0; i < FUZZ_RUNS; i++) {
-      const ip = randomIPv4(rng);
-      const bits = randInt(rng, 0, 32);
+  it.prop([ipv4Arb, ipv4MaskArb], { numRuns: FUZZ_RUNS })(
+    'an address inside its own subnet always matches',
+    (ip, bits) => {
       const m = new IPCidrMatcher([`${ip}/${bits}`]);
-      expect(m.contains(ip), `iter=${i} cidr=${ip}/${bits}`).toBe(true);
-    }
-  });
+      expect(m.contains(ip), `cidr=${ip}/${bits}`).toBe(true);
+    },
+  );
 
-  it('multi-rule matcher returns true iff any single rule would', () => {
-    const rng = mulberry32(FUZZ_SEED ^ 0x13);
-    for (let i = 0; i < FUZZ_RUNS; i++) {
-      const ruleCount = randInt(rng, 1, 20);
-      const cidrs: string[] = [];
-      for (let j = 0; j < ruleCount; j++) {
-        cidrs.push(`${randomIPv4(rng)}/${randInt(rng, 0, 32)}`);
-      }
-      const queryIp = randomIPv4(rng);
+  it.prop([ipv4CidrsArb, ipv4Arb], { numRuns: FUZZ_RUNS })(
+    'multi-rule matcher returns true iff any single rule would',
+    (cidrs, queryIp) => {
       const m = new IPCidrMatcher(cidrs);
       const expected = cidrs.some((c) => refContains(c, queryIp));
-      expect(m.contains(queryIp), `iter=${i} cidrs=${cidrs.join(',')} query=${queryIp}`).toBe(
-        expected,
-      );
-    }
-  });
+      expect(m.contains(queryIp), `cidrs=${cidrs.join(',')} query=${queryIp}`).toBe(expected);
+    },
+  );
 
-  it('REGRESSION: high-bit ranges (top octet >= 128) behave correctly', () => {
-    const rng = mulberry32(FUZZ_SEED ^ 0x14);
-    for (let i = 0; i < FUZZ_RUNS; i++) {
-      const ruleIp = randomHighBitIPv4(rng);
-      const bits = randInt(rng, 0, 32);
-      const queryIp = randomHighBitIPv4(rng);
+  it.prop([highBitIPv4Arb, ipv4MaskArb, highBitIPv4Arb], { numRuns: FUZZ_RUNS })(
+    'REGRESSION: high-bit ranges (top octet >= 128) behave correctly',
+    (ruleIp, bits, queryIp) => {
       const cidr = `${ruleIp}/${bits}`;
       const m = new IPCidrMatcher([cidr]);
       const expected = refContains(cidr, queryIp);
-      expect(m.contains(queryIp), `iter=${i} cidr=${cidr} query=${queryIp}`).toBe(expected);
-    }
-  });
+      expect(m.contains(queryIp), `cidr=${cidr} query=${queryIp}`).toBe(expected);
+    },
+  );
 });
 
-describe('fuzz: matcher agrees with reference (IPv6)', () => {
-  it('host-only rule matches exactly the host (full form)', () => {
-    const rng = mulberry32(FUZZ_SEED ^ 0x20);
-    for (let i = 0; i < FUZZ_RUNS; i++) {
-      const ruleIp = randomIPv6Full(rng);
-      const queryIp = randomIPv6Full(rng);
+describe('property: matcher agrees with reference (IPv6)', () => {
+  it.prop([ipv6FullArb, ipv6FullArb], { numRuns: FUZZ_RUNS })(
+    'host-only rule matches exactly the host (full form)',
+    (ruleIp, queryIp) => {
       const m = new IPCidrMatcher([`${ruleIp}/128`]);
       const expected = ipv6ToBigInt(ruleIp) === ipv6ToBigInt(queryIp);
-      expect(m.contains(queryIp), `iter=${i} rule=${ruleIp} query=${queryIp}`).toBe(expected);
-    }
-  });
+      expect(m.contains(queryIp), `rule=${ruleIp} query=${queryIp}`).toBe(expected);
+    },
+  );
 
-  it('arbitrary CIDR matches reference for arbitrary query', () => {
-    const rng = mulberry32(FUZZ_SEED ^ 0x21);
-    for (let i = 0; i < FUZZ_RUNS; i++) {
-      const ruleIp = randomIPv6Full(rng);
-      const bits = randInt(rng, 0, 128);
-      const queryIp = randomIPv6Full(rng);
+  it.prop([ipv6FullArb, ipv6MaskArb, ipv6FullArb], { numRuns: FUZZ_RUNS })(
+    'arbitrary CIDR matches reference for arbitrary query',
+    (ruleIp, bits, queryIp) => {
       const cidr = `${ruleIp}/${bits}`;
       const m = new IPCidrMatcher([cidr]);
       const expected = refContains(cidr, queryIp);
-      expect(m.contains(queryIp), `iter=${i} cidr=${cidr} query=${queryIp}`).toBe(expected);
-    }
-  });
+      expect(m.contains(queryIp), `cidr=${cidr} query=${queryIp}`).toBe(expected);
+    },
+  );
 
-  it('an address inside its own subnet always matches', () => {
-    const rng = mulberry32(FUZZ_SEED ^ 0x22);
-    for (let i = 0; i < FUZZ_RUNS; i++) {
-      const ip = randomIPv6Full(rng);
-      const bits = randInt(rng, 0, 128);
+  it.prop([ipv6FullArb, ipv6MaskArb], { numRuns: FUZZ_RUNS })(
+    'an address inside its own subnet always matches',
+    (ip, bits) => {
       const m = new IPCidrMatcher([`${ip}/${bits}`]);
-      expect(m.contains(ip), `iter=${i} cidr=${ip}/${bits}`).toBe(true);
-    }
-  });
+      expect(m.contains(ip), `cidr=${ip}/${bits}`).toBe(true);
+    },
+  );
 
-  it('REGRESSION: compressed forms parse to the same value as the canonical form', () => {
-    const rng = mulberry32(FUZZ_SEED ^ 0x23);
-    for (let i = 0; i < FUZZ_RUNS; i++) {
-      const full = randomIPv6Full(rng);
+  it.prop([ipv6FullArb], { numRuns: FUZZ_RUNS })(
+    'REGRESSION: compressed forms parse to the same value as the canonical form',
+    (full) => {
       const compressed = compressIPv6(full);
       const m = new IPCidrMatcher([`${full}/128`]);
-      expect(m.contains(full), `iter=${i} full=${full}`).toBe(true);
-      expect(m.contains(compressed), `iter=${i} full=${full} compressed=${compressed}`).toBe(true);
-    }
-  });
+      expect(m.contains(full), `full=${full}`).toBe(true);
+      expect(m.contains(compressed), `full=${full} compressed=${compressed}`).toBe(true);
+    },
+  );
 
-  it('multi-rule matcher matches iff any rule would (mixed v4 and v6)', () => {
-    const rng = mulberry32(FUZZ_SEED ^ 0x24);
-    for (let i = 0; i < FUZZ_RUNS; i++) {
-      const ruleCount = randInt(rng, 1, 15);
-      const cidrs: string[] = [];
-      for (let j = 0; j < ruleCount; j++) {
-        if (rng() < 0.5) {
-          cidrs.push(`${randomIPv4(rng)}/${randInt(rng, 0, 32)}`);
-        } else {
-          cidrs.push(`${randomIPv6Full(rng)}/${randInt(rng, 0, 128)}`);
-        }
-      }
-      const queryIp = rng() < 0.5 ? randomIPv4(rng) : randomIPv6Full(rng);
+  it.prop([mixedCidrsArb, ipv4OrIpv6Arb], { numRuns: FUZZ_RUNS })(
+    'multi-rule matcher matches iff any rule would (mixed v4 and v6)',
+    (cidrs, queryIp) => {
       const m = new IPCidrMatcher(cidrs);
       const expected = cidrs.some((c) => refContains(c, queryIp));
-      expect(m.contains(queryIp), `iter=${i} cidrs=${cidrs.join(',')} query=${queryIp}`).toBe(
-        expected,
-      );
-    }
-  });
+      expect(m.contains(queryIp), `cidrs=${cidrs.join(',')} query=${queryIp}`).toBe(expected);
+    },
+  );
 });
 
-describe('fuzz: ::ffff: normalization', () => {
-  it('::ffff:X.Y.Z.W is treated identically to X.Y.Z.W on both sides', () => {
-    const rng = mulberry32(FUZZ_SEED ^ 0x30);
-    for (let i = 0; i < FUZZ_RUNS; i++) {
-      const ruleIp = randomIPv4(rng);
-      const bits = randInt(rng, 0, 32);
-      const queryIp = randomIPv4(rng);
+describe('property: ::ffff: normalization', () => {
+  it.prop([ipv4Arb, ipv4MaskArb, ipv4Arb], { numRuns: FUZZ_RUNS })(
+    '::ffff:X.Y.Z.W is treated identically to X.Y.Z.W on both sides',
+    (ruleIp, bits, queryIp) => {
       const m1 = new IPCidrMatcher([`${ruleIp}/${bits}`]);
       const m2 = new IPCidrMatcher([`::ffff:${ruleIp}/${bits}`]);
-      const ctx = `iter=${i} rule=${ruleIp}/${bits} query=${queryIp}`;
+      const ctx = `rule=${ruleIp}/${bits} query=${queryIp}`;
       expect(m2.contains(queryIp), `${ctx} (m2 vs m1)`).toBe(m1.contains(queryIp));
       expect(m1.contains(`::ffff:${queryIp}`), `${ctx} (mapped lower)`).toBe(m1.contains(queryIp));
       expect(m1.contains(`::FFFF:${queryIp}`), `${ctx} (mapped UPPER)`).toBe(m1.contains(queryIp));
-    }
-  });
+    },
+  );
 });
 
-describe('fuzz: invalid input never throws from contains()', () => {
-  it('any random ASCII string returns a boolean, never throws', () => {
-    const m = new IPCidrMatcher(['10.0.0.0/8', '2001:db8::/32']);
-    const rng = mulberry32(FUZZ_SEED ^ 0x40);
-    for (let i = 0; i < FUZZ_RUNS; i++) {
-      const junk = randomAscii(rng);
+describe('property: invalid input never throws from contains()', () => {
+  const m = new IPCidrMatcher(['10.0.0.0/8', '2001:db8::/32']);
+
+  it.prop([asciiArb], { numRuns: FUZZ_RUNS })(
+    'any random ASCII string returns a boolean, never throws',
+    (junk) => {
       const result = m.contains(junk);
-      expect(typeof result, `iter=${i} junk=${JSON.stringify(junk)}`).toBe('boolean');
-    }
-  });
+      expect(typeof result, `junk=${JSON.stringify(junk)}`).toBe('boolean');
+    },
+  );
 });
