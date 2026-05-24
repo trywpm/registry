@@ -62,10 +62,16 @@ export function isValidSemver(v: string): boolean {
     return false;
   }
 
+  let firstWasZero = c === 48;
+
   while (++i < n) {
     c = v.charCodeAt(i);
     if (c < 48 || c > 57) {
       break;
+    }
+
+    if (firstWasZero) {
+      return false;
     }
   }
 
@@ -77,11 +83,16 @@ export function isValidSemver(v: string): boolean {
   if (c < 48 || c > 57) {
     return false;
   }
+  firstWasZero = c === 48;
 
   while (++i < n) {
     c = v.charCodeAt(i);
     if (c < 48 || c > 57) {
       break;
+    }
+
+    if (firstWasZero) {
+      return false;
     }
   }
 
@@ -93,11 +104,16 @@ export function isValidSemver(v: string): boolean {
   if (c < 48 || c > 57) {
     return false;
   }
+  firstWasZero = c === 48;
 
   while (++i < n) {
     c = v.charCodeAt(i);
     if (c < 48 || c > 57) {
       break;
+    }
+
+    if (firstWasZero) {
+      return false;
     }
   }
 
@@ -106,6 +122,10 @@ export function isValidSemver(v: string): boolean {
   }
 
   if (c !== 45 && c !== 43) {
+    return false;
+  }
+
+  if (i + 1 >= n) {
     return false;
   }
 

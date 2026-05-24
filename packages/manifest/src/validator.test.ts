@@ -48,13 +48,10 @@ describe('isValidSemver', () => {
     '1.0.0',
     '0.0.0',
     '12.34.567',
-    '01.02.03',
     '1.0.0-alpha',
     '1.0.0-alpha.1',
     '1.0.0+build.123',
     '1.2.3-rc.1+build.1',
-    '1.2.3-',
-    '1.2.3+',
     '1.0.0-0.3.7',
   ])('returns true for valid loose semver: "%s"', (val) => {
     expect(isValidSemver(val)).toBe(true);
@@ -76,6 +73,12 @@ describe('isValidSemver', () => {
     '1.0.0.0',
     '1',
     '1.2.3'.padEnd(65, '-'),
+    '01.0.0',
+    '1.02.0',
+    '1.0.03',
+    '01.02.03',
+    '1.2.3-',
+    '1.2.3+',
   ])('returns false for invalid semver: "%s"', (val) => {
     expect(isValidSemver(val)).toBe(false);
   });
@@ -86,7 +89,9 @@ describe('isValidSemver', () => {
 const oracles = {
   tagName: (s: string) => s.length >= 3 && s.length <= 64 && /^[a-z0-9]+(-[a-z0-9]+)*$/.test(s),
   semver: (s: string) =>
-    s.length >= 5 && s.length <= 64 && /^\d+\.\d+\.\d+(?:[-+][a-zA-Z0-9.\-+]*)?$/.test(s),
+    s.length >= 5 &&
+    s.length <= 64 &&
+    /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:[-+][a-zA-Z0-9.\-+]+)?$/.test(s),
   packageName: (s: string) =>
     s.length >= 3 && s.length <= 164 && /^[a-z0-9]+(-[a-z0-9]+)*$/.test(s),
 };
