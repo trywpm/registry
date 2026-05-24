@@ -798,6 +798,12 @@ describe('Region defaulting', () => {
     expect(paramOf(url, 'X-Amz-Credential')).toContain('/auto/');
   });
 
+  it("defaults to 'auto' when region is empty string", async () => {
+    const p = new Presigner({ ...CFG, region: '' });
+    const url = await p.get({ key: 'k', expiresIn: 60 });
+    expect(paramOf(url, 'X-Amz-Credential')).toContain('/auto/');
+  });
+
   it('respects explicit region', async () => {
     const p = new Presigner({ ...CFG, region: 'us-east-1' });
     const url = await p.get({ key: 'k', expiresIn: 60 });
