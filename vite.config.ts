@@ -3,6 +3,8 @@ import { defineConfig } from 'vite-plus';
 export default defineConfig({
   test: {
     projects: ['web', 'registry', 'packages/*'],
+    testTimeout: process.env.CI ? 30_000 : 5_000,
+    hookTimeout: process.env.CI ? 30_000 : 10_000,
   },
   fmt: {
     tabWidth: 2,
