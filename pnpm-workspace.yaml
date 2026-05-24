@@ -6,7 +6,7 @@ packages:
 catalog:
   '@cloudflare/workers-types': 4.20260123.0
   '@types/bun': 1.3.14
-  '@types/node': 25.9.0
+  '@types/node': 25.9.1
   '@types/semver': 7.7.1
   'hono': 4.12.19
   'postgres': 3.4.9
