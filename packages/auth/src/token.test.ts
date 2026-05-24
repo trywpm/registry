@@ -5,7 +5,7 @@ import { afterEach, beforeAll, beforeEach, describe, expect, vi } from 'vitest';
 
 import type { MockInstance } from 'vitest';
 
-import { generateWpmAuthToken, getAuthTokenHash, randString } from './token';
+import { generateWpmAuthToken, getAuthTokenHash, parseBearerToken, randString } from './token';
 
 const CHARSET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_';
 const CHARSET_ARRAY = Array.from({ length: CHARSET.length }, (_, i) => CHARSET[i]);
@@ -377,5 +377,47 @@ describe('Property: matches Node native HMAC', () => {
     const key = 'secure_key';
     const expectedInput = edgeToken.startsWith(PREFIX) ? edgeToken.slice(PREFIX_LEN) : edgeToken;
     expect(await getAuthTokenHash(edgeToken, key)).toBe(referenceHash(expectedInput, key));
+  });
+});
+
+describe('parseBearerToken', () => {
+  const validToken = generateWpmAuthToken();
+  const validHeader = `Bearer ${validToken}`;
+
+  describe('accepts', () => {
+    it('returns the token from a well-formed Bearer header', () => {
+      expect(parseBearerToken(validHeader)).toBe(validToken);
+    });
+
+    it.each(Array.from({ length: 20 }, () => generateWpmAuthToken()))(
+      'returns the token for fresh sample: %s',
+      (token) => {
+        expect(parseBearerToken(`Bearer ${token}`)).toBe(token);
+      },
+    );
+  });
+
+  describe('rejects', () => {
+    it.each([
+      { case: 'empty string', input: '' },
+      { case: 'one char shorter than expected', input: `Bearer ${validToken.slice(0, -1)}` },
+      { case: 'one char longer than expected', input: `Bearer ${validToken}x` },
+      { case: 'missing space after Bearer', input: `Bearer${validToken}` },
+      { case: 'lowercase scheme', input: `bearer ${validToken}` },
+      { case: 'uppercase scheme', input: `BEARER ${validToken}` },
+      { case: 'mixed-case scheme', input: `BeArEr ${validToken}` },
+      { case: 'Basic scheme', input: `Basic ${validToken}` },
+      { case: 'no scheme, token only', input: validToken.padEnd(71, ' ') },
+      { case: 'wrong prefix on token', input: `Bearer abc_${validToken.slice(4)}` },
+      { case: 'token uppercase prefix', input: `Bearer WPM_${validToken.slice(4)}` },
+      { case: 'token with disallowed char (hyphen)', input: `Bearer wpm_${'-'.repeat(60)}` },
+      { case: 'token with disallowed char (space)', input: `Bearer wpm_${' '.repeat(60)}` },
+      { case: 'token with non-ASCII char', input: `Bearer wpm_${'é'.repeat(60)}` },
+      { case: 'leading whitespace', input: ` Bearer ${validToken}` },
+      { case: 'tab instead of space', input: `Bearer\t${validToken}` },
+      { case: 'trailing whitespace breaks length', input: `Bearer ${validToken} ` },
+    ])('rejects $case', ({ input }) => {
+      expect(parseBearerToken(input)).toBeNull();
+    });
   });
 });
