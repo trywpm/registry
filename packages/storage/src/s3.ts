@@ -114,7 +114,7 @@ export type PutResult = {
   readonly headers: Readonly<Record<string, string>>;
 };
 
-type Method = 'GET' | 'PUT' | 'HEAD';
+type Method = 'GET' | 'PUT';
 
 type SignArgs = {
   readonly key: string;
@@ -165,7 +165,7 @@ export class Presigner {
     this.clock = cfg.clock ?? null;
 
     this.bucket = cfg.bucket;
-    this.region = cfg.region ?? 'auto';
+    this.region = cfg.region || 'auto';
     this.accessKeyId = cfg.accessKeyId;
     this.secretAccessKey = cfg.secretAccessKey;
 
