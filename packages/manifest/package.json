@@ -11,6 +11,7 @@
     "zod": "catalog:"
   },
   "devDependencies": {
+    "@fast-check/vitest": "catalog:",
     "@types/bun": "catalog:",
     "@types/node": "catalog:",
     "@types/semver": "catalog:",
