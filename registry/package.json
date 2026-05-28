@@ -9,6 +9,7 @@
   "dependencies": {
     "@wpm/auth": "workspace:*",
     "@wpm/db": "workspace:*",
+    "@wpm/kms": "workspace:*",
     "@wpm/manifest": "workspace:*",
     "@wpm/net": "workspace:*",
     "@wpm/rbac": "workspace:*",
@@ -17,6 +18,7 @@
     "postgres": "catalog:"
   },
   "devDependencies": {
+    "@types/node": "catalog:",
     "typescript": "catalog:",
     "wrangler": "catalog:"
   }

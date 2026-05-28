@@ -3,13 +3,15 @@
   "compilerOptions": {
     "paths": {
       "@/*": ["./src/*"]
-    }
+    },
+    "types": ["node"]
   },
   "include": ["src/**/*", "worker-types.d.ts"],
   "exclude": ["node_modules", "dist"],
   "references": [
     { "path": "../packages/db" },
     { "path": "../packages/net" },
+    { "path": "../packages/kms" },
     { "path": "../packages/auth" },
     { "path": "../packages/rbac" },
     { "path": "../packages/storage" },
