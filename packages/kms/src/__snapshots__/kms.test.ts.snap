@@ -1,0 +1,23 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`Signature regression baseline > produces a stable signature for a fixed input 1`] = `"1443624ee196213fee9e3c82c2177aa3554f479b711822c079f5c559d86b6d1e"`;
+
+exports[`Signature regression baseline > produces a stable signature for a fixed input 2`] = `
+"POST
+/
+
+content-type:application/x-amz-json-1.1
+host:kms.us-east-1.amazonaws.com
+x-amz-date:20260510T123456Z
+x-amz-target:TrentService.Sign
+
+content-type;host;x-amz-date;x-amz-target
+77a2a0ed232cfa8362cb174ed4e7d3002e16be6c7f051fb70d86c45031d2f354"
+`;
+
+exports[`Signature regression baseline > produces a stable signature for a fixed input 3`] = `
+"AWS4-HMAC-SHA256
+20260510T123456Z
+20260510/us-east-1/kms/aws4_request
+f1af4b7194887fe02d43d1ae9abab3f9a8b088596d972f026c52145164360631"
+`;
