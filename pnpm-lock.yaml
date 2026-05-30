@@ -28,8 +28,8 @@ catalogs:
       specifier: 3.4.9
       version: 3.4.9
     semver:
-      specifier: 7.8.0
-      version: 7.8.0
+      specifier: 7.8.1
+      version: 7.8.1
     typescript:
       specifier: 6.0.3
       version: 6.0.3
@@ -143,7 +143,7 @@ importers:
         version: link:../types
       semver:
         specifier: 'catalog:'
-        version: 7.8.0
+        version: 7.8.1
       zod:
         specifier: 'catalog:'
         version: 4.4.3
@@ -3294,11 +3294,6 @@ packages:
 
   semver@6.3.1:
     resolution: {integrity: sha512-BR7VvDCVHO+q2xBEWskxS6DJE1qRnb7DxzUrogb71CWoSficBxYsiAGd+Kl0mmq/MprG9yArRkyrQxTO6XjMzA==}
-    hasBin: true
-
-  semver@7.8.0:
-    resolution: {integrity: sha512-AcM7dV/5ul4EekoQ29Agm5vri8JNqRyj39o0qpX6vDF2GZrtutZl5RwgD1XnZjiTAfncsJhMI48QQH3sN87YNA==}
-    engines: {node: '>=10'}
     hasBin: true
 
   semver@7.8.1:
@@ -6854,8 +6849,6 @@ snapshots:
   scheduler@0.27.0: {}
 
   semver@6.3.1: {}
-
-  semver@7.8.0: {}
 
   semver@7.8.1: {}
 
