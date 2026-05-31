@@ -11,7 +11,7 @@ catalog:
   '@types/semver': 7.7.1
   'hono': 4.12.19
   'postgres': 3.4.9
-  'semver': 7.8.0
+  'semver': 7.8.1
   'typescript': 6.0.3
   'wrangler': 4.94.0
   'zod': 4.4.3
