@@ -63,7 +63,6 @@ export function SelectTrigger({
   return (
     <button
       type="button"
-      // oxlint-disable-next-line jsx-a11y/prefer-tag-over-role -- Valid ARIA 1.2 select-only combobox pattern
       role="combobox"
       aria-expanded="false"
       data-slot="select-trigger"
@@ -95,7 +94,6 @@ export function SelectContent({
     <div
       data-slot="select-content"
       data-state="closed"
-      // oxlint-disable-next-line jsx-a11y/prefer-tag-over-role -- Valid ARIA pattern for custom select dropdowns
       role="listbox"
       style={{ display: 'none' }}
       className={cn(
