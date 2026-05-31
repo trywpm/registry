@@ -54,9 +54,8 @@ const buildValidPackage = (): Package => ({
 // DANGEROUS_CHARS_REGEX
 // =====================================================================
 
+const safe = (s: string) => !DANGEROUS_CHARS_REGEX.test(s);
 describe('DANGEROUS_CHARS_REGEX', () => {
-  const safe = (s: string) => !DANGEROUS_CHARS_REGEX.test(s);
-
   describe('accepts safe content', () => {
     it.each([
       { case: 'empty string', input: '' },
