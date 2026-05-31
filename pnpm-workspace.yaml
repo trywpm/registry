@@ -19,6 +19,16 @@ catalog:
   'vitest': npm:@voidzero-dev/vite-plus-test@0.1.23
   'vite-plus': 0.1.23
 
+allowBuilds:
+  '@clerk/shared': false
+  'browser-tabs-lock': false
+  'bufferutil': false
+  'core-js': false
+  'esbuild': false
+  'sharp': false
+  'utf-8-validate': false
+  'workerd': false
+
 'overrides':
   'vite': 'catalog:'
   'vitest': 'catalog:'
@@ -34,12 +44,3 @@ packageConfigs:
 catalogMode: strict
 minimumReleaseAge: 1440
 minimumReleaseAgeStrict: strict
-allowBuilds:
-  '@clerk/shared': false
-  'browser-tabs-lock': false
-  'bufferutil': false
-  'core-js': false
-  'esbuild': false
-  'sharp': false
-  'utf-8-validate': false
-  'workerd': false
