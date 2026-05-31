@@ -13,7 +13,7 @@ catalog:
   'postgres': 3.4.9
   'semver': 7.8.1
   'typescript': 6.0.3
-  'wrangler': 4.94.0
+  'wrangler': 4.95.0
   'zod': 4.4.3
   'vite': npm:@voidzero-dev/vite-plus-core@0.1.21
   'vitest': npm:@voidzero-dev/vite-plus-test@0.1.21
