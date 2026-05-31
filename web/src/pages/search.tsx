@@ -223,7 +223,6 @@ export const SearchPage = async (c: Context) => {
         <section
           id="search-results"
           class="container flex grow flex-col mb-8"
-          role="region"
           aria-label="Search results"
           aria-live="polite"
         >

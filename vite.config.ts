@@ -232,6 +232,7 @@ export default defineConfig({
         },
         rules: {
           'react/react-in-jsx-scope': 'off',
+          'jsx-a11y/prefer-tag-over-role': 'off',
         },
       },
     ],
