@@ -1,4 +1,7 @@
 const MAX_MANIFEST_SIZE = 256 * 1024; // 256 KB
+const MAX_PACKAGE_SIZE = 128 * 1024 * 1024; // 128 MB
+
+export const MAX_UPLOAD_SIZE = 4 + MAX_MANIFEST_SIZE + MAX_PACKAGE_SIZE; // 4 bytes for manifest length prefix + manifest + tarball = 128.25 MB
 
 /**
  * Reads a package upload stream using Length-Prefixed Framing.
