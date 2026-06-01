@@ -22,50 +22,48 @@ export class Publish extends DurableObject {
     return this._db;
   }
 
-  async publish(request: Request, manifest: Package, data: { userId: string; packageId: string }) {
-    return this.ctx.blockConcurrencyWhile(async () => {
-      const body = request.body;
-      if (!body) {
-        throw new Error('missing request body');
-      }
+  async publish(
+    manifest: Package,
+    tarballStream: ReadableStream,
+    opts: { userId: string; packageId: string },
+  ) {
+    const s3Key = `${manifest.visibility}/${manifest.name}/${manifest.version}.tar.zst`;
 
-      const s3Key = `${manifest.visibility}/${manifest.name}/${manifest.version}.tar.zst`;
+    // === Upload the tarball to R2 ===
 
-      // === Upload the tarball to R2 ===
+    const fls = new FixedLengthStream(manifest.dist.packedSize);
+    try {
+      await Promise.all([
+        tarballStream.pipeTo(fls.writable),
+        this.env.tarball.put(s3Key, fls.readable, {
+          sha256: Buffer.from(manifest.dist.digest.slice(7)), // Remove "sha256:" prefix
+        }),
+      ]);
+    } catch (err) {
+      await this.env.tarball.delete(s3Key);
+      throw err;
+    }
 
-      const fls = new FixedLengthStream(manifest.dist.packedSize);
-      try {
-        await Promise.all([
-          body.pipeTo(fls.writable),
-          this.env.tarball.put(s3Key, fls.readable, {
-            sha256: Buffer.from(manifest.dist.digest.slice(7)), // Remove "sha256:" prefix
-          }),
-        ]);
-      } catch (err) {
-        await this.env.tarball.delete(s3Key);
-        throw err;
-      }
+    // === Sign the manifest ===
 
-      // === Sign the manifest ===
+    try {
+      // @ts-expect-error -- adding signatures to manifest
+      manifest.dist.signatures = [
+        {
+          sig: await this.sign(`${manifest.name}:${manifest.version}:${manifest.dist.digest}`),
+          keyid: '',
+        },
+      ];
+    } catch (err) {
+      await this.env.tarball.delete(s3Key);
+      throw err;
+    }
 
-      try {
-        // @ts-expect-error -- adding signatures to manifest
-        manifest.dist.signatures = [
-          {
-            sig: await this.sign(`${manifest.name}:${manifest.version}:${manifest.dist.digest}`),
-            keyid: '',
-          },
-        ];
-      } catch (err) {
-        await this.env.tarball.delete(s3Key);
-        throw err;
-      }
+    // === Commit to DB ===
 
-      // === Commit to DB ===
-
-      try {
-        await this.db.begin(async (sql) => {
-          await sql`
+    try {
+      await this.db.begin(async (sql) => {
+        await sql`
             insert into
               "package_version" (
                 "description",
@@ -94,35 +92,36 @@ export class Publish extends DurableObject {
                 ${manifest.team ?? null},
                 ${sql.json(manifest.dependencies ?? null)},
                 ${sql.json(manifest.devDependencies ?? null)},
-                ${data.userId},
+                ${opts.userId},
                 ${sql.json(manifest.dist)},
                 ${manifest._wpm},
                 ${false},
-                ${data.packageId}
+                ${opts.packageId}
               )
           `;
 
-          if (manifest.tag === '') {
-            manifest.tag = 'latest';
-          }
+        if (manifest.tag === '') {
+          manifest.tag = 'latest';
+        }
 
-          if (manifest.tag !== 'untagged') {
-            await sql`
+        if (manifest.tag !== 'untagged') {
+          await sql`
               insert into
                 "package_dist_tag" ("tag", "package_id", "version")
               values
-                (${manifest.tag}, ${data.packageId}, ${manifest.version})
+                (${manifest.tag}, ${opts.packageId}, ${manifest.version})
               on conflict ("tag", "package_id") do update
               set
                 "version" = excluded."version"
             `;
-          }
-        });
-      } catch (err) {
-        await this.env.tarball.delete(s3Key);
-        throw err;
-      }
-    });
+        }
+      });
+    } catch (err) {
+      await this.env.tarball.delete(s3Key);
+      throw err;
+    }
+
+    return new Response(null, { status: 201 });
   }
 
   async alarm() {}
