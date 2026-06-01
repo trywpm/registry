@@ -52,6 +52,20 @@
       "localConnectionString": "postgresql://wpm:wpm@localhost:5432/wpm"
     }
   ],
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "publish",
+        "class_name": "Publish"
+      }
+    ]
+  },
+  "migrations": [
+    {
+      "tag": "v1",
+      "new_sqlite_classes": ["Publish"]
+    }
+  ],
   "routes": [
     {
       "pattern": "registry.wpm.so",
