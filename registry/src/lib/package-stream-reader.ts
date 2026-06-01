@@ -63,9 +63,8 @@ export class PackageStreamReader {
       }
 
       const manifestBytes = await this.#readExact(manifestLength);
-      const manifest = new TextDecoder().decode(manifestBytes);
-
-      return JSON.parse(manifest);
+      const manifestString = new TextDecoder().decode(manifestBytes);
+      return JSON.parse(manifestString);
     } catch (error) {
       await this.#reader.cancel();
       throw error;
