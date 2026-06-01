@@ -15,8 +15,9 @@ const MAX_MANIFEST_SIZE = 512 * 1024; // 512 KB
  * resting perfectly on the first byte of the tarball to be piped to storage.
  */
 export class PackageStreamReader {
-  #stream;
-  #reader;
+  #stream: ReadableStream;
+  #reader: ReadableStreamBYOBReader;
+  #manifestRead = false;
 
   constructor(requestBody: ReadableStream) {
     this.#stream = requestBody;
@@ -29,7 +30,6 @@ export class PackageStreamReader {
 
     while (offset < length) {
       const view = new Uint8Array(buffer, offset, length - offset);
-
       const { done, value } = await this.#reader.read(view);
 
       if (value) {
@@ -41,7 +41,7 @@ export class PackageStreamReader {
         if (offset < length) {
           throw new Error('Network stream ended abruptly before data could be fully read.');
         }
-        break; // We have exactly what we need
+        break;
       }
     }
 
@@ -49,6 +49,10 @@ export class PackageStreamReader {
   }
 
   async getManifest() {
+    if (this.#manifestRead) {
+      throw new Error('Manifest has already been read.');
+    }
+
     try {
       const lengthBytes = await this.#readExact(4);
       const dataView = new DataView(
@@ -58,20 +62,32 @@ export class PackageStreamReader {
       );
 
       const manifestLength = dataView.getUint32(0, false); // Big Endian
-      if (manifestLength > MAX_MANIFEST_SIZE) {
-        throw new Error(`Manifest size (${manifestLength} bytes) exceeds the 512KB limit.`);
+      if (manifestLength === 0 || manifestLength > MAX_MANIFEST_SIZE) {
+        throw new Error(`Invalid manifest size: ${manifestLength} bytes.`);
       }
 
       const manifestBytes = await this.#readExact(manifestLength);
-      const manifestString = new TextDecoder().decode(manifestBytes);
+      const manifestString = new TextDecoder('utf-8', { fatal: true }).decode(manifestBytes);
+
+      this.#manifestRead = true;
+
       return JSON.parse(manifestString);
     } catch (error) {
-      await this.#reader.cancel();
+      try {
+        await this.#reader.cancel();
+      } catch {
+        // Ignore cancellation errors.
+      }
+
       throw error;
     }
   }
 
   getTarballStream() {
+    if (!this.#manifestRead) {
+      throw new Error('You must call getManifest() before getting the tarball stream.');
+    }
+
     this.#reader.releaseLock();
     return this.#stream;
   }
