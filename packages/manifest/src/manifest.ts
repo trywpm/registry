@@ -247,7 +247,7 @@ const DependenciesSchema = z
 const ReadmeField = z
   .string()
   .trim()
-  .max(50 * 1024, 'readme must be at most 50KB')
+  .max(100 * 1024, 'readme must be at most 100KB')
   .transform((val) =>
     val.replace(WEIRD_LINE_BREAKS_REGEX, ' ').replace(BAD_CHARS_REGEX, '').trim(),
   );
