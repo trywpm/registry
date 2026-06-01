@@ -7,7 +7,9 @@ import { Registry } from '@wpm/db';
 import { Presigner } from '@wpm/storage';
 import { IPCidrMatcher } from '@wpm/net';
 import { getAuthTokenHash, parseBearerToken } from '@wpm/auth';
-import { isValidPackageName, isValidSemver } from '@wpm/manifest';
+import { isValidPackageName, isValidSemver, PackageSchema } from '@wpm/manifest';
+
+import { MAX_UPLOAD_SIZE, PackageStreamReader } from '@/lib/package-stream-reader';
 
 const app = new Hono<{
   Bindings: Cloudflare.Env;
@@ -99,6 +101,66 @@ app.use('*', async (c, next) => {
 
 app.get('/', (c) => c.json({ name: 'wpm registry', version: '0.1.0' }));
 
+app.put('/:package/:version', async (c) => {
+  if (!c.req.raw.body) {
+    return c.json({ error: 'missing request body' }, 400);
+  }
+
+  const { package: name, version } = c.req.param();
+  if (!isValidPackageName(name)) {
+    return c.json({ error: 'invalid package name' }, 400);
+  }
+
+  if (!isValidSemver(version)) {
+    return c.json({ error: 'invalid semver version' }, 400);
+  }
+
+  const contentLengthHeader = c.req.header('Content-Length');
+  if (!contentLengthHeader) {
+    return c.json({ error: 'missing content length header' }, 411);
+  }
+
+  const contentLength = parseInt(contentLengthHeader, 10);
+  if (isNaN(contentLength) || contentLength <= 0) {
+    return c.json({ error: 'invalid content length header' }, 400);
+  }
+
+  if (contentLength > MAX_UPLOAD_SIZE) {
+    return c.json({ error: 'payload too large' }, 413);
+  }
+
+  const reader = new PackageStreamReader(c.req.raw.body);
+
+  let manifest;
+  try {
+    manifest = await reader.getManifest();
+  } catch {
+    return c.json({ error: 'bad request' }, 400);
+  }
+
+  const parsedManifest = await PackageSchema.safeParseAsync(manifest);
+  if (!parsedManifest.success) {
+    const firstIssue = parsedManifest.error.issues[0];
+    return c.json({ error: firstIssue.message }, 400);
+  }
+
+  if (parsedManifest.data.name !== name || parsedManifest.data.version !== version) {
+    return c.json({ error: 'bad request' }, 400);
+  }
+
+  try {
+    const stub = c.env.publish.getByName(`${name}@${version}`);
+    const tarballStream = reader.getTarballStream();
+
+    return stub.publish(parsedManifest.data, tarballStream, {
+      userId: '',
+      packageId: '',
+    });
+  } catch {
+    return c.json({ error: 'internal server error' }, 500);
+  }
+});
+
 app.get('/-/whoami', (c) => {
   const user = c.get('user');
   if (!user) {
@@ -178,3 +240,6 @@ app.get('/:package/:filename', async (c) => {
 export default {
   fetch: app.fetch,
 };
+
+// Durable Objects.
+export { Publish } from '@/publish';
