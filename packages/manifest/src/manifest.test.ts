@@ -965,11 +965,11 @@ describe('PackageSchema (field-level)', () => {
     expectValid('empty string', (p) => {
       p.readme = '';
     });
-    expectValid('exactly 50KB', (p) => {
-      p.readme = 'a'.repeat(50 * 1024);
+    expectValid('exactly 100KB', (p) => {
+      p.readme = 'a'.repeat(100 * 1024);
     });
-    expectInvalid('over 50KB', (p) => {
-      p.readme = 'a'.repeat(50 * 1024 + 1);
+    expectInvalid('over 100KB', (p) => {
+      p.readme = 'a'.repeat(100 * 1024 + 1);
     });
 
     it('strips line/paragraph separators in transform', () => {
