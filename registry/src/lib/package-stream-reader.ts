@@ -1,4 +1,4 @@
-const MAX_MANIFEST_SIZE = 512 * 1024; // 512 KB
+const MAX_MANIFEST_SIZE = 256 * 1024; // 256 KB
 
 /**
  * Reads a package upload stream using Length-Prefixed Framing.
