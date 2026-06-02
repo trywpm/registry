@@ -12,6 +12,10 @@
     "port": 3001,
     "inspector_port": 9230
   },
+  "vars": {
+    "SIG_KEY_ID": "bfee8dd8-0f5a-472e-b309-7bd0d2f38622",
+    "SIG_KEY_SPKI_FINGERPRINT": "sha256:9/oofuyiEytGPeRG82jpV3ki7DVwG4AheqeqoFmTz5k"
+  },
   "observability": {
     "enabled": true,
     "traces": {
