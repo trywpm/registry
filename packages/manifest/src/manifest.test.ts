@@ -9,13 +9,14 @@ import {
   SemverSchema,
   DistTagSchema,
   PackageSchema,
+  formatZodError,
   PackageNameSchema,
   DANGEROUS_CHARS_REGEX,
   SemverConstraintSchema,
   DependencyVersionSchema,
 } from './manifest';
 
-import type { Package } from './manifest';
+import type { PackageInput } from './manifest';
 
 // =====================================================================
 // Test helpers
@@ -26,7 +27,7 @@ const accepts = (schema: ZodType, value: unknown): boolean => schema.safeParse(v
 const validHash = Buffer.alloc(32).toString('base64');
 const validDigest = `sha256:${validHash}`;
 
-const buildValidPackage = (): Package => ({
+const buildValidPackage = (): PackageInput => ({
   name: 'my-valid-package',
   description: 'A valid description for the package.',
   type: 'plugin',
@@ -492,7 +493,7 @@ describe('DigestSchema', () => {
 // =====================================================================
 
 describe('PackageSchema (field-level)', () => {
-  type Mutator = (p: Package) => void;
+  type Mutator = (p: PackageInput) => void;
 
   const expectValid = (label: string, mutate: Mutator) => {
     it(`accepts: ${label}`, () => {
@@ -923,6 +924,36 @@ describe('PackageSchema (field-level)', () => {
     });
   });
 
+  describe('signatures', () => {
+    it('accepts omitted signatures and transforms to an empty array', () => {
+      const p = buildValidPackage();
+      const parsed = PackageSchema.parse(p);
+      expect(parsed.dist.signatures).toEqual([]);
+    });
+
+    it('accepts null signatures and transforms to an empty array', () => {
+      const p = buildValidPackage();
+      p.dist.signatures = null;
+      const parsed = PackageSchema.parse(p);
+      expect(parsed.dist.signatures).toEqual([]);
+    });
+
+    expectInvalid('rejects array input (prevents client spoofing)', (p) => {
+      // @ts-expect-error -- verifying malicious client payload
+      p.dist.signatures = [{ keyid: 'prodSPKI', sig: 'fake-signature' }];
+    });
+
+    expectInvalid('rejects empty array input', (p) => {
+      // @ts-expect-error -- verifying malicious client payload
+      p.dist.signatures = [];
+    });
+
+    expectInvalid('rejects string input', (p) => {
+      // @ts-expect-error -- verifying malicious client payload
+      p.dist.signatures = 'invalid';
+    });
+  });
+
   describe('tag', () => {
     expectInvalid('empty', (p) => {
       p.tag = '';
@@ -1279,5 +1310,72 @@ describe('mutation-testing gaps', () => {
 
       expect(PackageSchema.safeParse(p).success).toBe(false);
     });
+  });
+});
+
+// =====================================================================
+// formatZodError formatting
+// =====================================================================
+
+describe('formatZodError', () => {
+  it('formats missing required fields', () => {
+    const p = buildValidPackage();
+    // @ts-expect-error -- forcing missing field
+    delete p.version;
+    const result = PackageSchema.safeParse(p);
+
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(formatZodError(result.error)).toBe(
+        "invalid field 'version': invalid input: expected string, received undefined",
+      );
+    }
+  });
+
+  it('formats invalid types in nested objects', () => {
+    const p = buildValidPackage();
+    // @ts-expect-error -- forcing invalid type
+    p.dist.packedSize = '1024';
+    const result = PackageSchema.safeParse(p);
+
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(formatZodError(result.error)).toBe(
+        "invalid field 'dist.packedSize': invalid input: expected number, received string",
+      );
+    }
+  });
+
+  it('formats strict object unrecognized keys nicely at nested levels', () => {
+    const p = buildValidPackage();
+    // @ts-expect-error -- forcing unrecognized key
+    p.dist.sneaky = 'value';
+    const result = PackageSchema.safeParse(p);
+
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(formatZodError(result.error)).toBe("unrecognized field(s) in 'dist': sneaky");
+    }
+  });
+
+  it('formats strict object unrecognized keys nicely at root level', () => {
+    const p = { ...buildValidPackage(), maliciousField: true };
+    const result = PackageSchema.safeParse(p);
+
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(formatZodError(result.error)).toBe('unrecognized field(s): maliciousField');
+    }
+  });
+
+  it('does not prepend path if message already contains the field name (custom errors)', () => {
+    const p = buildValidPackage();
+    p.name = 'ab';
+    const result = PackageSchema.safeParse(p);
+
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(formatZodError(result.error)).toBe('package name must be at least 3 characters');
+    }
   });
 });
