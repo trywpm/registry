@@ -12,14 +12,12 @@ const CHARSET_ARRAY = Array.from({ length: CHARSET.length }, (_, i) => CHARSET[i
 
 const PREFIX = 'wpm_';
 const MAX_LEN = 128;
-const PREFIX_LEN = PREFIX.length;
-const TOKEN_RANDOM_LEN = 60;
-
-const TOKEN_TOTAL_LEN = PREFIX_LEN + TOKEN_RANDOM_LEN; // 64
+const PAT_LENGTH = 64;
+const TOKEN_RANDOM_LENGTH = 60;
 
 const BASE64URL_REGEX = /^[A-Za-z0-9_-]+$/;
 const TOKEN_BODY_REGEX = /^[A-Za-z0-9_]+$/;
-const FULL_WPM_TOKEN_REGEX = /^wpm_[A-Za-z0-9_]{60}$/;
+const FULL_WPM_TOKEN_REGEX = /^wpm_[A-Za-z0-9_]{64}$/;
 
 const referenceHash = (token: string, key: string): string =>
   createHmac('sha256', key).update(token).digest('base64url');
@@ -79,7 +77,7 @@ describe('randString', () => {
       [1, 1],
       [16, 16],
       [32, 32],
-      [TOKEN_RANDOM_LEN, TOKEN_RANDOM_LEN],
+      [TOKEN_RANDOM_LENGTH, TOKEN_RANDOM_LENGTH],
       [64, 64],
       [128, 128],
     ])('returns string of requested length (%i → %i)', (input, expected) => {
@@ -87,9 +85,9 @@ describe('randString', () => {
     });
 
     it.each([
-      [0, TOKEN_RANDOM_LEN],
-      [-1, TOKEN_RANDOM_LEN],
-      [-100, TOKEN_RANDOM_LEN],
+      [0, TOKEN_RANDOM_LENGTH],
+      [-1, TOKEN_RANDOM_LENGTH],
+      [-100, TOKEN_RANDOM_LENGTH],
     ])('clamps non-positive lengths (%i) to default (%i)', (input, expected) => {
       expect(randString(input)).toHaveLength(expected);
     });
@@ -117,7 +115,7 @@ describe('randString', () => {
       const iterations = 10_000;
       const set = new Set<string>();
       for (let i = 0; i < iterations; i++) {
-        set.add(randString(TOKEN_RANDOM_LEN));
+        set.add(randString(TOKEN_RANDOM_LENGTH));
       }
       expect(set.size).toBe(iterations);
     });
@@ -150,16 +148,16 @@ describe('randString', () => {
 });
 
 describe('generateWpmAuthToken', () => {
-  it('returns a token of total length 64 (4 prefix + 60 random)', () => {
-    expect(generateWpmAuthToken()).toHaveLength(TOKEN_TOTAL_LEN);
+  it('returns a token of total length 68 (4 prefix + 64 random)', () => {
+    expect(generateWpmAuthToken()).toHaveLength(PREFIX.length + PAT_LENGTH);
   });
 
   it('always begins with the "wpm_" prefix', () => {
     expect(generateWpmAuthToken().startsWith(PREFIX)).toBe(true);
   });
 
-  it('random portion is exactly 60 chars from the allowed charset', () => {
-    expect(generateWpmAuthToken().slice(PREFIX_LEN)).toMatch(/^[A-Za-z0-9_]{60}$/);
+  it('random portion is exactly 64 chars from the allowed charset', () => {
+    expect(generateWpmAuthToken().slice(PREFIX.length)).toMatch(/^[A-Za-z0-9_]{64}$/);
   });
 
   it.each(Array.from({ length: 50 }, (_, i) => i))(
@@ -358,7 +356,7 @@ describe('Property: matches Node native HMAC', () => {
   it.prop([chaoticInputArb], { numRuns: 300 })(
     'matches native HMAC against chaotic inputs',
     async ({ key, token }) => {
-      const expectedInput = token.startsWith(PREFIX) ? token.slice(PREFIX_LEN) : token;
+      const expectedInput = token.startsWith(PREFIX) ? token.slice(PREFIX.length) : token;
       expect(await getAuthTokenHash(token, key)).toBe(referenceHash(expectedInput, key));
     },
   );
@@ -375,7 +373,7 @@ describe('Property: matches Node native HMAC', () => {
     ['unicode mix', 'naïve_café_日本語_🚀'],
   ])('handles boundary input — %s', async (_label, edgeToken) => {
     const key = 'secure_key';
-    const expectedInput = edgeToken.startsWith(PREFIX) ? edgeToken.slice(PREFIX_LEN) : edgeToken;
+    const expectedInput = edgeToken.startsWith(PREFIX) ? edgeToken.slice(PREFIX.length) : edgeToken;
     expect(await getAuthTokenHash(edgeToken, key)).toBe(referenceHash(expectedInput, key));
   });
 });

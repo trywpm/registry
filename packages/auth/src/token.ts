@@ -2,7 +2,8 @@ import { Buffer } from 'node:buffer';
 
 const PREFIX = 'wpm_';
 const MAX_LEN = 128;
-const TOKEN_RANDOM_LEN = 60;
+const PAT_LENGTH = 64;
+const TOKEN_RANDOM_LENGTH = 60;
 
 const CHARSET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_';
 
@@ -21,7 +22,7 @@ const latin1Decoder = new TextDecoder('latin1');
 
 export function randString(length: number): string {
   if (length <= 0) {
-    length = TOKEN_RANDOM_LEN;
+    length = TOKEN_RANDOM_LENGTH;
   }
 
   if (length > MAX_LEN) {
@@ -49,7 +50,7 @@ export function randString(length: number): string {
 }
 
 export function generateWpmAuthToken(): string {
-  return PREFIX + randString(TOKEN_RANDOM_LEN);
+  return PREFIX + randString(PAT_LENGTH);
 }
 
 let cachedKey: Promise<CryptoKey> | null = null;
@@ -91,10 +92,10 @@ export async function getAuthTokenHash(token: string, hmacKey: string): Promise<
 // ---------------------------------------
 
 // Parse wpm token.
-const TOKEN_REGEX = /^wpm_\w{60}$/;
+const TOKEN_REGEX = /^wpm_\w{64}$/;
 
-// "Bearer " + "wpm_" + 60 chars = 71
-const HEADER_LEN = 7 + PREFIX.length + 60;
+// "Bearer " + "wpm_" + 64 chars = 7 + 4 + 64 = 75
+const HEADER_LEN = 7 + PREFIX.length + PAT_LENGTH;
 
 export function parseBearerToken(authHeader: string): string | null {
   if (authHeader.length !== HEADER_LEN) {
