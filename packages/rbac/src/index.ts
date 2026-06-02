@@ -37,5 +37,5 @@ export function canUser(role: Role, action: Action, resource: Resource): boolean
 }
 
 export function canToken(scopes: readonly string[], action: Action, resource: Resource): boolean {
-  return scopes.includes(`${resource}:${action}`);
+  return Array.isArray(scopes) && scopes.includes(`${resource}:${action}`);
 }
