@@ -165,7 +165,9 @@ app.put('/:package/:version', async (c) => {
     return c.json({ error: 'bad request' }, 400);
   }
 
-  const stub = c.env.publish.getByName(`${name}@${version}`);
+  // create DO instance by package name so that we can
+  // limit concurrent publishes to the same package.
+  const stub = c.env.publish.getByName(name);
   const logger = c.get('logger').child({ package: name, version });
 
   return stub.publish(parsedManifest.data, reader.getTarballStream(), {
