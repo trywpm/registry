@@ -14,6 +14,7 @@
     { "path": "../packages/kms" },
     { "path": "../packages/auth" },
     { "path": "../packages/rbac" },
+    { "path": "../packages/logger" },
     { "path": "../packages/storage" },
     { "path": "../packages/manifest" }
   ]

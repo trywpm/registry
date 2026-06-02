@@ -233,6 +233,9 @@ importers:
       '@wpm/kms':
         specifier: workspace:*
         version: link:../packages/kms
+      '@wpm/logger':
+        specifier: workspace:*
+        version: link:../packages/logger
       '@wpm/manifest':
         specifier: workspace:*
         version: link:../packages/manifest
@@ -5209,7 +5212,7 @@ snapshots:
 
   '@types/connect@3.4.38':
     dependencies:
-      '@types/node': 12.20.55
+      '@types/node': 25.9.1
 
   '@types/deep-eql@4.0.2': {}
 
@@ -5237,7 +5240,7 @@ snapshots:
 
   '@types/ws@7.4.7':
     dependencies:
-      '@types/node': 12.20.55
+      '@types/node': 25.9.1
 
   '@types/ws@8.18.1':
     dependencies:
