@@ -1,6 +1,6 @@
 import type { Package } from '@wpm/manifest';
 import type { Role as PackageRole } from '@wpm/rbac';
-import type { PackageStatus, PackageId, UserId } from '@wpm/types';
+import type { PackageStatus, PackageId, UserId, PackageType, PackageVisibility } from '@wpm/types';
 
 import { Base } from './base';
 
@@ -40,6 +40,15 @@ export type PackageAccess = {
 
 export type PackageVersionInput = Omit<Package, 'name' | 'visibility' | 'tag' | 'readme'> & {
   released_by: UserId;
+};
+
+export type GetOrInsertPackageResult = {
+  id: PackageId;
+  role: PackageRole | null;
+  type: PackageType;
+  is_new: boolean;
+  status: PackageStatus;
+  visibility: PackageVisibility;
 };
 
 export class Packages extends Base {
@@ -289,5 +298,84 @@ export class Packages extends Base {
     await this.invalidate([`pkg:idv:${name}`, `pkg:details:${name}`]);
 
     await this.db`DELETE FROM "public"."package" WHERE "name" = ${name}`;
+  }
+
+  async getOrInsert(
+    name: string,
+    type: PackageType,
+    visibility: PackageVisibility,
+    userId: UserId,
+  ): Promise<GetOrInsertPackageResult> {
+    const [row] = await this.db<[GetOrInsertPackageResult?]>`
+      with
+        insert_package as (
+          insert into "package" (
+            "name", "type", "status", "visibility"
+          )
+          values
+            (
+              ${name}, ${type}, 'active', ${visibility}
+            ) on conflict ("name") do nothing
+          returning
+            "id",
+            "status"
+        ),
+        insert_access as (
+          insert into "package_access" (
+            "package_id", "user_id", "role", "added_by"
+          )
+          select
+            "id",
+            ${userId},
+            'admin' :: "package_role",
+            ${userId}
+          from
+            insert_package
+          returning
+            "role",
+            "package_id"
+        )
+      select
+        "role",
+        true AS "is_new",
+        "package_id" AS "id",
+        ${type} :: "package_type" AS "type",
+        'active' :: "package_status" AS "status",
+        ${visibility} :: "package_visibility" AS "visibility"
+      from
+        insert_access
+      union all
+      select
+        p."id",
+        pa."role",
+        false AS "is_new",
+        p."type",
+        p."status",
+        p."visibility"
+      from
+        "package" p
+        left join "package_access" pa on p."id" = pa."package_id"
+        and pa."user_id" = ${userId}
+      where
+        p."name" = ${name}
+        and not exists (
+          select
+            1
+          from
+            insert_package
+        )
+    `;
+
+    if (!row) {
+      // This should never happen. If it does, it indicates a Postgres MVCC snapshot race
+      // condition where two users tried to create the same package at the exact same millisecond.
+      //
+      // This query MUST be executed inside an application-level lock on the package name to
+      // guarantee serial execution. We throw here defensively in case the lock implementation
+      // is buggy, expired early, or the package was manually deleted mid-transaction.
+      throw new Error(`Failed to resolve package state for ${name}.`);
+    }
+
+    return row;
   }
 }
