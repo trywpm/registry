@@ -2,6 +2,8 @@ import { z } from 'zod/v4';
 import { valid, validRange } from 'semver';
 import { PACKAGE_NAME_REGEX, DIST_TAG_REGEX } from '@wpm/types';
 
+export type PackageSignature = { keyid: string; sig: string };
+
 const MAX_DEPENDENCIES = 16;
 const MAX_TOTAL_FILES = 50_000;
 
@@ -230,6 +232,12 @@ const PackageDistSchema = z
         MAX_DECOMPRESSED_SIZE,
         `unpacked size must not exceed ${MAX_DECOMPRESSED_SIZE / (1024 * 1024)}MB`,
       ),
+    signatures: z
+      .null()
+      .optional()
+      .transform((): PackageSignature[] => {
+        return [];
+      }),
   })
   .refine(
     (d) =>
