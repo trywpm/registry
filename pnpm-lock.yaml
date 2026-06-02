@@ -257,6 +257,9 @@ importers:
       '@wpm/storage':
         specifier: workspace:*
         version: link:../packages/storage
+      '@wpm/types':
+        specifier: workspace:*
+        version: link:../packages/types
       hono:
         specifier: 'catalog:'
         version: 4.12.19

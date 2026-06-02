@@ -16,6 +16,7 @@
     "@wpm/net": "workspace:*",
     "@wpm/rbac": "workspace:*",
     "@wpm/storage": "workspace:*",
+    "@wpm/types": "workspace:*",
     "hono": "catalog:",
     "postgres": "catalog:"
   },
