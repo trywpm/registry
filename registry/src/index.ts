@@ -21,10 +21,11 @@ const app = new Hono<{
     repos: Registry;
     user?: UserWithToken;
     logger: Logger;
+    requestId: string;
   };
 }>();
 
-app.use('*', async (c, next) => {
+app.use('*', (c, next) => {
   let dbInstance: Sql | null = null;
 
   const getDb = (): Sql => {
@@ -44,6 +45,7 @@ app.use('*', async (c, next) => {
   c.set('db', getDb);
   c.set('repos', new Registry(getDb, c.env.cache));
   c.set('logger', logger.child({ requestId }));
+  c.set('requestId', requestId);
 
   return next();
 });
@@ -165,14 +167,10 @@ app.put('/:package/:version', async (c) => {
     return c.json({ error: 'bad request' }, 400);
   }
 
-  // create DO instance by package name so that we can
-  // limit concurrent publishes to the same package.
   const stub = c.env.publish.getByName(name);
-  const logger = c.get('logger').child({ package: name, version });
-
   return stub.publish(parsedManifest.data, reader.getTarballStream(), {
     userId: user.userId,
-    logger: logger.child({ component: 'publish-do' }),
+    requestId: c.get('requestId'),
   });
 });
 
