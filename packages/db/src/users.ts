@@ -21,16 +21,16 @@ export class Users extends Base {
       async () => {
         const [row] = await this.db<[UserWithToken?]>`
           SELECT
-            u.id AS userId,
+            u.id AS "userId",
             u.email,
             u.username,
             u.status,
-            t.id AS tokenId,
-            t.scopes as tokenScopes,
-            t.expiry AS tokenExpiry,
-            t.allowed_cidrs AS tokenCidrs
-          FROM "public"."users" u
-          INNER JOIN "public"."token" t ON u.id = t.user_id
+            t.id AS "tokenId",
+            t.scopes AS "tokenScopes",
+            t.expiry AS "tokenExpiry",
+            t.allowed_cidrs AS "tokenCidrs"
+          FROM "users" u
+          INNER JOIN "token" t ON u.id = t.user_id
           WHERE t.token_hash = ${tokenHash}
         `;
 
