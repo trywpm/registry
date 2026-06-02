@@ -236,6 +236,9 @@ importers:
       '@wpm/db':
         specifier: workspace:*
         version: link:../packages/db
+      '@wpm/exception':
+        specifier: workspace:*
+        version: link:../packages/exception
       '@wpm/kms':
         specifier: workspace:*
         version: link:../packages/kms

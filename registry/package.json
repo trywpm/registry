@@ -9,6 +9,7 @@
   "dependencies": {
     "@wpm/auth": "workspace:*",
     "@wpm/db": "workspace:*",
+    "@wpm/exception": "workspace:*",
     "@wpm/kms": "workspace:*",
     "@wpm/logger": "workspace:*",
     "@wpm/manifest": "workspace:*",
