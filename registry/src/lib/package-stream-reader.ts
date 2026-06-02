@@ -1,3 +1,5 @@
+import { UserError } from '@wpm/exception';
+
 const MAX_MANIFEST_SIZE = 256 * 1024; // 256 KB
 const MAX_PACKAGE_SIZE = 128 * 1024 * 1024; // 128 MB
 
@@ -42,7 +44,7 @@ export class PackageStreamReader {
 
       if (done) {
         if (offset < length) {
-          throw new Error('Network stream ended abruptly before data could be fully read.');
+          throw new UserError('unexpected end of stream', 400);
         }
         break;
       }
@@ -53,7 +55,7 @@ export class PackageStreamReader {
 
   async getManifest() {
     if (this.#manifestRead) {
-      throw new Error('Manifest has already been read.');
+      throw new Error('manifest has already been read');
     }
 
     try {
@@ -65,30 +67,46 @@ export class PackageStreamReader {
       );
 
       const manifestLength = dataView.getUint32(0, false); // Big Endian
-      if (manifestLength === 0 || manifestLength > MAX_MANIFEST_SIZE) {
-        throw new Error(`Invalid manifest size: ${manifestLength} bytes.`);
+
+      if (manifestLength === 0) {
+        throw new UserError('manifest size cannot be zero', 400);
+      }
+
+      if (manifestLength > MAX_MANIFEST_SIZE) {
+        throw new UserError('manifest exceeds size limit of 256KB', 413); // 413 Payload Too Large
       }
 
       const manifestBytes = await this.#readExact(manifestLength);
-      const manifestString = new TextDecoder('utf-8', { fatal: true }).decode(manifestBytes);
+
+      let manifestString: string;
+      try {
+        manifestString = new TextDecoder('utf-8', { fatal: true }).decode(manifestBytes);
+      } catch {
+        throw new UserError('manifest is not valid utf-8', 400);
+      }
+
+      let parsedManifest: unknown;
+      try {
+        parsedManifest = JSON.parse(manifestString);
+      } catch {
+        throw new UserError('manifest is not valid json', 400);
+      }
 
       this.#manifestRead = true;
-
-      return JSON.parse(manifestString);
+      return parsedManifest;
     } catch (error) {
       try {
         await this.#reader.cancel();
       } catch {
         // Ignore cancellation errors.
       }
-
       throw error;
     }
   }
 
   getTarballStream() {
     if (!this.#manifestRead) {
-      throw new Error('You must call getManifest() before getting the tarball stream.');
+      throw new Error('you must call getManifest() before getting the tarball stream');
     }
 
     this.#reader.releaseLock();
