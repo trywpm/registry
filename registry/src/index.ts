@@ -4,6 +4,7 @@ import type { UserWithToken } from '@wpm/db';
 import { Hono } from 'hono';
 import postgres from 'postgres';
 import { Registry } from '@wpm/db';
+import { Logger } from '@wpm/logger';
 import { Presigner } from '@wpm/storage';
 import { IPCidrMatcher } from '@wpm/net';
 import { getAuthTokenHash, parseBearerToken } from '@wpm/auth';
@@ -17,6 +18,7 @@ const app = new Hono<{
     db: () => Sql;
     repos: Registry;
     user?: UserWithToken;
+    logger: Logger;
   };
 }>();
 
@@ -34,8 +36,12 @@ app.use('*', async (c, next) => {
     return dbInstance;
   };
 
+  const logger = new Logger(c.env.APP_ENV === 'development' ? 10 : 30, '');
+  const requestId = c.req.header('Cf-Ray') ?? crypto.randomUUID();
+
   c.set('db', getDb);
   c.set('repos', new Registry(getDb, c.env.cache));
+  c.set('logger', logger.child({ requestId }));
 
   return next();
 });
