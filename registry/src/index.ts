@@ -214,11 +214,21 @@ app.get('/:package/:filename', async (c) => {
 
   const user = c.get('user');
   if (!user) {
-    return c.json({ error: 'unauthorized' }, 401);
+    return c.json({ error: 'requires authentication' }, 401);
+  }
+
+  if (!user.userId) {
+    throw new Error('authenticated user is missing userId');
+  }
+  if (!user.tokenId) {
+    throw new Error('authenticated user is missing tokenId');
+  }
+
+  if (!canToken(user.tokenScopes, 'view', 'package')) {
+    return c.json({ error: 'missing token scope to access package' }, 403);
   }
 
   const repos = c.get('repos');
-
   const access = await repos.packages.getAccess(name, user.userId);
   if (!access || !access.role) {
     return c.json({ error: 'not found' }, 404);
@@ -243,7 +253,7 @@ app.get('/:package/:filename', async (c) => {
     //
     // In either case, we generate a signed URL and let the Cloudflare
     // layer handle the final response flow.
-    key: `private/${name}/${version}.tar.zst`,
+    key: `${access.visibility}/${name}/${version}.tar.zst`,
     expiresIn: 3600,
   });
 
