@@ -221,7 +221,7 @@ export class Publish extends DurableObject {
     manifest.dist.signatures = [
       {
         sig: await this.sign(`${manifest.name}:${manifest.version}:${manifest.dist.digest}`),
-        keyid: '',
+        keyid: this.env.SIG_KEY_SPKI_FINGERPRINT, // SPKI fingerprint used to identify the public key for signature verification.
       },
     ];
   }
@@ -236,13 +236,13 @@ export class Publish extends DurableObject {
     });
 
     const res = await this.kms.sign({
-      KeyId: this.env.PAT_HMAC_KEY,
+      KeyId: this.env.SIG_KEY_ID,
       Message: Buffer.from(message),
       MessageType: 'RAW',
       SigningAlgorithm: 'ECDSA_SHA_256',
     });
 
-    if (res.KeyId !== this.env.PAT_HMAC_KEY) {
+    if (res.KeyId !== this.env.SIG_KEY_ID) {
       throw new Error('Invalid key ID');
     }
 
