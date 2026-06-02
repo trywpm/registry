@@ -243,7 +243,7 @@ app.get('/:package/:filename', async (c) => {
     //
     // In either case, we generate a signed URL and let the Cloudflare
     // layer handle the final response flow.
-    key: `private-packages/${name}/${version}.tar.zst`,
+    key: `private/${name}/${version}.tar.zst`,
     expiresIn: 3600,
   });
 
