@@ -1,4 +1,4 @@
-import type { Role, Action, Resource } from '.';
+import type { Role, Action, Resource, Permission } from '.';
 
 import { canUser, canToken } from '.';
 import { describe, it, expect } from 'vitest';
@@ -90,30 +90,146 @@ describe('canUser (RBAC)', () => {
 });
 
 describe('canToken (Scope Based Access)', () => {
-  const mockScopes = ['team:view', 'package:publish', 'package:view'];
+  const ALL_RESOURCES: Resource[] = ['team', 'package'];
+  const ALL_ACTIONS: Action[] = [
+    'view',
+    'edit',
+    'delete',
+    'publish',
+    'deprecate',
+    'manage_members',
+  ];
 
-  it('returns true when exact scope is present', () => {
-    expect(canToken(mockScopes, 'view', 'team')).toBe(true);
-    expect(canToken(mockScopes, 'publish', 'package')).toBe(true);
+  describe('Exact scope present', () => {
+    const ALL_PERMISSIONS = ALL_RESOURCES.flatMap((resource) =>
+      ALL_ACTIONS.map((action) => [resource, action] as [Resource, Action]),
+    );
+
+    it.each(ALL_PERMISSIONS)(
+      'grants %s:%s when that exact scope is present',
+      (resource, action) => {
+        expect(canToken([`${resource}:${action}`], action, resource)).toBe(true);
+      },
+    );
+
+    it('grants a permission present among many scopes', () => {
+      const scopes: Permission[] = ['team:view', 'package:publish', 'package:view'];
+      expect(canToken(scopes, 'publish', 'package')).toBe(true);
+      expect(canToken(scopes, 'view', 'team')).toBe(true);
+    });
   });
 
-  it('returns false when scope is missing entirely', () => {
-    expect(canToken(mockScopes, 'delete', 'package')).toBe(false);
-    expect(canToken(mockScopes, 'manage_members', 'team')).toBe(false);
+  describe('Scope absent', () => {
+    const scopes: Permission[] = ['team:view', 'package:publish', 'package:view'];
+
+    it('denies when the permission is not in scopes', () => {
+      expect(canToken(scopes, 'delete', 'package')).toBe(false);
+      expect(canToken(scopes, 'manage_members', 'team')).toBe(false);
+    });
+
+    it('denies when resource matches but action differs', () => {
+      expect(canToken(scopes, 'edit', 'team')).toBe(false);
+    });
+
+    it('denies for empty scopes', () => {
+      expect(canToken([], 'view', 'team')).toBe(false);
+    });
   });
 
-  it('returns false when resource matches but action differs', () => {
-    expect(canToken(mockScopes, 'edit', 'team')).toBe(false);
+  describe('Exhaustive grant/deny matrix', () => {
+    const granted: Permission[] = ['package:publish', 'package:view', 'team:view'];
+
+    const allPairs = ALL_RESOURCES.flatMap((resource) =>
+      ALL_ACTIONS.map((action) => [resource, action] as [Resource, Action]),
+    );
+
+    it.each(allPairs)('canToken(%s:%s) equals exact membership', (resource, action) => {
+      const expected = granted.includes(`${resource}:${action}`);
+      expect(canToken(granted, action, resource)).toBe(expected);
+    });
   });
 
-  it('returns false for empty token scopes', () => {
-    expect(canToken([], 'view', 'team')).toBe(false);
+  describe('No substring / false-positive matches', () => {
+    it('denies a longer ARRAY scope containing the target as a substring', () => {
+      expect(canToken(['package:view_all'], 'view', 'package')).toBe(false);
+      expect(canToken(['package:publish_all'], 'publish', 'package')).toBe(false);
+      expect(canToken(['myteam:view'], 'view', 'team')).toBe(false);
+    });
+
+    it('denies when scopes is a STRING containing the target as a substring', () => {
+      // @ts-expect-error - scopes typed as array; testing non-array runtime input
+      expect(canToken('package:publish_all', 'publish', 'package')).toBe(false);
+    });
+
+    it('denies even an exact-match STRING (the contract is array-only)', () => {
+      // @ts-expect-error - non-array runtime input
+      expect(canToken('package:publish', 'publish', 'package')).toBe(false);
+    });
   });
 
-  it('handles exact substring mismatches correctly (no false positives)', () => {
-    const deceptiveScopes = ['package:view_all', 'myteam:view'];
-    expect(canToken(deceptiveScopes, 'view', 'package')).toBe(false);
-    expect(canToken(deceptiveScopes, 'view', 'team')).toBe(false);
+  describe('Runtime Boundary Safety (Bypassing TypeScript)', () => {
+    it.each([null, undefined, 123, {}, [], true, NaN])(
+      'returns false (never throws) for non-array scopes: %s',
+      (invalidScopes) => {
+        // @ts-expect-error - intentionally passing non-array runtime input
+        expect(canToken(invalidScopes, 'view', 'team')).toBe(false);
+      },
+    );
+
+    it('returns false for an empty-string scopes', () => {
+      // @ts-expect-error - non-array runtime input
+      expect(canToken('', 'view', 'team')).toBe(false);
+    });
+  });
+
+  describe('Strictness: Prototype & Built-in Object Properties', () => {
+    const scopes: Permission[] = ['team:view', 'package:publish'];
+
+    it.each(['__proto__', 'constructor', 'hasOwnProperty', 'isPrototypeOf', 'toString', 'valueOf'])(
+      'denies when action is a built-in object property: "%s"',
+      (maliciousAction) => {
+        // @ts-expect-error - bypassing TS to test malicious runtime payloads
+        expect(canToken(scopes, maliciousAction, 'team')).toBe(false);
+      },
+    );
+
+    it.each(['__proto__', 'constructor', 'prototype'])(
+      'denies when resource is a built-in object property: "%s"',
+      (maliciousResource) => {
+        // @ts-expect-error - bypassing TS to test malicious runtime payloads
+        expect(canToken(scopes, 'view', maliciousResource)).toBe(false);
+      },
+    );
+  });
+
+  describe('Strictness: Case Sensitivity', () => {
+    it('denies improperly-cased stored scopes', () => {
+      expect(canToken(['Package:Publish'], 'publish', 'package')).toBe(false);
+      expect(canToken(['PACKAGE:PUBLISH'], 'publish', 'package')).toBe(false);
+    });
+
+    it('denies improperly-cased action/resource arguments', () => {
+      // @ts-expect-error - bypassing TS to test case sensitivity at runtime
+      expect(canToken(['package:publish'], 'Publish', 'package')).toBe(false);
+      // @ts-expect-error - bypassing TS to test case sensitivity at runtime
+      expect(canToken(['package:publish'], 'publish', 'Package')).toBe(false);
+    });
+  });
+
+  describe('Strictness: Whitespace', () => {
+    it.each(['package:publish ', ' package:publish', 'package: publish', 'package:publish\n'])(
+      'denies stored scope with stray whitespace: "%s"',
+      (scope) => {
+        expect(canToken([scope], 'publish', 'package')).toBe(false);
+      },
+    );
+  });
+
+  describe('Strictness: resource:action ordering', () => {
+    it('denies reversed action:resource ordering', () => {
+      expect(canToken(['view:team'], 'view', 'team')).toBe(false);
+      expect(canToken(['publish:package'], 'publish', 'package')).toBe(false);
+    });
   });
 });
 
