@@ -4,16 +4,14 @@ set -euo pipefail
 DB_CONTAINER=db
 LOCALSTACK_CONTAINER=localstack
 
+echo "Starting services and waiting for them to be healthy..."
+docker compose up -d --wait
+
 maybe_create_resource() {
 	local container=$1
 	local check_cmd=$2
 	local create_cmd=$3
 	local resource_name=$4
-
-	echo "waiting for $container to be healthy..."
-	while ! docker compose exec "$container" bash -c "echo 'select 1' | $check_cmd" &>/dev/null; do
-		sleep 1
-	done
 
 	if ! docker compose exec "$container" bash -c "$check_cmd" &>/dev/null; then
 		echo "creating $resource_name..."
@@ -34,12 +32,18 @@ maybe_create_resource "$LOCALSTACK_CONTAINER" \
 	"wpm-registry bucket"
 
 maybe_create_resource "$LOCALSTACK_CONTAINER" \
-	"awslocal kms list-keys | grep -q bfee8dd8-0f5a-472e-b309-7bd0d2f38622" \
-	"awslocal kms create-key --key-spec ECC_NIST_P256 --key-usage SIGN_VERIFY --tags '[{\"TagKey\":\"_custom_id_\",\"TagValue\":\"bfee8dd8-0f5a-472e-b309-7bd0d2f38622\"}]'" \
-	"kms key bfee8dd8-0f5a-472e-b309-7bd0d2f38622"
+	"awslocal kms list-keys | grep -q 9355ce66-56af-4c7e-abdd-7e3e0168220a" \
+	"awslocal kms create-key \
+		--key-spec ECC_NIST_P256 \
+		--key-usage SIGN_VERIFY \
+		--tags '[
+			{\"TagKey\":\"_custom_id_\",\"TagValue\":\"9355ce66-56af-4c7e-abdd-7e3e0168220a\"},
+			{\"TagKey\":\"_custom_key_material_\",\"TagValue\":\"MIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQgxY3VMVh+GxgEuDgkiMaXPAV1aObMotgdzzbL3hhycK6hRANCAAQAwo8N3QSO6GVQ2OsA1r1KMm0hESZ3M0g3MQ2Jyr9coKN4pOxSsQPBrtbi5LyyrHyx1GyzsgiR6aQTRdLNo1Z6\"}
+		]'" \
+	"kms key 9355ce66-56af-4c7e-abdd-7e3e0168220a"
 
 # signing key spki fingerprint setup
-kms_key_id="bfee8dd8-0f5a-472e-b309-7bd0d2f38622"
+kms_key_id="9355ce66-56af-4c7e-abdd-7e3e0168220a"
 public_key_b64=$(docker compose exec "$LOCALSTACK_CONTAINER" \
 	awslocal kms get-public-key --key-id "$kms_key_id" --query 'PublicKey' --output text 2>/dev/null)
 
@@ -49,22 +53,23 @@ if [ -z "$public_key_b64" ]; then
 	exit 1
 fi
 
-env_file=".env"
+env_file="registry/.env"
 spki_fingerprint=$(bash ./bin/generate-key-id.sh "$public_key_b64")
 
-# set KMS_SPKI_FINGERPRINT in .env
-if grep -q "^KMS_SPKI_FINGERPRINT=" "$env_file"; then
-	sed -i.bak "s|^KMS_SPKI_FINGERPRINT=.*|KMS_SPKI_FINGERPRINT=$spki_fingerprint|" "$env_file"
+# set SIG_KEY_ID in .env
+if grep -q "^SIG_KEY_ID=" "$env_file"; then
+	sed -i.bak "s|^SIG_KEY_ID=.*|SIG_KEY_ID=$kms_key_id|" "$env_file"
 else
-	echo "KMS_SPKI_FINGERPRINT=$spki_fingerprint" >> "$env_file"
+	echo "SIG_KEY_ID=$kms_key_id" >> "$env_file"
 fi
 
-# set KMS_PUBLIC_KEY in .env
-if grep -q "^KMS_PUBLIC_KEY=" "$env_file"; then
-	sed -i.bak "s|^KMS_PUBLIC_KEY=.*|KMS_PUBLIC_KEY=$public_key_b64|" "$env_file"
+# set SIG_KEY_SPKI_FINGERPRINT in .env
+if grep -q "^SIG_KEY_SPKI_FINGERPRINT=" "$env_file"; then
+	sed -i.bak "s|^SIG_KEY_SPKI_FINGERPRINT=.*|SIG_KEY_SPKI_FINGERPRINT=$spki_fingerprint|" "$env_file"
 else
-	echo "KMS_PUBLIC_KEY=$public_key_b64" >> "$env_file"
+	echo "SIG_KEY_SPKI_FINGERPRINT=$spki_fingerprint" >> "$env_file"
 fi
+
 rm -f "${env_file}.bak"
 
 echo "✓ all resources ready"
