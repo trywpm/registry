@@ -1,6 +1,11 @@
 services:
   db:
     image: postgres:17
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U wpm -d postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
     shm_size: 2gb
     volumes:
       - db-data:/var/lib/postgresql/data
@@ -12,6 +17,11 @@ services:
       - 5432:5432
   localstack:
     image: localstack/localstack-pro:latest
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4566/_localstack/health"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
     environment:
       - PERSISTENCE=1
       - SERVICES=s3,ses,kms,sesv2
