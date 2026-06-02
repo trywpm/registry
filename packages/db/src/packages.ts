@@ -49,6 +49,7 @@ export type GetOrInsertPackageResult = {
   is_new: boolean;
   status: PackageStatus;
   visibility: PackageVisibility;
+  versionExists: boolean;
 };
 
 export class Packages extends Base {
@@ -302,6 +303,7 @@ export class Packages extends Base {
 
   async getOrInsert(
     name: string,
+    version: string,
     type: PackageType,
     visibility: PackageVisibility,
     userId: UserId,
@@ -332,16 +334,17 @@ export class Packages extends Base {
           from
             insert_package
           returning
-            "role",
-            "package_id"
+            "package_id",
+            "role"
         )
       select
+        "package_id" AS "id",
         "role",
         true AS "is_new",
-        "package_id" AS "id",
         ${type} :: "package_type" AS "type",
         'active' :: "package_status" AS "status",
-        ${visibility} :: "package_visibility" AS "visibility"
+        ${visibility} :: "package_visibility" AS "visibility",
+        false AS "versionExists"
       from
         insert_access
       union all
@@ -351,7 +354,13 @@ export class Packages extends Base {
         false AS "is_new",
         p."type",
         p."status",
-        p."visibility"
+        p."visibility",
+        exists (
+          select 1
+          from "package_version" pv
+          where pv."package_id" = p."id"
+            and pv."version" = ${version}
+        ) AS "versionExists"
       from
         "package" p
         left join "package_access" pa on p."id" = pa."package_id"
