@@ -310,3 +310,29 @@ export const PackageSchema = z
   });
 
 export type Package = z.infer<typeof PackageSchema>;
+export type PackageInput = z.input<typeof PackageSchema>;
+
+export const formatZodError = (error: z.ZodError): string => {
+  const issue = error.issues[0];
+  const path = issue.path.join('.');
+
+  if (issue.code === 'unrecognized_keys') {
+    const keys = issue.keys.join(', ');
+    return path ? `unrecognized field(s) in '${path}': ${keys}` : `unrecognized field(s): ${keys}`;
+  }
+
+  let message = issue.message.toLowerCase();
+
+  if (!path) {
+    return message;
+  }
+
+  const pathParts = issue.path.map((p) => String(p).toLowerCase());
+  const hasPathInMessage = pathParts.some((p) => message.includes(p));
+
+  if (!hasPathInMessage) {
+    message = `invalid field '${path}': ${message}`;
+  }
+
+  return message;
+};
