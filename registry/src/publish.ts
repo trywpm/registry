@@ -211,7 +211,7 @@ export class Publish extends DurableObject {
     await Promise.all([
       tarballStream.pipeTo(fls.writable),
       this.env.tarball.put(s3Key, fls.readable, {
-        sha256: Buffer.from(manifest.dist.digest.slice(7)), // Remove "sha256:" prefix
+        sha256: Buffer.from(manifest.dist.digest.slice(7), 'base64'), // Remove "sha256:" prefix
       }),
     ]);
   }
