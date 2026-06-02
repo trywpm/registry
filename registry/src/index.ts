@@ -7,10 +7,12 @@ import { Registry } from '@wpm/db';
 import { Logger } from '@wpm/logger';
 import { Presigner } from '@wpm/storage';
 import { IPCidrMatcher } from '@wpm/net';
+import { UserError } from '@wpm/exception';
 import { getAuthTokenHash, parseBearerToken } from '@wpm/auth';
 import { isValidPackageName, isValidSemver, PackageSchema } from '@wpm/manifest';
 
 import { MAX_UPLOAD_SIZE, PackageStreamReader } from '@/lib/package-stream-reader';
+import { canToken } from '@wpm/rbac';
 
 const app = new Hono<{
   Bindings: Cloudflare.Env;
@@ -108,17 +110,17 @@ app.use('*', async (c, next) => {
 app.get('/', (c) => c.json({ name: 'wpm registry', version: '0.1.0' }));
 
 app.put('/:package/:version', async (c) => {
-  if (!c.req.raw.body) {
-    return c.json({ error: 'missing request body' }, 400);
-  }
-
   const { package: name, version } = c.req.param();
   if (!isValidPackageName(name)) {
-    return c.json({ error: 'invalid package name' }, 400);
+    return c.json({ error: 'not found' }, 404);
   }
 
   if (!isValidSemver(version)) {
-    return c.json({ error: 'invalid semver version' }, 400);
+    return c.json({ error: 'not found' }, 404);
+  }
+
+  if (!c.req.raw.body) {
+    return c.json({ error: 'missing request body' }, 400);
   }
 
   const contentLengthHeader = c.req.header('Content-Length');
@@ -135,15 +137,24 @@ app.put('/:package/:version', async (c) => {
     return c.json({ error: 'payload too large' }, 413);
   }
 
-  const reader = new PackageStreamReader(c.req.raw.body);
-
-  let manifest;
-  try {
-    manifest = await reader.getManifest();
-  } catch {
-    return c.json({ error: 'bad request' }, 400);
+  const user = c.get('user');
+  if (!user) {
+    return c.json({ error: 'requires authentication' }, 401);
   }
 
+  if (!user.userId) {
+    throw new Error('authenticated user is missing userId');
+  }
+  if (!user.tokenId) {
+    throw new Error('authenticated user is missing tokenId');
+  }
+
+  if (!canToken(user.tokenScopes, 'publish', 'package')) {
+    return c.json({ error: 'missing token scope to publish package' }, 403);
+  }
+
+  const reader = new PackageStreamReader(c.req.raw.body);
+  const manifest = await reader.getManifest();
   const parsedManifest = await PackageSchema.safeParseAsync(manifest);
   if (!parsedManifest.success) {
     const firstIssue = parsedManifest.error.issues[0];
@@ -154,17 +165,13 @@ app.put('/:package/:version', async (c) => {
     return c.json({ error: 'bad request' }, 400);
   }
 
-  try {
-    const stub = c.env.publish.getByName(`${name}@${version}`);
-    const tarballStream = reader.getTarballStream();
+  const stub = c.env.publish.getByName(`${name}@${version}`);
+  const logger = c.get('logger').child({ package: name, version });
 
-    return stub.publish(parsedManifest.data, tarballStream, {
-      userId: '',
-      packageId: '',
-    });
-  } catch {
-    return c.json({ error: 'internal server error' }, 500);
-  }
+  return stub.publish(parsedManifest.data, reader.getTarballStream(), {
+    userId: user.userId,
+    logger: logger.child({ component: 'publish-do' }),
+  });
 });
 
 app.get('/-/whoami', (c) => {
@@ -241,6 +248,16 @@ app.get('/:package/:filename', async (c) => {
   });
 
   return c.redirect(url, 302);
+});
+
+app.notFound((c) => c.json({ error: 'not found' }, 404));
+app.onError((err, c) => {
+  if (err instanceof UserError) {
+    return c.json({ error: err.message }, err.status);
+  }
+
+  c.get('logger').error('unhandled error', { err });
+  return c.json({ error: 'internal server error' }, 500);
 });
 
 export default {
