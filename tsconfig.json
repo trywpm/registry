@@ -10,8 +10,10 @@
     { "path": "packages/rbac" },
     { "path": "packages/util" },
     { "path": "packages/types" },
+    { "path": "packages/logger" },
     { "path": "packages/storage" },
     { "path": "packages/datetime" },
-    { "path": "packages/manifest" }
+    { "path": "packages/manifest" },
+    { "path": "packages/exception" }
   ]
 }
