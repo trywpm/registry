@@ -1,20 +1,16 @@
-.PHONY: s sw sr du dd c fmt format test build lint prestart help migrate-create migrate-up migrate-down env-setup
+.PHONY: sw sr c fmt format test build lint help migrate-create migrate-up migrate-down env-setup
 
 SHELL := /usr/bin/env bash
 MIGRATE_CMD := migrate -database "$(DATABASE_URL)" -path migrations
 
-start: prestart ## Start both Web and Registry in parallel
+start: env-setup ## Start both Web and Registry in parallel
 	@$(MAKE) -j2 sw sr
 
-sw start-web: ## Start the web worker
+sw start-web: env-setup ## Start the web worker
 	vp run web#start
 
-sr start-registry: ## Start the registry worker
+sr start-registry: env-setup ## Start the registry worker
 	vp run registry#start
-
-prestart: ## Prepare infrastructure and environment
-	@$(MAKE) du
-	@$(MAKE) env-setup
 
 test: ## Run tests for both Web and Registry
 	vp test
@@ -33,13 +29,7 @@ fmt format: ## Run formatters
 
 # --- Infrastructure ---
 
-du docker-up: ## Boot docker containers in background
-	@docker compose up -d
-
-dd docker-down: ## Tear down docker containers
-	@docker compose down
-
-env-setup: ## Run local environment configuration
+env-setup: ## Setup local development environment
 	@bash bin/env-setup.sh
 
 # --- Database ---
