@@ -26,6 +26,9 @@ jobs:
           cache: true
           node-version: 24
 
+      - name: env setup
+        run: bash bin/env-setup.sh false
+
       - name: generate types
         run: vp run -r typegen
 
