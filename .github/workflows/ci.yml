@@ -24,7 +24,7 @@ jobs:
       - uses: voidzero-dev/setup-vp@329490fff19dd4ecd8ff2a74d7c45bee0448f3a6 # v1.11.0
         with:
           cache: true
-          node-version: 24
+          node-version-file: '.node-version'
 
       - name: env setup
         run: bash bin/env-setup.sh false
@@ -46,6 +46,7 @@ jobs:
       - uses: voidzero-dev/setup-vp@329490fff19dd4ecd8ff2a74d7c45bee0448f3a6 # v1.11.0
         with:
           cache: true
+          node-version-file: '.node-version'
 
       - name: run tests
         run: vp test
