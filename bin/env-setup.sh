@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+START_RESOURCES=${1:-true}
+
 # Containers
 DB_CONTAINER=db
 LOCALSTACK_CONTAINER=localstack
@@ -31,6 +33,31 @@ VITE_CLERK_PUBLISHABLE_KEY="pk_test_aGFuZHktZ251LTU3LmNsZXJrLmFjY291bnRzLmRldiQ"
 
 # Postgres connection URL
 DATABASE_URL="postgresql://wpm:wpm@localhost:5432/wpm?sslmode=disable"
+
+# Write registry env vars.
+registry_env_file="registry/.env"
+{
+	echo "APP_ENV=$APP_ENV"
+	echo "AWS_REGION=$AWS_REGION"
+	echo "AWS_ENDPOINT_URL=$AWS_ENDPOINT_URL"
+	echo "AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID"
+	echo "AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY"
+	echo "S3_BUCKET=$S3_BUCKET"
+	echo "PAT_HMAC_KEY=$PAT_HMAC_KEY"
+	echo "SIG_KEY_ID=$SIG_KEY_ID"
+	echo "SIG_KEY_SPKI_FINGERPRINT=$SIG_KEY_SPKI_FINGERPRINT"
+} > "$registry_env_file"
+
+# Write web env vars.
+web_env_file="web/.env"
+{
+	echo "VITE_CLERK_DOMAIN=$VITE_CLERK_DOMAIN"
+	echo "VITE_CLERK_PUBLISHABLE_KEY=$VITE_CLERK_PUBLISHABLE_KEY"
+} > "$web_env_file"
+
+if [ "$START_RESOURCES" != "true" ]; then
+	exit 0
+fi
 
 echo "Starting services and waiting for them to be healthy..."
 docker compose up -d --wait
@@ -76,26 +103,5 @@ echo "Running database migrations..."
 export DATABASE_URL
 make migrate-up
 vp run -r d1-migration
-
-# Write registry env vars.
-registry_env_file="registry/.env"
-{
-	echo "APP_ENV=$APP_ENV"
-	echo "AWS_REGION=$AWS_REGION"
-	echo "AWS_ENDPOINT_URL=$AWS_ENDPOINT_URL"
-	echo "AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID"
-	echo "AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY"
-	echo "S3_BUCKET=$S3_BUCKET"
-	echo "PAT_HMAC_KEY=$PAT_HMAC_KEY"
-	echo "SIG_KEY_ID=$SIG_KEY_ID"
-	echo "SIG_KEY_SPKI_FINGERPRINT=$SIG_KEY_SPKI_FINGERPRINT"
-} > "$registry_env_file"
-
-# Write web env vars.
-web_env_file="web/.env"
-{
-	echo "VITE_CLERK_DOMAIN=$VITE_CLERK_DOMAIN"
-	echo "VITE_CLERK_PUBLISHABLE_KEY=$VITE_CLERK_PUBLISHABLE_KEY"
-} > "$web_env_file"
 
 echo "✓ all resources ready"
