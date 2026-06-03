@@ -4,7 +4,7 @@
   "type": "module",
   "scripts": {
     "start": "vp run typegen && wrangler dev",
-    "typegen": "wrangler types worker-types.d.ts --env-file .env.example"
+    "typegen": "wrangler types worker-types.d.ts"
   },
   "dependencies": {
     "@wpm/auth": "workspace:*",
