@@ -30,7 +30,7 @@ VITE_CLERK_DOMAIN="handy-gnu-57.clerk.accounts.dev"
 VITE_CLERK_PUBLISHABLE_KEY="pk_test_aGFuZHktZ251LTU3LmNsZXJrLmFjY291bnRzLmRldiQ"
 
 # Postgres connection URL
-DATABASE_URL="postgresql://wpm:wpm@localhost:5432/wpm"
+DATABASE_URL="postgresql://wpm:wpm@localhost:5432/wpm?sslmode=disable"
 
 echo "Starting services and waiting for them to be healthy..."
 docker compose up -d --wait
@@ -69,6 +69,13 @@ maybe_create_resource "$LOCALSTACK_CONTAINER" \
 			{\"TagKey\":\"_custom_key_material_\",\"TagValue\":\"MIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQgxY3VMVh+GxgEuDgkiMaXPAV1aObMotgdzzbL3hhycK6hRANCAAQAwo8N3QSO6GVQ2OsA1r1KMm0hESZ3M0g3MQ2Jyr9coKN4pOxSsQPBrtbi5LyyrHyx1GyzsgiR6aQTRdLNo1Z6\"}
 		]'" \
 	"kms signing key"
+
+# Run DB migrations.
+echo "Running database migrations..."
+# make migrate-up
+export DATABASE_URL
+make migrate-up
+vp run -r d1-migration
 
 # Write registry env vars.
 registry_env_file="registry/.env"
