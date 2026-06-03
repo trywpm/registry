@@ -28,6 +28,8 @@ updates:
           - 'wrangler'
           - '@cloudflare/*'
     versioning-strategy: increase
+    cooldown:
+      default-days: 7
 
   - package-ecosystem: github-actions
     directory: '/'
@@ -41,3 +43,5 @@ updates:
     labels:
       - 'dependencies'
       - 'github-actions'
+    cooldown:
+      default-days: 7
