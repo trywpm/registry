@@ -4,7 +4,8 @@
   "type": "module",
   "scripts": {
     "start": "vp run typegen && wrangler dev",
-    "typegen": "wrangler types worker-types.d.ts"
+    "typegen": "wrangler types worker-types.d.ts",
+    "d1-migration": "wrangler d1 migrations apply registry_search_db --local"
   },
   "dependencies": {
     "@wpm/auth": "workspace:*",
