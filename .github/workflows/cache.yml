@@ -10,6 +10,8 @@ concurrency:
   group: ${{ github.workflow }}-cache-buster
   cancel-in-progress: true
 
+permissions: {}
+
 jobs:
   bust:
     runs-on: ubuntu-latest
@@ -17,6 +19,7 @@ jobs:
       actions: write
     steps:
       - name: delete action cache
-        run: gh cache delete --all --succeed-on-no-caches --repo ${{ github.repository }}
+        run: gh cache delete --all --succeed-on-no-caches --repo "${REPO}"
         env:
+          REPO: ${{ github.repository }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
