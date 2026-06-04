@@ -76,5 +76,6 @@
       "pattern": "registry.wpm.so",
       "custom_domain": true
     }
-  ]
+  ],
+  "rules": [{ "type": "CompiledWasm", "globs": ["gfm-wasm/wasm"], "fallthrough": true }]
 }
