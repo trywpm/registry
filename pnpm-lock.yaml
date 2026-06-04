@@ -260,6 +260,9 @@ importers:
       '@wpm/types':
         specifier: workspace:*
         version: link:../packages/types
+      gfm-wasm:
+        specifier: 1.0.1
+        version: 1.0.1
       hono:
         specifier: 'catalog:'
         version: 4.12.23
@@ -2543,6 +2546,9 @@ packages:
   get-caller-file@2.0.5:
     resolution: {integrity: sha512-DyFP3BM/3YHTQOCUL/w0OZHR0lpKeGrxotcHWcqNEdnltqFwXVfhEBQ94eIo34AfQpo0rGki4cyIiftY06h2Fg==}
     engines: {node: 6.* || 8.* || >= 10.*}
+
+  gfm-wasm@1.0.1:
+    resolution: {integrity: sha512-IIKeTjUwlfkXaV/pd1ZnAsPDcPWb+BO8WwbV4YhnD0VtObcvQ9fqpaaGECWtdUr5eNED9Pu9zFJR68/N0JFt2Q==}
 
   glob-to-regexp@0.4.1:
     resolution: {integrity: sha512-lkX1HJXwyMcprw/5YUZc2s7DrpAiHB21/V+E1rHUrVNokkvB6bqMzT0VfV6/86ZNabt1k14YOIaT7nDvOX3Iiw==}
@@ -5817,6 +5823,8 @@ snapshots:
   gensync@1.0.0-beta.2: {}
 
   get-caller-file@2.0.5: {}
+
+  gfm-wasm@1.0.1: {}
 
   glob-to-regexp@0.4.1: {}
 
