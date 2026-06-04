@@ -110,6 +110,10 @@ export class PackageStreamReader {
     }
 
     this.#reader.releaseLock();
-    return this.#stream;
+
+    const { readable, writable } = new TransformStream();
+    this.#stream.pipeTo(writable).catch(() => {});
+
+    return readable;
   }
 }
