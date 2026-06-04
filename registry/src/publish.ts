@@ -22,6 +22,8 @@ type ExistingPackage = Awaited<ReturnType<Registry['packages']['getOrInsert']>>;
 
 const LEASE_MS = 5 * 60 * 1000; // a crashed lock frees itself after 5 minutes
 
+const gfmReady = init(mod);
+
 export class Publish extends DurableObject {
   private _db: Sql | undefined;
   private kms: KmsClient | undefined;
@@ -93,6 +95,12 @@ export class Publish extends DurableObject {
     try {
       return await work();
     } finally {
+      if (this._db) {
+        const db = this._db;
+        this._db = undefined;
+        this._repos = undefined;
+        await db.end().catch(() => {});
+      }
       await this.ctx.storage.delete('state');
     }
   }
@@ -150,7 +158,7 @@ export class Publish extends DurableObject {
     // since it's not critical and can be retried separately.
     if (manifest.readme) {
       try {
-        await init(mod);
+        await gfmReady;
         await this.env.readme.put(`${manifest.name}.html`, render(manifest.readme));
       } catch (err) {
         logger.error('Failed to upload readme', { err });
