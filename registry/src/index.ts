@@ -5,6 +5,7 @@ import { Hono } from 'hono';
 import postgres from 'postgres';
 import { Registry } from '@wpm/db';
 import { Logger } from '@wpm/logger';
+import { canToken } from '@wpm/rbac';
 import { Presigner } from '@wpm/storage';
 import { IPCidrMatcher } from '@wpm/net';
 import { UserError } from '@wpm/exception';
@@ -12,7 +13,6 @@ import { getAuthTokenHash, parseBearerToken } from '@wpm/auth';
 import { isValidPackageName, isValidSemver, PackageSchema } from '@wpm/manifest';
 
 import { MAX_UPLOAD_SIZE, PackageStreamReader } from '@/lib/package-stream-reader';
-import { canToken } from '@wpm/rbac';
 
 const app = new Hono<{
   Bindings: Cloudflare.Env;
