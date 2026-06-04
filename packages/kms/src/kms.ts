@@ -139,6 +139,7 @@ export class KmsError extends Error {
 
 export class KmsClient {
   public readonly host: string;
+  public readonly protocol: string;
 
   private readonly region: string;
   private readonly accessKeyId: string;
@@ -179,8 +180,10 @@ export class KmsClient {
         throw new Error('KmsClient: endpoint must have http or https scheme');
       }
       this.host = e.host;
+      this.protocol = e.protocol;
     } else {
       this.host = `kms.${cfg.region}.amazonaws.com`;
+      this.protocol = 'https:';
     }
   }
 
@@ -267,8 +270,12 @@ export class KmsClient {
       requestHeaders['x-amz-security-token'] = this.sessionToken;
     }
 
+    if (process.env.APP_ENV !== 'development' && this.protocol === 'http:') {
+      throw new Error('KmsClient: In production, only HTTPS is allowed');
+    }
+
     return {
-      url: `https://${this.host}/`,
+      url: `${this.protocol}//${this.host}/`,
       method: 'POST',
       headers: requestHeaders,
       bodyText,
