@@ -20,7 +20,7 @@ type PublishOptions = {
 
 type ExistingPackage = Awaited<ReturnType<Registry['packages']['getOrInsert']>>;
 
-const LEASE_MS = 10 * 60 * 1000; // a crashed lock frees itself after 10 minutes
+const LEASE_MS = 5 * 60 * 1000; // a crashed lock frees itself after 5 minutes
 
 export class Publish extends DurableObject {
   private _db: Sql | undefined;
