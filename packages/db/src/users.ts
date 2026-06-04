@@ -26,9 +26,9 @@ export class Users extends Base {
             u.username,
             u.status,
             t.id AS "tokenId",
-            t.scopes AS "tokenScopes",
+            to_jsonb(t.scopes) AS "tokenScopes",
             t.expiry AS "tokenExpiry",
-            t.allowed_cidrs AS "tokenCidrs"
+            to_jsonb(t.allowed_cidrs) AS "tokenCidrs"
           FROM "users" u
           INNER JOIN "token" t ON u.id = t.user_id
           WHERE t.token_hash = ${tokenHash}
