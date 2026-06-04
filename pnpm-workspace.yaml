@@ -41,6 +41,5 @@ packageConfigs:
   - match: ['*']
     saveExact: true
 
-catalogMode: strict
 minimumReleaseAge: 4320
 minimumReleaseAgeStrict: strict
