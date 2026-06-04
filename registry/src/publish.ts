@@ -1,15 +1,17 @@
 import { Buffer } from 'node:buffer';
 import { DurableObject } from 'cloudflare:workers';
 
+import mod from 'gfm-wasm/wasm';
 import postgres from 'postgres';
 import { Logger } from '@wpm/logger';
+import { canUser } from '@wpm/rbac';
 import { Registry } from '@wpm/db';
 import { KmsClient } from '@wpm/kms';
+import { init, render } from 'gfm-wasm';
 
 import type { Sql } from 'postgres';
 import type { UserId } from '@wpm/types';
 import type { Package } from '@wpm/manifest';
-import { canUser } from '@wpm/rbac';
 
 type PublishOptions = {
   userId: UserId;
@@ -142,6 +144,17 @@ export class Publish extends DurableObject {
       logger.error('Failed to publish package', { err });
 
       return Response.json({ error: 'internal server error' }, { status: 500 });
+    }
+
+    // readme upload - if it fails, we don't want to fail the whole publish
+    // since it's not critical and can be retried separately.
+    if (manifest.readme) {
+      try {
+        await init(mod);
+        await this.env.readme.put(`${manifest.name}.html`, render(manifest.readme));
+      } catch (err) {
+        logger.error('Failed to upload readme', { err });
+      }
     }
 
     logger.info('Package published successfully');
