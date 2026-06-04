@@ -255,10 +255,6 @@ export class Publish extends DurableObject {
       SigningAlgorithm: 'ECDSA_SHA_256',
     });
 
-    if (res.KeyId !== this.env.SIG_KEY_ID) {
-      throw new Error('Invalid key ID');
-    }
-
     return Buffer.from(res.Signature).toString('base64');
   }
 }
