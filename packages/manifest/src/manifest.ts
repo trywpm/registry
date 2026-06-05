@@ -148,6 +148,7 @@ const DescriptionField = z
 
 const LicenseField = z
   .string()
+  .normalize('NFC')
   .trim()
   .refine((lic) => !DANGEROUS_CHARS_REGEX.test(lic), {
     message: `license ${CONTROL_CHAR_ERROR}`,
@@ -167,6 +168,7 @@ const TagsField = z
   .array(
     z
       .string()
+      .normalize('NFC')
       .trim()
       .refine((tag) => !DANGEROUS_CHARS_REGEX.test(tag), {
         message: `tag items ${CONTROL_CHAR_ERROR}`,
@@ -179,21 +181,19 @@ const TagsField = z
     message: 'tags must be unique',
   });
 
-const TeamField = z
-  .array(
+const AuthorField = z
+  .string()
+  .normalize('NFC')
+  .trim()
+  .pipe(
     z
       .string()
-      .trim()
-      .refine((member) => !DANGEROUS_CHARS_REGEX.test(member), {
-        message: `team member ${CONTROL_CHAR_ERROR}`,
-      })
-      .min(2, 'team member must be at least 2 characters')
-      .max(100, 'team member must be at most 100 characters'),
-  )
-  .max(100, 'team must not have more than 100 members')
-  .refine((members) => new Set(members).size === members.length, {
-    message: 'team members must be unique',
-  });
+      .min(2, 'author name must be at least 2 characters')
+      .max(164, 'author name must be at most 164 characters')
+      .refine((name) => !DANGEROUS_CHARS_REGEX.test(name), {
+        message: `author field ${CONTROL_CHAR_ERROR}`,
+      }),
+  );
 
 const PackageTypeEnum = z.enum(['theme', 'plugin', 'mu-plugin'], {
   error: 'type must be one of theme, plugin, or mu-plugin',
@@ -294,9 +294,9 @@ export const PackageSchema = z
     version: SemverSchema,
     requires: RequirementsSchema.optional(),
     license: LicenseField.optional(),
+    author: AuthorField.optional(),
     homepage: HomepageField.optional(),
     tags: TagsField.optional(),
-    team: TeamField.optional(),
     dependencies: DependenciesSchema.optional(),
     devDependencies: DependenciesSchema.optional(),
     tag: DistTagSchema,
