@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "start": "vp run typegen && wrangler dev",
+    "start": "vp run typegen && vp dev",
     "typegen": "wrangler types worker-types.d.ts",
     "d1-migration": "wrangler d1 migrations apply registry_search_db --local"
   },
