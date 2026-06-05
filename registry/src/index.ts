@@ -25,6 +25,7 @@ const app = new Hono<{
   };
 }>();
 
+// #region Bindings Middleware
 app.use('*', (c, next) => {
   let dbInstance: Sql | null = null;
 
@@ -49,7 +50,9 @@ app.use('*', (c, next) => {
 
   return next();
 });
+// #endregion
 
+// #region Authentication Middleware
 app.use('*', async (c, next) => {
   // Check auth header requirements.
   const authHeader = c.req.header('Authorization');
@@ -108,9 +111,13 @@ app.use('*', async (c, next) => {
 
   return next();
 });
+// #endregion
 
+// #region Home Route
 app.get('/', (c) => c.json({ name: 'wpm registry', version: '0.1.0' }));
+// #endregion
 
+// #region Package Publish Route
 app.put('/:package/:version', async (c) => {
   const { package: name, version } = c.req.param();
   if (!isValidPackageName(name)) {
@@ -173,7 +180,9 @@ app.put('/:package/:version', async (c) => {
     requestId: c.get('requestId'),
   });
 });
+// #endregion
 
+// #region Whoami Route
 app.get('/-/whoami', (c) => {
   const user = c.get('user');
   if (!user) {
@@ -182,21 +191,9 @@ app.get('/-/whoami', (c) => {
 
   return c.text(user.username);
 });
+// #endregion
 
-app.get('/:package', async (c) => {
-  const { package: name } = c.req.param();
-  if (!isValidPackageName(name)) {
-    return c.json({ error: 'not found' }, 404);
-  }
-
-  const pkg = await c.env.manifest.get(name);
-  if (!pkg) {
-    return c.json({ error: 'not found' }, 404);
-  }
-
-  return c.json(pkg);
-});
-
+// #region Tarball Download Route
 app.get('/:package/:filename', async (c) => {
   const { package: name, filename } = c.req.param();
   if (!isValidPackageName(name)) {
@@ -259,7 +256,9 @@ app.get('/:package/:filename', async (c) => {
 
   return c.redirect(url, 302);
 });
+// #endregion
 
+// #region Error Handlers
 app.notFound((c) => c.json({ error: 'not found' }, 404));
 app.onError((err, c) => {
   if (err instanceof UserError) {
@@ -269,10 +268,13 @@ app.onError((err, c) => {
   c.get('logger').error('unhandled error', { err });
   return c.json({ error: 'internal server error' }, 500);
 });
+// #endregion
 
+// #region Exports
 export default {
   fetch: app.fetch,
 };
 
 // Durable Objects.
 export { Publish } from '@/publish';
+// #endregion
