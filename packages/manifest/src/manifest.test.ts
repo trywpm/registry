@@ -36,7 +36,7 @@ const buildValidPackage = (): PackageInput => ({
   license: 'GPL-2.0-or-later',
   homepage: 'https://example.com/homepage',
   tags: ['block-editor', 'widget'],
-  team: ['john-doe', 'maintainer-team <team@example.com>'],
+  author: 'Jane Doe <john@doe.com>',
   dependencies: { 'dependency-one': '1.2.0' },
   devDependencies: { 'dev-dependency': '2.0.0' },
   dist: {
@@ -521,7 +521,7 @@ describe('PackageSchema (field-level)', () => {
       delete p.license;
       delete p.homepage;
       delete p.tags;
-      delete p.team;
+      delete p.author;
       delete p.dependencies;
       delete p.devDependencies;
       delete p.readme;
@@ -749,43 +749,33 @@ describe('PackageSchema (field-level)', () => {
     });
   });
 
-  describe('team', () => {
+  describe('author', () => {
     expectValid('plain username', (p) => {
-      p.team = ['john-doe'];
+      p.author = 'john-doe';
     });
     expectValid('username with email (RFC-822 style)', (p) => {
-      p.team = ['john <john@example.com>'];
+      p.author = 'john <john@example.com>';
     });
     expectValid('non-ASCII name (SVN-migrated)', (p) => {
-      p.team = ['野原ひろし'];
+      p.author = '野原ひろし';
     });
-    expectValid('team at max count (100)', (p) => {
-      p.team = Array.from({ length: 100 }, (_, i) => `member-${i}`);
-    });
-
-    expectInvalid('over max (101)', (p) => {
-      p.team = Array.from({ length: 101 }, (_, i) => `m-${i}`);
-    });
-    expectInvalid('duplicates', (p) => {
-      p.team = ['member', 'member'];
-    });
-    expectInvalid('empty string', (p) => {
-      p.team = ['ok', ''];
+    expectValid('with NFC normalization', (p) => {
+      p.author = 'foo-e\u0301'; // "é" as "e" + combining acute
     });
     expectInvalid('too short (1)', (p) => {
-      p.team = ['a'];
+      p.author = 'a';
     });
-    expectInvalid('too long (101)', (p) => {
-      p.team = ['a'.repeat(101)];
+    expectInvalid('too long (165)', (p) => {
+      p.author = 'a'.repeat(165);
     });
     expectInvalid('control char', (p) => {
-      p.team = ['hello\x00there'];
+      p.author = 'hello\x00there';
     });
     expectInvalid('RTL override', (p) => {
-      p.team = ['admin\u202Efdp.exe'];
+      p.author = 'admin\u202Efdp.exe';
     });
     expectInvalid('hangul filler (invisible username)', (p) => {
-      p.team = ['admin\u3164'];
+      p.author = 'admin\u3164';
     });
   });
 
@@ -1228,9 +1218,9 @@ describe('mutation-testing gaps', () => {
       expect(PackageSchema.safeParse(p).success).toBe(false);
     });
 
-    it('rejects team member that meets min only without trim', () => {
+    it('rejects author that meets min only without trim', () => {
       const p = buildValidPackage();
-      p.team = [' x '];
+      p.author = ' x ';
 
       expect(PackageSchema.safeParse(p).success).toBe(false);
     });
