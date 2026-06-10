@@ -5,13 +5,15 @@ import { Hono } from 'hono';
 import postgres from 'postgres';
 import { Registry } from '@wpm/db';
 import { Logger } from '@wpm/logger';
-import { canToken } from '@wpm/rbac';
 import { Presigner } from '@wpm/storage';
 import { IPCidrMatcher } from '@wpm/net';
 import { UserError } from '@wpm/exception';
+import { canToken, canUser } from '@wpm/rbac';
 import { getAuthTokenHash, parseBearerToken } from '@wpm/auth';
-import { isValidPackageName, isValidSemver, PackageSchema } from '@wpm/manifest';
+import { isValidPackageName, isValidSemver, PackageSchema, formatZodError } from '@wpm/manifest';
 
+import { signManifest } from '@/lib/sign-manifest';
+import { uploadToStaging, uploadErrorResponse } from '@/lib/tarball';
 import { MAX_UPLOAD_SIZE, PackageStreamReader } from '@/lib/package-stream-reader';
 
 const app = new Hono<{
@@ -163,19 +165,77 @@ app.put('/:package/:version', async (c) => {
   }
 
   const reader = new PackageStreamReader(c.req.raw.body);
+  const reject = async (error: string, status: 400 | 403 | 404 | 409) => {
+    await reader.cancel();
+    return c.json({ error }, status);
+  };
+
   const manifest = await reader.getManifest();
   const parsedManifest = await PackageSchema.safeParseAsync(manifest);
   if (!parsedManifest.success) {
-    const firstIssue = parsedManifest.error.issues[0];
-    return c.json({ error: firstIssue.message }, 400);
+    return reject(formatZodError(parsedManifest.error), 400);
   }
 
   if (parsedManifest.data.name !== name || parsedManifest.data.version !== version) {
-    return c.json({ error: 'bad request' }, 400);
+    return reject('bad request', 400);
+  }
+
+  if (4 + reader.manifestByteLength + parsedManifest.data.dist.packedSize !== contentLength) {
+    return reject('content-length does not match the framed payload size', 400);
+  }
+
+  const repos = c.get('repos');
+  const access = await repos.packages.getAccess(name, user.userId);
+  if (access) {
+    if (!access.role) {
+      return reject('not found', 404);
+    }
+    if (!canUser(access.role, 'publish', 'package')) {
+      return reject('user is not authorized to publish package', 403);
+    }
+    if (access.status !== 'active') {
+      return reject(`${name} is not accepting new versions`, 403);
+    }
+    if (await repos.packages.versionExists(access.id, version)) {
+      return reject(`${name}@${version} already exists`, 409);
+    }
+    if (access.type !== parsedManifest.data.type) {
+      return reject(`package type mismatch, expected ${access.type}`, 400);
+    }
+    if (access.visibility !== parsedManifest.data.visibility) {
+      return reject(`package visibility mismatch, expected ${access.visibility}`, 400);
+    }
+  }
+
+  const digestSegment = parsedManifest.data.dist.digest
+    .slice(7)
+    .replaceAll(/[+/]|=+$/g, (m) => (m === '+' ? '-' : m === '/' ? '_' : ''));
+  const stagingKey = `staging/${digestSegment}.tar.zst`;
+
+  const alreadyStaged = (await c.env.tarball.head(stagingKey)) != null;
+  if (alreadyStaged) {
+    await reader.cancel();
+  }
+
+  const [sign, upload] = await Promise.allSettled([
+    signManifest(c.env, parsedManifest.data),
+    alreadyStaged
+      ? Promise.resolve()
+      : uploadToStaging(c.env, stagingKey, reader.getTarballStream(), parsedManifest.data.dist),
+  ]);
+
+  if (upload.status === 'rejected') {
+    c.get('logger').warn('tarball upload rejected', { err: upload.reason });
+    return uploadErrorResponse(upload.reason, parsedManifest.data.dist);
+  }
+
+  if (sign.status === 'rejected') {
+    c.get('logger').error('failed to sign manifest', { err: sign.reason });
+    return c.json({ error: 'internal server error' }, 500);
   }
 
   const stub = c.env.publish.getByName(name);
-  return stub.publish(parsedManifest.data, reader.getTarballStream(), {
+  return stub.publish(parsedManifest.data, stagingKey, {
     userId: user.userId,
     requestId: c.get('requestId'),
   });
@@ -227,7 +287,7 @@ app.get('/:package/:filename', async (c) => {
 
   const repos = c.get('repos');
   const access = await repos.packages.getAccess(name, user.userId);
-  if (!access || !access.role) {
+  if (!access || !access.role || access.status === 'deleted') {
     return c.json({ error: 'not found' }, 404);
   }
 
