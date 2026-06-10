@@ -23,10 +23,23 @@ export class PackageStreamReader {
   #stream: ReadableStream;
   #reader: ReadableStreamBYOBReader;
   #manifestRead = false;
+  #manifestByteLength = 0;
 
   constructor(requestBody: ReadableStream) {
     this.#stream = requestBody;
     this.#reader = requestBody.getReader({ mode: 'byob' });
+  }
+
+  get manifestByteLength(): number {
+    return this.#manifestByteLength;
+  }
+
+  async cancel(): Promise<void> {
+    try {
+      await this.#reader.cancel();
+    } catch {
+      // Reader already released or stream errored.
+    }
   }
 
   async #readExact(length: number) {
@@ -93,6 +106,7 @@ export class PackageStreamReader {
       }
 
       this.#manifestRead = true;
+      this.#manifestByteLength = manifestLength;
       return parsedManifest;
     } catch (error) {
       try {
