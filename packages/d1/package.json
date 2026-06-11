@@ -5,7 +5,9 @@
   "exports": {
     "./search": "./src/search/index.ts"
   },
-  "dependencies": {},
+  "dependencies": {
+    "@wpm/manifest": "workspace:*"
+  },
   "devDependencies": {
     "@cloudflare/workers-types": "catalog:",
     "@types/node": "catalog:"
