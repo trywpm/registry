@@ -9,6 +9,7 @@
   "include": ["src/**/*", "worker-types.d.ts"],
   "exclude": ["node_modules", "dist"],
   "references": [
+    { "path": "../packages/d1" },
     { "path": "../packages/db" },
     { "path": "../packages/net" },
     { "path": "../packages/kms" },

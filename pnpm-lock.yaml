@@ -237,6 +237,9 @@ importers:
       '@wpm/auth':
         specifier: workspace:*
         version: link:../packages/auth
+      '@wpm/d1':
+        specifier: workspace:*
+        version: link:../packages/d1
       '@wpm/db':
         specifier: workspace:*
         version: link:../packages/db
