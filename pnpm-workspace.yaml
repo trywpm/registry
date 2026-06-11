@@ -43,5 +43,3 @@ packageConfigs:
 
 minimumReleaseAge: 4320
 minimumReleaseAgeStrict: strict
-minimumReleaseAgeExclude:
-  - gfm-wasm@1.0.1
