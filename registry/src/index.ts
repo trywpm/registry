@@ -12,6 +12,7 @@ import { canToken, canUser } from '@wpm/rbac';
 import { getAuthTokenHash, parseBearerToken } from '@wpm/auth';
 import { isValidPackageName, isValidSemver, PackageSchema, formatZodError } from '@wpm/manifest';
 
+import { scheduler } from '@/scheduler';
 import { signManifest } from '@/lib/sign-manifest';
 import { uploadToStaging, uploadErrorResponse } from '@/lib/tarball';
 import { MAX_UPLOAD_SIZE, PackageStreamReader } from '@/lib/package-stream-reader';
@@ -333,6 +334,7 @@ app.onError((err, c) => {
 // #region Exports
 export default {
   fetch: app.fetch,
+  scheduler,
 };
 
 // Durable Objects.
