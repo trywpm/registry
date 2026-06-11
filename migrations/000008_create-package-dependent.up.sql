@@ -25,6 +25,37 @@ WHERE pv."dependencies" IS NOT NULL
     WHERE NOT EXISTS (SELECT 1 FROM "package" p WHERE p."name" = k)
   );
 
+WITH no_latest AS (
+  SELECT p."id" FROM "package" p
+  WHERE EXISTS (SELECT 1 FROM "package_version" pv WHERE pv."package_id" = p."id")
+    AND NOT EXISTS (SELECT 1 FROM "package_dist_tag" t WHERE t."package_id" = p."id" AND t."tag" = 'latest')
+),
+ranked AS (
+  SELECT pv."package_id", pv."version",
+    row_number() OVER (
+      PARTITION BY pv."package_id"
+      ORDER BY
+        string_to_array(split_part(split_part(pv."version", '+', 1), '-', 1), '.')::bigint[] DESC,
+        (position('-' IN split_part(pv."version", '+', 1)) = 0) DESC,
+        (
+          SELECT array_agg(
+            (CASE WHEN t.id ~ '^[0-9]+$' THEN '0' || lpad(t.id, 20, '0') ELSE '1' || t.id END) COLLATE "C"
+            ORDER BY t.ord
+          )
+          FROM unnest(string_to_array(
+            CASE WHEN position('-' IN split_part(pv."version", '+', 1)) > 0
+              THEN substr(split_part(pv."version", '+', 1), position('-' IN split_part(pv."version", '+', 1)) + 1)
+            END, '.')) WITH ORDINALITY AS t(id, ord)
+        ) DESC,
+        pv."created" DESC
+    ) rn
+  FROM "package_version" pv
+  JOIN no_latest nl ON nl."id" = pv."package_id"
+  WHERE pv."yanked" = false
+)
+INSERT INTO "package_dist_tag" ("tag", "package_id", "version")
+SELECT 'latest', "package_id", "version" FROM ranked WHERE rn = 1;
+
 CREATE TABLE "package_dependent" (
   "dep_name" varchar(164) NOT NULL,
   "package_id" integer NOT NULL,
