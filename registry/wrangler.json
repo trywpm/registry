@@ -77,5 +77,8 @@
       "custom_domain": true
     }
   ],
+  "triggers": {
+    "crons": ["0 3 * * *"]
+  },
   "rules": [{ "type": "CompiledWasm", "globs": ["gfm-wasm/wasm"], "fallthrough": true }]
 }
