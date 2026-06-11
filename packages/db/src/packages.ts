@@ -21,6 +21,18 @@ export type PublishCommitResult = {
   committed: boolean;
 };
 
+export type Dependent = {
+  id: PackageId;
+  name: string;
+};
+
+export type DependentsPage = {
+  dependents: Dependent[];
+  cursor: PackageId | null;
+};
+
+const DEPENDENTS_PAGE_SIZE = 25;
+
 export class Packages extends Base {
   async getAccess(name: string, userId: UserId) {
     return this.cached<PackageAccess>(
@@ -38,6 +50,55 @@ export class Packages extends Base {
       },
       { ttl: 604800, cacheNull: true },
     );
+  }
+
+  async getDependents(depName: string, after: PackageId | null): Promise<DependentsPage> {
+    const page = await this.cached<DependentsPage>(
+      `pkg:dependents:${depName}:${after ?? 0}`,
+      async () => {
+        const rows = await this.db<Dependent[]>`
+          select p."id", p."name"
+          from (
+            select "package_id"
+            from "package_dependent"
+            where "dep_name" = ${depName} and "package_id" > ${after ?? 0}
+            order by "package_id"
+            limit ${DEPENDENTS_PAGE_SIZE + 1}
+          ) d
+          join "package" p on p."id" = d."package_id"
+          order by p."id"
+        `;
+
+        const hasMore = rows.length > DEPENDENTS_PAGE_SIZE;
+        const dependents = hasMore ? rows.slice(0, DEPENDENTS_PAGE_SIZE) : [...rows];
+
+        return {
+          dependents,
+          cursor: hasMore ? dependents[dependents.length - 1].id : null,
+        };
+      },
+      { ttl: 604800 },
+    );
+
+    return page ?? { dependents: [], cursor: null };
+  }
+
+  async countDependents(depName: string): Promise<number> {
+    const count = await this.cached<number>(
+      `pkg:dependents:count:${depName}`,
+      async () => {
+        const [row] = await this.db<[{ count: number }]>`
+          select count(*)::int as "count"
+          from "package_dependent"
+          where "dep_name" = ${depName}
+        `;
+
+        return row.count;
+      },
+      { ttl: 604800 },
+    );
+
+    return count ?? 0;
   }
 
   async versionExists(packageId: PackageId, version: string): Promise<boolean> {
@@ -131,6 +192,34 @@ export class Packages extends Base {
         on conflict ("tag", "package_id") do update
         set
           "version" = excluded."version"
+      ),
+      del_deps as (
+        delete from "package_dependent" pd
+        using ins_ver v
+        where
+          ${manifest.tag === 'latest'}
+          and pd."package_id" = v."package_id"
+          and not exists (
+            select 1
+            from jsonb_each_text(${manifest.dependencies ? sql.json(manifest.dependencies) : null}) as d
+            where d.key = pd."dep_name"
+          )
+      ),
+      ins_deps as (
+        insert into
+          "package_dependent" as pd ("dep_name", "package_id", "dep_range")
+        select
+          d.key, v."package_id", d.value
+        from
+          ins_ver v,
+          jsonb_each_text(${manifest.dependencies ? sql.json(manifest.dependencies) : null}) as d
+        where
+          ${manifest.tag === 'latest'}
+        on conflict ("dep_name", "package_id") do update
+        set
+          "dep_range" = excluded."dep_range"
+        where
+          pd."dep_range" is distinct from excluded."dep_range"
       )
       select
         exists (select 1 from ins_ver) as "committed"
@@ -207,6 +296,17 @@ export class Packages extends Base {
         on conflict ("tag", "package_id") do update
         set
           "version" = excluded."version"
+      ),
+      ins_deps as (
+        insert into
+          "package_dependent" ("dep_name", "package_id", "dep_range")
+        select
+          d.key, v."package_id", d.value
+        from
+          ins_ver v,
+          jsonb_each_text(${manifest.dependencies ? sql.json(manifest.dependencies) : null}) as d
+        where
+          ${manifest.tag === 'latest'}
       )
       select
         exists (select 1 from ins_pkg) as "created",
