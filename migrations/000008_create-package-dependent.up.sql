@@ -1,15 +1,18 @@
 CREATE TABLE "package_dependent" (
   "dep_name" varchar(164) NOT NULL,
   "package_id" integer NOT NULL,
-  "version" varchar(64) NOT NULL,
   "dep_range" varchar(64) NOT NULL,
-  CONSTRAINT "package_dependent_pkey" PRIMARY KEY ("dep_name", "package_id", "version"),
-  CONSTRAINT "package_dependent_package_version_fkey" FOREIGN KEY ("package_id", "version") REFERENCES "public"."package_version"("package_id", "version") ON DELETE cascade ON UPDATE no action
-);
+  CONSTRAINT "package_dependent_pkey" PRIMARY KEY ("dep_name", "package_id"),
+  CONSTRAINT "package_dependent_package_id_package_id_fk" FOREIGN KEY ("package_id") REFERENCES "public"."package"("id") ON DELETE cascade ON UPDATE no action
+) WITH (fillfactor = 90);
 
-INSERT INTO "package_dependent" ("dep_name", "package_id", "version", "dep_range")
-SELECT d.key, pv."package_id", pv."version", d.value
-FROM "package_version" pv, jsonb_each_text(pv."dependencies") AS d
-WHERE pv."dependencies" IS NOT NULL AND pv."dependencies" != '{}'::jsonb;
+INSERT INTO "package_dependent" ("dep_name", "package_id", "dep_range")
+SELECT d.key, pv."package_id", d.value
+FROM "package_dist_tag" t
+JOIN "package_version" pv ON pv."package_id" = t."package_id" AND pv."version" = t."version"
+CROSS JOIN LATERAL jsonb_each_text(pv."dependencies") AS d
+WHERE t."tag" = 'latest'
+  AND pv."dependencies" IS NOT NULL
+  AND pv."dependencies" != '{}'::jsonb;
 
 ANALYZE "package_dependent";
