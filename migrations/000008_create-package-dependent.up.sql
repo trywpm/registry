@@ -6,6 +6,8 @@ CREATE TABLE "package_dependent" (
   CONSTRAINT "package_dependent_package_id_package_id_fk" FOREIGN KEY ("package_id") REFERENCES "public"."package"("id") ON DELETE cascade ON UPDATE no action
 ) WITH (fillfactor = 90);
 
+CREATE INDEX "idx_package_dependent_package_id" ON "package_dependent" ("package_id");
+
 INSERT INTO "package_dependent" ("dep_name", "package_id", "dep_range")
 SELECT d.key, pv."package_id", d.value
 FROM "package_dist_tag" t
