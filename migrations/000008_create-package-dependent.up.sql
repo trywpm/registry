@@ -1,3 +1,30 @@
+-- normalize dependency keys to lowercase.
+UPDATE "package_version" pv
+SET "dependencies" = (
+  SELECT jsonb_object_agg(lower(d.key), d.value)
+  FROM jsonb_each(pv."dependencies") AS d(key, value)
+)
+WHERE pv."dependencies" IS NOT NULL
+  AND pv."dependencies" != '{}'::jsonb
+  AND EXISTS (
+    SELECT 1 FROM jsonb_object_keys(pv."dependencies") AS k
+    WHERE k <> lower(k)
+  );
+
+-- remove dependencies on packages that don't exist.
+UPDATE "package_version" pv
+SET "dependencies" = (
+  SELECT jsonb_object_agg(d.key, d.value)
+  FROM jsonb_each(pv."dependencies") AS d(key, value)
+  WHERE EXISTS (SELECT 1 FROM "package" p WHERE p."name" = d.key)
+)
+WHERE pv."dependencies" IS NOT NULL
+  AND pv."dependencies" != '{}'::jsonb
+  AND EXISTS (
+    SELECT 1 FROM jsonb_object_keys(pv."dependencies") AS k
+    WHERE NOT EXISTS (SELECT 1 FROM "package" p WHERE p."name" = k)
+  );
+
 CREATE TABLE "package_dependent" (
   "dep_name" varchar(164) NOT NULL,
   "package_id" integer NOT NULL,
