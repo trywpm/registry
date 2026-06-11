@@ -392,3 +392,37 @@ export async function updateSearchIndex(d1: D1Database, manifest: Package) {
 
   await d1.batch(queries);
 }
+
+const QUALITY_SCORE_EXPR = `
+  ROUND(
+    MIN(40, (dependent_count * 5) + (LOG(MAX(1, downloads_per_week)) * 5))
+    + (CASE WHEN license IS NOT NULL AND length(license) > 0 THEN 10 ELSE 0 END)
+    + (CASE WHEN json_array_length(tags) > 0 THEN 10 ELSE 0 END)
+    + (CASE WHEN length(description) > 50 THEN 10 ELSE 0 END)
+    + MAX(0, MIN(30, 30 * (1 - (
+        ((CAST(strftime('%s', 'now') AS INTEGER) - CAST(strftime('%s', package_published) AS INTEGER)) / 604800)
+        / 52.0
+      ))))
+  , 1)`;
+
+export async function refreshSearchIndex(d1: D1Database) {
+  const dependentsStmt = `
+    UPDATE packages SET dependent_count = (
+      SELECT COUNT(*)
+      FROM package_dependencies
+      WHERE package_dependencies.target_name = packages.name
+    )
+    WHERE dependent_count IS NOT (
+      SELECT COUNT(*)
+      FROM package_dependencies
+      WHERE package_dependencies.target_name = packages.name
+    )
+  `;
+
+  const qualityStmt = `
+    UPDATE packages SET quality_score = ${QUALITY_SCORE_EXPR}
+    WHERE quality_score IS NOT ${QUALITY_SCORE_EXPR}
+  `;
+
+  await d1.batch([d1.prepare(dependentsStmt), d1.prepare(qualityStmt)]);
+}
