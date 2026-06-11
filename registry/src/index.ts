@@ -212,7 +212,7 @@ app.put('/:package/:version', async (c) => {
     .replaceAll(/[+/]|=+$/g, (m) => (m === '+' ? '-' : m === '/' ? '_' : ''));
   const stagingKey = `staging/${digestSegment}.tar.zst`;
 
-  const alreadyStaged = (await c.env.tarball.head(stagingKey)) != null;
+  const alreadyStaged = (await c.env.tarball.head(stagingKey).catch(() => null)) != null;
   if (alreadyStaged) {
     await reader.cancel();
   }
