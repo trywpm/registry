@@ -1,5 +1,7 @@
 import { Buffer } from 'node:buffer';
 
+import type { Package } from '@wpm/manifest';
+
 const CACHE_VERSION = 'v1';
 const CACHE_KEY_PREFIX = '__d1_internal-cache';
 
@@ -320,4 +322,73 @@ export async function searchPackages(
   ctx.waitUntil(cache.put(cacheKey, response));
 
   return finalResult;
+}
+
+export async function updateSearchIndex(d1: D1Database, manifest: Package) {
+  if (manifest.visibility !== 'public' || manifest.tag !== 'latest') {
+    return;
+  }
+
+  const queries = [];
+  const now = new Date().toISOString();
+  const deps = Object.keys(manifest.dependencies ?? {});
+  const tagsJson = JSON.stringify(manifest.tags ?? []);
+
+  queries.push(
+    d1
+      .prepare(
+        `INSERT INTO packages (name, type, version, description, tags, license, package_published)
+          VALUES (?, ?, ?, ?, ?, ?, ?)
+          ON CONFLICT(name) DO UPDATE SET
+            type=excluded.type,
+            version=excluded.version,
+            description=excluded.description,
+            tags=excluded.tags,
+            license=excluded.license,
+            package_published=excluded.package_published
+          WHERE excluded.version IS NOT packages.version
+            OR excluded.type IS NOT packages.type
+            OR excluded.description IS NOT packages.description
+            OR excluded.tags IS NOT packages.tags
+            OR excluded.license IS NOT packages.license`,
+      )
+      .bind(
+        manifest.name,
+        manifest.type,
+        manifest.version,
+        manifest.description || null,
+        tagsJson,
+        manifest.license || null,
+        now,
+      ),
+  );
+
+  if (deps.length > 0) {
+    const inPlaceholders = deps.map(() => '?').join(', ');
+
+    queries.push(
+      d1
+        .prepare(
+          `DELETE FROM package_dependencies WHERE source_name = ? AND target_name NOT IN (${inPlaceholders})`,
+        )
+        .bind(manifest.name, ...deps),
+    );
+
+    const placeholders = deps.map(() => '(?, ?)').join(', ');
+    const inputs = deps.flatMap((dep) => [manifest.name, dep]);
+
+    queries.push(
+      d1
+        .prepare(
+          `INSERT OR IGNORE INTO package_dependencies (source_name, target_name) VALUES ${placeholders}`,
+        )
+        .bind(...inputs),
+    );
+  } else {
+    queries.push(
+      d1.prepare(`DELETE FROM package_dependencies WHERE source_name = ?`).bind(manifest.name),
+    );
+  }
+
+  await d1.batch(queries);
 }
