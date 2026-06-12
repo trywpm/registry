@@ -1,342 +1,105 @@
-import type { Sql } from 'postgres';
-import type { UserWithToken } from '@wpm/db';
-
-import { Hono } from 'hono';
-import postgres from 'postgres';
-import { Registry } from '@wpm/db';
-import { Logger } from '@wpm/logger';
-import { Presigner } from '@wpm/storage';
-import { IPCidrMatcher } from '@wpm/net';
 import { UserError } from '@wpm/exception';
-import { canToken, canUser } from '@wpm/rbac';
-import { getAuthTokenHash, parseBearerToken } from '@wpm/auth';
-import { isValidPackageName, isValidSemver, PackageSchema, formatZodError } from '@wpm/manifest';
+import { isValidPackageName, isValidSemver, isValidTagName } from '@wpm/manifest/validator';
 
+import { publish } from '@/routes/publish';
 import { scheduler } from '@/scheduler';
-import { signManifest } from '@/lib/sign-manifest';
-import { uploadToStaging, uploadErrorResponse } from '@/lib/tarball';
-import { MAX_UPLOAD_SIZE, PackageStreamReader } from '@/lib/package-stream-reader';
+import { RequestContext } from '@/lib/context';
+import { json, notFound, decodeSegment, JSON_TYPE, HOME_BODY } from '@/http';
+import { whoami, redirectTag, serveTarball, serveManifest, servePackageDoc } from '@/routes/read';
 
-const app = new Hono<{
-  Bindings: Cloudflare.Env;
-  Variables: {
-    db: () => Sql;
-    repos: Registry;
-    user?: UserWithToken;
-    logger: Logger;
-    requestId: string;
-  };
-}>();
+async function handleRequest(request: Request, env: Cloudflare.Env): Promise<Response> {
+  const ctx = new RequestContext(request, env);
 
-// #region Bindings Middleware
-app.use('*', (c, next) => {
-  let dbInstance: Sql | null = null;
-
-  const getDb = (): Sql => {
-    dbInstance ??= postgres(c.env.pg.connectionString, {
-      max: 1,
-      fetch_types: false,
-      idle_timeout: 15,
-      connect_timeout: 10,
-    });
-
-    return dbInstance;
-  };
-
-  const logger = new Logger(c.env.APP_ENV === 'development' ? 10 : 30, '');
-  const requestId = c.req.header('Cf-Ray') ?? crypto.randomUUID();
-
-  c.set('db', getDb);
-  c.set('repos', new Registry(getDb, c.env.cache));
-  c.set('logger', logger.child({ requestId }));
-  c.set('requestId', requestId);
-
-  return next();
-});
-// #endregion
-
-// #region Authentication Middleware
-app.use('*', async (c, next) => {
-  // Check auth header requirements.
-  const authHeader = c.req.header('Authorization');
-  if (!authHeader) {
-    return next();
-  }
-
-  // Validate and parse token.
-  const bearerToken = parseBearerToken(authHeader);
-  if (!bearerToken) {
-    c.header('WWW-Authenticate', `Bearer realm="registry", error="invalid_token"`);
-    return c.json({ error: 'bad credentials' }, 401);
-  }
-
-  const repos = c.get('repos');
-  const tokenHash = await getAuthTokenHash(bearerToken, c.env.PAT_HMAC_KEY);
-
-  // Lookup token in database after hashing.
-  const user = await repos.users.getByToken(tokenHash);
-  if (!user) {
-    c.header('WWW-Authenticate', `Bearer realm="registry", error="invalid_token"`);
-    return c.json({ error: 'bad credentials' }, 401);
-  }
-
-  // Check user status.
-  if (user.status !== 'active') {
-    return c.json({ error: 'user account is not active' }, 403);
-  }
-
-  if (user.tokenExpiry && new Date(user.tokenExpiry).getTime() < Date.now()) {
-    c.header(
-      'WWW-Authenticate',
-      `Bearer realm="registry", error="invalid_token", error_description="token has expired"`,
-    );
-    return c.json({ error: 'token has expired' }, 401);
-  }
-
-  // Check CIDR restrictions.
-  if (user.tokenCidrs && user.tokenCidrs.length > 0) {
-    const ip = c.req.header('True-Client-IP');
-    if (!ip) {
-      return c.json({ error: 'unable to determine client ip' }, 500);
+  try {
+    return await route(ctx);
+  } catch (err) {
+    if (err instanceof UserError) {
+      return json({ error: err.message }, err.status);
     }
 
-    try {
-      const m = new IPCidrMatcher(user.tokenCidrs);
-      if (!m.contains(ip)) {
-        return c.json({ error: `ip ${ip} not in token allowlist` }, 403);
-      }
-    } catch {
-      return c.json({ error: 'invalid cidr configuration on token' }, 500);
-    }
+    ctx.logger().error('unhandled error', { err });
+    return json({ error: 'internal server error' }, 500);
+  }
+}
+
+function route(ctx: RequestContext): Promise<Response> | Response {
+  const url = ctx.req.url;
+  const method = ctx.req.method;
+
+  const start = url.indexOf('/', 8); // first '/' after "http(s)://"
+
+  let end = url.indexOf('?', start);
+  if (end === -1) {
+    end = url.length;
   }
 
-  c.set('user', user);
+  if (end - start === 1) {
+    return method === 'GET' ? new Response(HOME_BODY, { headers: JSON_TYPE }) : notFound();
+  }
 
-  return next();
-});
-// #endregion
+  if (method !== 'GET' && method !== 'PUT') {
+    return notFound();
+  }
 
-// #region Home Route
-app.get('/', (c) => c.json({ name: 'wpm registry', version: '0.1.0' }));
-// #endregion
+  const slash = url.indexOf('/', start + 1);
 
-// #region Package Publish Route
-app.put('/:package/:version', async (c) => {
-  const { package: name, version } = c.req.param();
+  // If only a single segment, it's `/:package` route.
+  if (slash === -1) {
+    return method === 'GET' ? servePackageDoc(ctx, url.slice(start + 1, end)) : notFound();
+  }
+
+  // Otherwise, parse the path as /:package/:selector (two non-empty segments).
+  // The meta routes like /-/whoami route naturally fits this shape because '-'
+  //  is never a valid package name. All parsing is constrained to `end`, ensuring
+  // that query string contents cannot influence path matching.
+  if (slash >= end - 1) {
+    return notFound();
+  }
+
+  // Reject paths with more than two segments.
+  const third = url.indexOf('/', slash + 1);
+  if (third !== -1 && third < end) {
+    return notFound();
+  }
+
+  const name = url.slice(start + 1, slash); // first segment.
+  const selector = decodeSegment(url.slice(slash + 1, end)); // second segment.
+  return method === 'GET' ? handleGet(ctx, name, selector) : publish(ctx, name, selector);
+}
+
+function handleGet(
+  ctx: RequestContext,
+  name: string,
+  selector: string,
+): Promise<Response> | Response {
+  if (name === '-') {
+    return selector === 'whoami' ? whoami(ctx) : notFound();
+  }
+
   if (!isValidPackageName(name)) {
-    return c.json({ error: 'not found' }, 404);
+    return notFound();
   }
 
-  if (!isValidSemver(version)) {
-    return c.json({ error: 'not found' }, 404);
+  if (selector.endsWith('.tar.zst')) {
+    // '.tar.zst'.length === 8
+    return serveTarball(ctx, name, selector.slice(0, -8));
   }
 
-  if (!c.req.raw.body) {
-    return c.json({ error: 'missing request body' }, 400);
+  if (isValidSemver(selector)) {
+    return serveManifest(ctx, name, selector);
   }
 
-  const contentLengthHeader = c.req.header('Content-Length');
-  if (!contentLengthHeader) {
-    return c.json({ error: 'missing content length header' }, 411);
+  if (isValidTagName(selector)) {
+    return redirectTag(ctx, name, selector);
   }
 
-  const contentLength = parseInt(contentLengthHeader, 10);
-  if (isNaN(contentLength) || contentLength <= 0) {
-    return c.json({ error: 'invalid content length header' }, 400);
-  }
+  return notFound();
+}
 
-  if (contentLength > MAX_UPLOAD_SIZE) {
-    return c.json({ error: 'payload too large' }, 413);
-  }
-
-  const user = c.get('user');
-  if (!user) {
-    return c.json({ error: 'requires authentication' }, 401);
-  }
-
-  if (!user.userId) {
-    throw new Error('authenticated user is missing userId');
-  }
-  if (!user.tokenId) {
-    throw new Error('authenticated user is missing tokenId');
-  }
-
-  if (!canToken(user.tokenScopes, 'publish', 'package')) {
-    return c.json({ error: 'missing token scope to publish package' }, 403);
-  }
-
-  const reader = new PackageStreamReader(c.req.raw.body);
-  const reject = async (error: string, status: 400 | 403 | 404 | 409) => {
-    await reader.cancel();
-    return c.json({ error }, status);
-  };
-
-  const manifest = await reader.getManifest();
-  const parsedManifest = await PackageSchema.safeParseAsync(manifest);
-  if (!parsedManifest.success) {
-    return reject(formatZodError(parsedManifest.error), 400);
-  }
-
-  if (parsedManifest.data.name !== name || parsedManifest.data.version !== version) {
-    return reject('bad request', 400);
-  }
-
-  if (4 + reader.manifestByteLength + parsedManifest.data.dist.packedSize !== contentLength) {
-    return reject('content-length does not match the framed payload size', 400);
-  }
-
-  const repos = c.get('repos');
-  const access = await repos.packages.getAccess(name, user.userId);
-  if (access) {
-    if (!access.role) {
-      return reject('not found', 404);
-    }
-    if (!canUser(access.role, 'publish', 'package')) {
-      return reject('user is not authorized to publish package', 403);
-    }
-    if (access.status !== 'active') {
-      return reject(`${name} is not accepting new versions`, 403);
-    }
-    if (await repos.packages.versionExists(access.id, version)) {
-      return reject(`${name}@${version} already exists`, 409);
-    }
-    if (access.type !== parsedManifest.data.type) {
-      return reject(`package type mismatch, expected ${access.type}`, 400);
-    }
-    if (access.visibility !== parsedManifest.data.visibility) {
-      return reject(`package visibility mismatch, expected ${access.visibility}`, 400);
-    }
-  }
-
-  const digestSegment = parsedManifest.data.dist.digest
-    .slice(7)
-    .replaceAll(/[+/]|=+$/g, (m) => (m === '+' ? '-' : m === '/' ? '_' : ''));
-  const stagingKey = `staging/${digestSegment}.tar.zst`;
-
-  const alreadyStaged = (await c.env.tarball.head(stagingKey).catch(() => null)) != null;
-  if (alreadyStaged) {
-    await reader.cancel();
-  }
-
-  const [sign, upload] = await Promise.allSettled([
-    signManifest(c.env, parsedManifest.data),
-    alreadyStaged
-      ? Promise.resolve()
-      : uploadToStaging(c.env, stagingKey, reader.getTarballStream(), parsedManifest.data.dist),
-  ]);
-
-  if (upload.status === 'rejected') {
-    c.get('logger').warn('tarball upload rejected', { err: upload.reason });
-    return uploadErrorResponse(upload.reason, parsedManifest.data.dist);
-  }
-
-  if (sign.status === 'rejected') {
-    c.get('logger').error('failed to sign manifest', { err: sign.reason });
-    return c.json({ error: 'internal server error' }, 500);
-  }
-
-  const stub = c.env.publish.getByName(name);
-  return stub.publish(parsedManifest.data, stagingKey, {
-    userId: user.userId,
-    requestId: c.get('requestId'),
-  });
-});
-// #endregion
-
-// #region Whoami Route
-app.get('/-/whoami', (c) => {
-  const user = c.get('user');
-  if (!user) {
-    return c.json({ error: 'unauthorized' }, 401);
-  }
-
-  return c.text(user.username);
-});
-// #endregion
-
-// #region Tarball Download Route
-app.get('/:package/:filename', async (c) => {
-  const { package: name, filename } = c.req.param();
-  if (!isValidPackageName(name)) {
-    return c.json({ error: 'not found' }, 404);
-  }
-
-  if (!filename.endsWith('.tar.zst')) {
-    return c.json({ error: 'not found' }, 404);
-  }
-
-  const version = filename.replace('.tar.zst', '');
-  if (!isValidSemver(version)) {
-    return c.json({ error: 'not found' }, 404);
-  }
-
-  const user = c.get('user');
-  if (!user) {
-    return c.json({ error: 'requires authentication' }, 401);
-  }
-
-  if (!user.userId) {
-    throw new Error('authenticated user is missing userId');
-  }
-  if (!user.tokenId) {
-    throw new Error('authenticated user is missing tokenId');
-  }
-
-  if (!canToken(user.tokenScopes, 'view', 'package')) {
-    return c.json({ error: 'missing token scope to access package' }, 403);
-  }
-
-  const repos = c.get('repos');
-  const access = await repos.packages.getAccess(name, user.userId);
-  if (!access || !access.role || access.status === 'deleted') {
-    return c.json({ error: 'not found' }, 404);
-  }
-
-  const p = new Presigner({
-    region: c.env.AWS_REGION,
-    bucket: c.env.S3_BUCKET,
-    endpoint: c.env.AWS_ENDPOINT_URL,
-    accessKeyId: c.env.AWS_ACCESS_KEY_ID,
-    secretAccessKey: c.env.AWS_SECRET_ACCESS_KEY,
-  });
-
-  const url = await p.get({
-    // This endpoint sits behind a top-level Cloudflare Snippet proxy.
-    // Public packages are served directly at the edge and never reach here.
-    //
-    // If execution reaches this point, we can assume one of two things:
-    // 1. The request is for a private package, or
-    // 2. The requested file does not exist in the S3 bucket
-    //    (for example, request to non-existent or a deleted package).
-    //
-    // In either case, we generate a signed URL and let the Cloudflare
-    // layer handle the final response flow.
-    key: `${access.visibility}/${name}/${version}.tar.zst`,
-    expiresIn: 3600,
-  });
-
-  return c.redirect(url, 302);
-});
-// #endregion
-
-// #region Error Handlers
-app.notFound((c) => c.json({ error: 'not found' }, 404));
-app.onError((err, c) => {
-  if (err instanceof UserError) {
-    return c.json({ error: err.message }, err.status);
-  }
-
-  c.get('logger').error('unhandled error', { err });
-  return c.json({ error: 'internal server error' }, 500);
-});
-// #endregion
-
-// #region Exports
 export default {
-  fetch: app.fetch,
-  scheduler,
+  fetch: handleRequest,
+  scheduled: scheduler,
 };
 
 // Durable Objects.
 export { Publish } from '@/publish';
-// #endregion
