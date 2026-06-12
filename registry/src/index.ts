@@ -80,6 +80,12 @@ function handleGet(
     return notFound();
   }
 
+  const c0 = selector.charCodeAt(0);
+  // first char is not 0-9.
+  if (c0 < 48 || c0 > 57) {
+    return isValidTagName(selector) ? redirectTag(ctx, name, selector) : notFound();
+  }
+
   if (selector.endsWith('.tar.zst')) {
     // '.tar.zst'.length === 8
     return serveTarball(ctx, name, selector.slice(0, -8));
@@ -89,11 +95,7 @@ function handleGet(
     return serveManifest(ctx, name, selector);
   }
 
-  if (isValidTagName(selector)) {
-    return redirectTag(ctx, name, selector);
-  }
-
-  return notFound();
+  return isValidTagName(selector) ? redirectTag(ctx, name, selector) : notFound();
 }
 
 export default {
