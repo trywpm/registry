@@ -3,18 +3,18 @@
   "private": true,
   "type": "module",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./validator": "./src/validator.ts"
   },
   "dependencies": {
+    "@wpm/semver-lite": "workspace:*",
     "@wpm/types": "workspace:*",
-    "semver": "catalog:",
     "zod": "catalog:"
   },
   "devDependencies": {
     "@fast-check/vitest": "catalog:",
     "@types/bun": "catalog:",
     "@types/node": "catalog:",
-    "@types/semver": "catalog:",
     "vitest": "catalog:"
   }
 }

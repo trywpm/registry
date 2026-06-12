@@ -1,7 +1,6 @@
 import { Buffer } from 'node:buffer';
 import { createHash } from 'node:crypto';
 
-import type { ZodType } from 'zod/v4';
 import { describe, it, expect } from 'vitest';
 
 import {
@@ -22,7 +21,10 @@ import type { PackageInput } from './manifest';
 // Test helpers
 // =====================================================================
 
-const accepts = (schema: ZodType, value: unknown): boolean => schema.safeParse(value).success;
+type ParseableSchema = { safeParse: (value: unknown) => { success: boolean } };
+
+const accepts = (schema: ParseableSchema, value: unknown): boolean =>
+  schema.safeParse(value).success;
 
 const validHash = Buffer.alloc(32).toString('base64');
 const validDigest = `sha256:${validHash}`;
@@ -408,7 +410,6 @@ describe('DependencyVersionSchema', () => {
       { case: 'exact semver', input: '1.2.3' },
       { case: 'prerelease', input: '2.0.0-beta.1' },
       { case: 'build metadata', input: '1.0.0+build.42' },
-      { case: 'wildcard', input: '*' },
     ])('$case', ({ input }) => {
       expect(accepts(DependencyVersionSchema, input)).toBe(true);
     });
@@ -793,10 +794,10 @@ describe('PackageSchema (field-level)', () => {
       }
       p.dependencies = deps;
     });
-    expectValid('wildcard version', (p) => {
+
+    expectInvalid('wildcard version', (p) => {
       p.dependencies = { 'some-pkg': '*' };
     });
-
     expectInvalid('over max (17)', (p) => {
       const deps: Record<string, string> = {};
       for (let i = 0; i < 17; i++) {

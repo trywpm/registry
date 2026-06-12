@@ -1,6 +1,14 @@
-import { z } from 'zod/v4';
-import { valid, validRange } from 'semver';
+import * as z from 'zod/v4-mini';
+import { isStrictSemver, isValidConstraint } from '@wpm/semver-lite';
 import { PACKAGE_NAME_REGEX, DIST_TAG_REGEX } from '@wpm/types';
+
+// Load English locale for zod error messages.
+//
+// This is loaded directly to avoid loading all of zod's locales
+// which would increase the bundle size significantly.
+import en from 'zod/v4/locales/en.js';
+
+z.config(en());
 
 export type PackageSignature = { keyid: string; sig: string };
 
@@ -74,126 +82,116 @@ const reserved = new Set([
   'wp-includes',
 ]);
 
-export const PackageNameSchema = z
-  .string()
-  .min(3, 'package name must be at least 3 characters')
-  .max(164, 'package name must be at most 164 characters')
-  .regex(
+export const PackageNameSchema = z.string().check(
+  z.minLength(3, 'package name must be at least 3 characters'),
+  z.maxLength(164, 'package name must be at most 164 characters'),
+  z.regex(
     PACKAGE_NAME_REGEX,
     'package name must consist of lowercase alphanumeric characters separated by hyphens',
-  )
-  .refine((name) => !reserved.has(name.toLowerCase()), {
+  ),
+  z.refine((name) => !reserved.has(name.toLowerCase()), {
     error: (issue) => `${String(issue.input)} is a restricted package name`,
-  });
+  }),
+);
 
-export const SemverSchema = z
-  .string()
-  .min(5, 'version must be at least 5 characters')
-  .max(64, 'version must be at most 64 characters')
-  .refine((v) => v === v.trim(), {
-    message: 'version cannot contain leading or trailing whitespace',
-  })
-  .refine((v) => !v.startsWith('v'), {
-    message: "version cannot start with 'v'",
-  })
-  .refine((v) => valid(v, { loose: false }) != null, {
-    message: 'version must be a valid semantic version',
-  });
+export const SemverSchema = z.string().check(
+  z.minLength(5, 'version must be at least 5 characters'),
+  z.maxLength(64, 'version must be at most 64 characters'),
+  z.refine((v) => v === v.trim(), 'version cannot contain leading or trailing whitespace'),
+  z.refine((v) => !v.startsWith('v'), "version cannot start with 'v'"),
+  z.refine((v) => isStrictSemver(v), 'version must be a valid semantic version'),
+);
 
-export const SemverConstraintSchema = z
-  .string()
-  .min(1, 'version constraint cannot be empty')
-  .max(64, 'version constraint must be at most 64 characters')
-  .refine((v) => v === v.trim(), {
-    message: 'version constraint cannot contain leading or trailing whitespace',
-  })
-  .refine((v) => !v.startsWith('v'), {
-    message: "version constraint cannot start with 'v'",
-  })
-  .refine((v) => validRange(v) != null, {
-    message: 'version constraint must be a valid semver range',
-  });
+export const SemverConstraintSchema = z.string().check(
+  z.minLength(1, 'version constraint cannot be empty'),
+  z.maxLength(64, 'version constraint must be at most 64 characters'),
+  z.refine(
+    (v) => v === v.trim(),
+    'version constraint cannot contain leading or trailing whitespace',
+  ),
+  z.refine((v) => !v.startsWith('v'), "version constraint cannot start with 'v'"),
+  z.refine((v) => isValidConstraint(v), 'version constraint must be a valid semver range'),
+);
 
-export const DistTagSchema = z
-  .string()
-  .min(3, 'tag must be at least 3 characters')
-  .max(64, 'tag must be at most 64 characters')
-  .regex(
-    DIST_TAG_REGEX,
-    'tag must consist of lowercase alphanumeric characters separated by hyphens',
-  )
-  .refine((t) => valid(t) == null && validRange(t) == null, {
-    message: 'tag cannot resemble a valid semantic version or range',
-  })
-  .default('latest');
+export const DistTagSchema = z._default(
+  z.string().check(
+    z.minLength(3, 'tag must be at least 3 characters'),
+    z.maxLength(64, 'tag must be at most 64 characters'),
+    z.regex(
+      DIST_TAG_REGEX,
+      'tag must consist of lowercase alphanumeric characters separated by hyphens',
+    ),
+    z.refine((t) => !isValidConstraint(t), 'tag cannot resemble a valid semantic version or range'),
+  ),
+  'latest',
+);
 
 export const DependencyVersionSchema = z
   .string()
-  .refine((val) => val === '*' || SemverSchema.safeParse(val).success, {
-    message: "dependency version must be '*' or a valid semantic version",
-  });
+  .check(
+    z.refine(
+      (val) => val.length <= 64 && isStrictSemver(val),
+      'dependency version must be a valid semantic version',
+    ),
+  );
 
 export const DigestSchema = z
   .string()
-  .regex(DIGEST_REGEX, "digest must be 'sha256:' followed by a 43-character base64-encoded hash");
+  .check(
+    z.regex(
+      DIGEST_REGEX,
+      "digest must be 'sha256:' followed by a 43-character base64-encoded hash",
+    ),
+  );
 
-const DescriptionField = z
-  .string()
-  .trim()
-  .refine((desc) => !DANGEROUS_CHARS_REGEX.test(desc), {
-    message: `description ${CONTROL_CHAR_ERROR}`,
-  })
-  .min(3, 'description must be at least 3 characters')
-  .max(512, 'description must be at most 512 characters');
+const DescriptionField = z.string().check(
+  z.trim(),
+  z.refine((desc) => !DANGEROUS_CHARS_REGEX.test(desc), `description ${CONTROL_CHAR_ERROR}`),
+  z.minLength(3, 'description must be at least 3 characters'),
+  z.maxLength(512, 'description must be at most 512 characters'),
+);
 
-const LicenseField = z
-  .string()
-  .normalize('NFC')
-  .trim()
-  .refine((lic) => !DANGEROUS_CHARS_REGEX.test(lic), {
-    message: `license ${CONTROL_CHAR_ERROR}`,
-  })
-  .min(3, 'license must be at least 3 characters')
-  .max(100, 'license must be at most 100 characters');
+const LicenseField = z.string().check(
+  z.normalize('NFC'),
+  z.trim(),
+  z.refine((lic) => !DANGEROUS_CHARS_REGEX.test(lic), `license ${CONTROL_CHAR_ERROR}`),
+  z.minLength(3, 'license must be at least 3 characters'),
+  z.maxLength(100, 'license must be at most 100 characters'),
+);
 
 const HomepageField = z
   .url({
     protocol: /^https?$/,
-    message: 'homepage must be a valid URL',
+    error: 'homepage must be a valid URL',
   })
-  .min(10, 'homepage url must be at least 10 characters')
-  .max(200, 'homepage url must be at most 200 characters');
+  .check(
+    z.minLength(10, 'homepage url must be at least 10 characters'),
+    z.maxLength(200, 'homepage url must be at most 200 characters'),
+  );
 
 const TagsField = z
   .array(
-    z
-      .string()
-      .normalize('NFC')
-      .trim()
-      .refine((tag) => !DANGEROUS_CHARS_REGEX.test(tag), {
-        message: `tag items ${CONTROL_CHAR_ERROR}`,
-      })
-      .min(2, 'tag must be at least 2 characters')
-      .max(64, 'tag must be at most 64 characters'),
+    z.string().check(
+      z.normalize('NFC'),
+      z.trim(),
+      z.refine((tag) => !DANGEROUS_CHARS_REGEX.test(tag), `tag items ${CONTROL_CHAR_ERROR}`),
+      z.minLength(2, 'tag must be at least 2 characters'),
+      z.maxLength(64, 'tag must be at most 64 characters'),
+    ),
   )
-  .max(5, 'tags must not have more than 5 items')
-  .refine((tags) => new Set(tags).size === tags.length, {
-    message: 'tags must be unique',
-  });
-
-const AuthorField = z
-  .string()
-  .normalize('NFC')
-  .trim()
-  .pipe(
-    z
-      .string()
-      .min(2, 'author name must be at least 2 characters')
-      .max(164, 'author name must be at most 164 characters')
-      .refine((name) => !DANGEROUS_CHARS_REGEX.test(name), {
-        message: `author field ${CONTROL_CHAR_ERROR}`,
-      }),
+  .check(
+    z.maxLength(5, 'tags must not have more than 5 items'),
+    z.refine((tags) => new Set(tags).size === tags.length, 'tags must be unique'),
   );
+
+const AuthorField = z.pipe(
+  z.string().check(z.normalize('NFC'), z.trim()),
+  z.string().check(
+    z.minLength(2, 'author name must be at least 2 characters'),
+    z.maxLength(164, 'author name must be at most 164 characters'),
+    z.refine((name) => !DANGEROUS_CHARS_REGEX.test(name), `author field ${CONTROL_CHAR_ERROR}`),
+  ),
+);
 
 const PackageTypeEnum = z.enum(['theme', 'plugin', 'mu-plugin'], {
   error: 'type must be one of theme, plugin, or mu-plugin',
@@ -204,8 +202,8 @@ const PackageVisibilityEnum = z.enum(['public', 'private'], {
 });
 
 const RequirementsSchema = z.strictObject({
-  wp: SemverConstraintSchema.optional(),
-  php: SemverConstraintSchema.optional(),
+  wp: z.optional(SemverConstraintSchema),
+  php: z.optional(SemverConstraintSchema),
 });
 
 const PackageDistSchema = z
@@ -213,52 +211,62 @@ const PackageDistSchema = z
     digest: DigestSchema,
     totalFiles: z
       .number()
-      .int()
-      .gt(0, 'total files must be greater than 0')
-      .lte(MAX_TOTAL_FILES, `total files must not exceed ${MAX_TOTAL_FILES}`),
+      .check(
+        z.int(),
+        z.gt(0, 'total files must be greater than 0'),
+        z.lte(MAX_TOTAL_FILES, `total files must not exceed ${MAX_TOTAL_FILES}`),
+      ),
     packedSize: z
       .number()
-      .int()
-      .gt(0, 'tarball size must be greater than 0')
-      .lte(
-        MAX_COMPRESSED_SIZE,
-        `tarball size must not exceed ${MAX_COMPRESSED_SIZE / (1024 * 1024)}MB`,
+      .check(
+        z.int(),
+        z.gt(0, 'tarball size must be greater than 0'),
+        z.lte(
+          MAX_COMPRESSED_SIZE,
+          `tarball size must not exceed ${MAX_COMPRESSED_SIZE / (1024 * 1024)}MB`,
+        ),
       ),
     unpackedSize: z
       .number()
-      .int()
-      .gt(0, 'unpacked size must be greater than 0')
-      .lte(
-        MAX_DECOMPRESSED_SIZE,
-        `unpacked size must not exceed ${MAX_DECOMPRESSED_SIZE / (1024 * 1024)}MB`,
+      .check(
+        z.int(),
+        z.gt(0, 'unpacked size must be greater than 0'),
+        z.lte(
+          MAX_DECOMPRESSED_SIZE,
+          `unpacked size must not exceed ${MAX_DECOMPRESSED_SIZE / (1024 * 1024)}MB`,
+        ),
       ),
-    signatures: z
-      .null()
-      .optional()
-      .transform((): PackageSignature[] => {
+    signatures: z.pipe(
+      z.optional(z.null()),
+      z.transform((): PackageSignature[] => {
         return [];
       }),
+    ),
   })
-  .refine(
-    (d) =>
-      d.packedSize < RATIO_CHECK_THRESHOLD ||
-      d.unpackedSize / d.packedSize <= MAX_COMPRESSION_RATIO,
-    { message: 'tarball compression ratio exceeds 99.6% (potential zip bomb)' },
+  .check(
+    z.refine(
+      (d) =>
+        d.packedSize < RATIO_CHECK_THRESHOLD ||
+        d.unpackedSize / d.packedSize <= MAX_COMPRESSION_RATIO,
+      'tarball compression ratio exceeds 99.6% (potential zip bomb)',
+    ),
   );
 
 const DependenciesSchema = z
   .record(PackageNameSchema, DependencyVersionSchema)
-  .refine((d) => Object.keys(d).length <= MAX_DEPENDENCIES, {
-    message: `cannot have more than ${MAX_DEPENDENCIES} (dev)dependencies`,
-  });
-
-const ReadmeField = z
-  .string()
-  .trim()
-  .max(100 * 1024, 'readme must be at most 100KB')
-  .transform((val) =>
-    val.replace(WEIRD_LINE_BREAKS_REGEX, ' ').replace(BAD_CHARS_REGEX, '').trim(),
+  .check(
+    z.refine(
+      (d) => Object.keys(d).length <= MAX_DEPENDENCIES,
+      `cannot have more than ${MAX_DEPENDENCIES} (dev)dependencies`,
+    ),
   );
+
+const ReadmeField = z.pipe(
+  z.string().check(z.trim(), z.maxLength(100 * 1024, 'readme must be at most 100KB')),
+  z.transform((val) =>
+    val.replace(WEIRD_LINE_BREAKS_REGEX, ' ').replace(BAD_CHARS_REGEX, '').trim(),
+  ),
+);
 
 type PackageWithDeps = {
   name: string;
@@ -266,7 +274,7 @@ type PackageWithDeps = {
   devDependencies?: Record<string, string>;
 };
 
-const checkDependencyIntegrity = (pkg: PackageWithDeps, ctx: z.RefinementCtx) => {
+const checkDependencyIntegrity = (pkg: PackageWithDeps, ctx: z.core.$RefinementCtx) => {
   if (pkg.dependencies?.[pkg.name] != null || pkg.devDependencies?.[pkg.name] != null) {
     ctx.addIssue({
       code: 'custom',
@@ -289,31 +297,33 @@ const checkDependencyIntegrity = (pkg: PackageWithDeps, ctx: z.RefinementCtx) =>
 export const PackageSchema = z
   .strictObject({
     name: PackageNameSchema,
-    description: DescriptionField.optional(),
+    description: z.optional(DescriptionField),
     type: PackageTypeEnum,
     version: SemverSchema,
-    requires: RequirementsSchema.optional(),
-    license: LicenseField.optional(),
-    author: AuthorField.optional(),
-    homepage: HomepageField.optional(),
-    tags: TagsField.optional(),
-    dependencies: DependenciesSchema.optional(),
-    devDependencies: DependenciesSchema.optional(),
+    requires: z.optional(RequirementsSchema),
+    license: z.optional(LicenseField),
+    author: z.optional(AuthorField),
+    homepage: z.optional(HomepageField),
+    tags: z.optional(TagsField),
+    dependencies: z.optional(DependenciesSchema),
+    devDependencies: z.optional(DependenciesSchema),
     tag: DistTagSchema,
     _wpm: SemverSchema,
     visibility: PackageVisibilityEnum,
     dist: PackageDistSchema,
-    readme: ReadmeField.optional(),
+    readme: z.optional(ReadmeField),
   })
-  .superRefine((pkg, ctx) => {
-    checkDependencyIntegrity(pkg, ctx);
-  });
+  .check(
+    z.superRefine((pkg, ctx) => {
+      checkDependencyIntegrity(pkg, ctx);
+    }),
+  );
 
 export type Package = z.infer<typeof PackageSchema>;
 export type PackageInput = z.input<typeof PackageSchema>;
 
-export const formatZodError = (error: z.ZodError): string => {
-  const issue = error.issues[0];
+export const formatZodError = (error: z.core.$ZodError): string => {
+  const issue = error.issues.find((i) => i.code !== 'unrecognized_keys') ?? error.issues[0];
   const path = issue.path.join('.');
 
   if (issue.code === 'unrecognized_keys') {
