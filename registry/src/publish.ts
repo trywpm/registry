@@ -173,6 +173,14 @@ export class Publish extends DurableObject {
     }
 
     try {
+      const { signManifest } = await import('@/lib/sign-manifest');
+      await signManifest(this.env, manifest);
+    } catch (err) {
+      logger.error('failed to sign manifest', { err });
+      return Response.json({ error: 'internal server error' }, { status: 500 });
+    }
+
+    try {
       const result = state
         ? await this.repos.packages.insertVersion(manifest, opts.userId, state.id)
         : await this.repos.packages.createWithVersion(manifest, opts.userId);
