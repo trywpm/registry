@@ -1,0 +1,14 @@
+{
+  "name": "@wpm/semver-lite",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": {
+      "import": "./src/index.ts"
+    }
+  },
+  "devDependencies": {
+    "@fast-check/vitest": "catalog:",
+    "vitest": "catalog:"
+  }
+}
