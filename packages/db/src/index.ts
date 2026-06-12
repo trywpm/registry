@@ -43,4 +43,4 @@ export class Registry {
 
 // export types
 export type { UserWithToken } from './users';
-export type { PublishState } from './packages';
+export type { PackageAccess, PublishState } from './packages';
