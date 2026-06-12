@@ -10,15 +10,21 @@ let baseLogger: Logger | undefined;
 export class RequestContext {
   readonly req: Request;
   readonly env: Cloudflare.Env;
+  readonly ctx: ExecutionContext;
 
   #user: Promise<UserWithToken | Response | null> | undefined;
   #repos: Registry | undefined;
   #logger: Logger | undefined;
   #requestId: string | undefined;
 
-  constructor(req: Request, env: Cloudflare.Env) {
+  constructor(req: Request, env: Cloudflare.Env, ctx: ExecutionContext) {
     this.req = req;
     this.env = env;
+    this.ctx = ctx;
+  }
+
+  waitUntil(promise: Promise<unknown>): void {
+    this.ctx.waitUntil(promise);
   }
 
   get requestId(): string {

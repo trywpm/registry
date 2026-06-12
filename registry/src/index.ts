@@ -7,8 +7,12 @@ import { RequestContext } from '@/lib/context';
 import { json, notFound, decodeSegment, JSON_TYPE, HOME_BODY } from '@/http';
 import { whoami, redirectTag, serveTarball, serveManifest, servePackageDoc } from '@/routes/read';
 
-async function handleRequest(request: Request, env: Cloudflare.Env): Promise<Response> {
-  const ctx = new RequestContext(request, env);
+async function handleRequest(
+  request: Request,
+  env: Cloudflare.Env,
+  ec: ExecutionContext,
+): Promise<Response> {
+  const ctx = new RequestContext(request, env, ec);
 
   try {
     return await route(ctx);
