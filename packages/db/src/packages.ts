@@ -21,6 +21,16 @@ export type PublishCommitResult = {
   committed: boolean;
 };
 
+export type ManifestMeta = {
+  v: Package['visibility'];
+  lm: string; // pre-formatted last-modified.
+};
+
+export type TagResult = {
+  version: string;
+  visibility: Package['visibility'];
+};
+
 export type Dependent = {
   id: PackageId;
   name: string;
@@ -34,7 +44,7 @@ export type DependentsPage = {
 const DEPENDENTS_PAGE_SIZE = 25;
 
 export class Packages extends Base {
-  async getAccess(name: string, userId: UserId) {
+  getAccess(name: string, userId: UserId) {
     return this.cached<PackageAccess>(
       `pkg:access:${name}:${userId}`,
       async () => {
@@ -48,8 +58,123 @@ export class Packages extends Base {
 
         return row ?? null;
       },
-      { ttl: 604800, cacheNull: true },
+      { ttl: 604800, cacheNull: true, cacheTtl: 60 },
     );
+  }
+
+  getManifest(name: string, version: string) {
+    return this.cachedBody<ManifestMeta>(
+      `pkg:manifest:${name}:${version}`,
+      async () => {
+        const [row] = await this.db<
+          [
+            {
+              visibility: Package['visibility'];
+              name: string;
+              type: PackageType;
+              version: string;
+              created: Date;
+              modified: Date;
+              requires: Package['requires'] | null;
+              dependencies: Package['dependencies'] | null;
+              dist: Package['dist'];
+              _wpm: string;
+            }?,
+          ]
+        >`
+          select
+            p."visibility",
+            p."name",
+            p."type",
+            pv."version",
+            pv."created",
+            pv."modified",
+            pv."requires",
+            pv."dependencies",
+            pv."dist",
+            pv."_wpm"
+          from "package_version" pv
+          join "package" p on p."id" = pv."package_id"
+          where p."name" = ${name} and pv."version" = ${version} and p."status" != 'deleted'
+        `;
+
+        if (!row) {
+          return null;
+        }
+
+        return {
+          value: JSON.stringify({
+            name: row.name,
+            type: row.type,
+            version: row.version,
+            requires: row.requires ?? undefined,
+            dependencies: row.dependencies ?? undefined,
+            dist: row.dist,
+            _wpm: row._wpm,
+            created: row.created,
+          }),
+          metadata: { v: row.visibility, lm: new Date(row.modified).toUTCString() },
+        };
+      },
+      { cacheNull: true, cacheTtl: 600 },
+    );
+  }
+
+  getPackageDocument(name: string) {
+    return this.cachedBody<{ v: Package['visibility'] }>(
+      `pkg:doc:${name}`,
+      async () => {
+        const [row] = await this.db<[{ visibility: Package['visibility']; body: string }?]>`
+          select
+            p."visibility",
+            json_build_object(
+              'name', p."name",
+              'dist-tags', coalesce(
+                (
+                  select jsonb_object_agg(pdt."tag", pdt."version")
+                  from "package_dist_tag" pdt
+                  where pdt."package_id" = p."id"
+                ),
+                '{}'::jsonb
+              ),
+              'versions', coalesce(
+                (
+                  select jsonb_object_agg(pv."version", coalesce(pv."requires", '{}'::jsonb))
+                  from "package_version" pv
+                  where pv."package_id" = p."id"
+                ),
+                '{}'::jsonb
+              ),
+              'created', p."created",
+              'modified', p."modified"
+            )::text as "body"
+          from "package" p
+          where p."name" = ${name} and p."status" != 'deleted'
+        `;
+
+        return row ? { value: row.body, metadata: { v: row.visibility } } : null;
+      },
+      { ttl: 86400, cacheNull: true, cacheTtl: 300 },
+    );
+  }
+
+  async getTagVersion(name: string, tag: string): Promise<TagResult | null> {
+    const hit = await this.cachedBody<{ v: Package['visibility'] }>(
+      `pkg:tag:${name}:${tag}`,
+      async () => {
+        const [row] = await this.db<[TagResult?]>`
+          select p."visibility", pdt."version"
+          from "package_dist_tag" pdt
+          join "package" p on p."id" = pdt."package_id"
+          where p."name" = ${name} and pdt."tag" = ${tag} and p."status" != 'deleted'
+        `;
+
+        return row ? { value: row.version, metadata: { v: row.visibility } } : null;
+      },
+      { ttl: 86400, cacheNull: true, cacheTtl: 60 },
+    );
+
+    return hit && { version: hit.value, visibility: hit.metadata.v };
   }
 
   async getDependents(depName: string, after: PackageId | null): Promise<DependentsPage> {
@@ -77,7 +202,7 @@ export class Packages extends Base {
           cursor: hasMore ? dependents[dependents.length - 1].id : null,
         };
       },
-      { ttl: 604800 },
+      { ttl: 604800, cacheTtl: 600 },
     );
 
     return page ?? { dependents: [], cursor: null };
@@ -95,7 +220,7 @@ export class Packages extends Base {
 
         return row.count;
       },
-      { ttl: 604800 },
+      { ttl: 604800, cacheTtl: 600 },
     );
 
     return count ?? 0;
@@ -225,6 +350,13 @@ export class Packages extends Base {
         exists (select 1 from ins_ver) as "committed"
     `;
 
+    if (row.committed) {
+      await this.invalidate([
+        `pkg:tag:${manifest.name}:${manifest.tag}`,
+        `pkg:doc:${manifest.name}`,
+      ]).catch(() => {});
+    }
+
     return { committed: row.committed, created: false };
   }
 
@@ -315,6 +447,13 @@ export class Packages extends Base {
 
     if (row.created) {
       await this.invalidate(`pkg:access:${manifest.name}:${userId}`).catch(() => {});
+    }
+
+    if (row.committed) {
+      await this.invalidate([
+        `pkg:tag:${manifest.name}:${manifest.tag}`,
+        `pkg:doc:${manifest.name}`,
+      ]).catch(() => {});
     }
 
     return row;
