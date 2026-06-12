@@ -16,14 +16,6 @@ type PublishOptions = {
   requestId: string;
 };
 
-type LockState = {
-  id: string;
-  ts: number;
-};
-
-const LEASE_MS = 5 * 60 * 1000;
-const DEADLINE_MS = 60 * 1000;
-
 let gfmReady: ReturnType<typeof init> | undefined;
 
 export class Publish extends DurableObject {
@@ -40,7 +32,7 @@ export class Publish extends DurableObject {
     return this._logger;
   }
 
-  /** Handle publish requests with a distributed lock to prevent concurrent publishes. */
+  /** Serialize and run a publish: validate, promote the tarball, sign, commit. */
   async publish(manifest: Package, stagingKey: string, opts: PublishOptions): Promise<Response> {
     const logger = this.logger.child({
       userId: opts.userId,
@@ -50,88 +42,29 @@ export class Publish extends DurableObject {
       requestId: opts.requestId,
     });
 
-    return this.withLock(logger, manifest.name, (lockId) =>
-      this.runPublish(manifest, stagingKey, opts, lockId, logger),
+    return this.ctx.blockConcurrencyWhile(() =>
+      this.runPublish(manifest, stagingKey, opts, logger),
     );
   }
 
-  /** Acquire a lock to ensure only one said operation can run at a time */
-  private async withLock(
-    logger: Logger,
-    subject: string,
-    work: (lockId: string) => Promise<Response>,
-  ): Promise<Response> {
-    const now = Date.now();
-    const lockId = crypto.randomUUID();
-
-    const lock = await this.ctx.storage.get<LockState>('lock');
-    if (lock && now - lock.ts < LEASE_MS) {
-      logger.warn('publish rejected, another publish in progress', {
-        lockAgeMs: now - lock.ts,
-      });
-
-      return Response.json(
-        { error: `${subject} is already being published, retry shortly` },
-        { status: 409 },
-      );
-    }
-
-    await this.ctx.storage.put<LockState>('lock', { id: lockId, ts: now });
-
-    const TIMED_OUT = Symbol('timed out');
-
-    let timer: ReturnType<typeof setTimeout> | undefined;
-    let timedOut = false;
-
-    try {
-      const result = await Promise.race([
-        work(lockId),
-        new Promise<typeof TIMED_OUT>((resolve) => {
-          timer = setTimeout(() => resolve(TIMED_OUT), DEADLINE_MS);
-        }),
-      ]);
-
-      if (result === TIMED_OUT) {
-        timedOut = true;
-        logger.error('publish exceeded deadline', { deadlineMs: DEADLINE_MS });
-        return Response.json({ error: 'publish timed out, retry shortly' }, { status: 503 });
-      }
-
-      return result;
-    } finally {
-      clearTimeout(timer);
-
-      if (!timedOut) {
-        try {
-          const current = await this.ctx.storage.get<LockState>('lock');
-          if (current?.id === lockId) {
-            await this.ctx.storage.delete('lock');
-          }
-        } catch (err) {
-          logger.warn('failed to release publish lock', { err });
-        }
-      }
-    }
-  }
-
-  private async ownsLock(lockId: string): Promise<boolean> {
-    const current = await this.ctx.storage.get<LockState>('lock');
-    return current?.id === lockId;
-  }
-
-  /** Validate, promote the staged tarball to its final key, and commit. */
+  /** Validate, promote the staged tarball to its final key, sign, and commit. */
   private async runPublish(
     manifest: Package,
     stagingKey: string,
     opts: PublishOptions,
-    lockId: string,
     logger: Logger,
   ): Promise<Response> {
-    const state = await this.repos.packages.getPublishState(
-      manifest.name,
-      manifest.version,
-      opts.userId,
-    );
+    let state: PublishState | null;
+    try {
+      state = await this.repos.packages.getPublishState(
+        manifest.name,
+        manifest.version,
+        opts.userId,
+      );
+    } catch (err) {
+      logger.error('failed to load publish state', { err });
+      return Response.json({ error: 'internal server error' }, { status: 500 });
+    }
 
     const validationError = this.validatePublishRequest(state, manifest);
     if (validationError) {
@@ -150,26 +83,10 @@ export class Publish extends DurableObject {
         return Response.json({ error: 'internal server error' }, { status: 500 });
       }
 
-      if (!(await this.ownsLock(lockId))) {
-        logger.error('lost publish lock before promote', { lockId });
-        return Response.json(
-          { error: `${manifest.name} is already being published, retry shortly` },
-          { status: 409 },
-        );
-      }
-
       await this.env.tarball.put(finalKey, staged.body, { sha256 });
     } catch (err) {
       logger.error('failed to promote tarball', { stagingKey, finalKey, err });
       return Response.json({ error: 'internal server error' }, { status: 500 });
-    }
-
-    if (!(await this.ownsLock(lockId))) {
-      logger.error('lost publish lock before commit', { lockId });
-      return Response.json(
-        { error: `${manifest.name} is already being published, retry shortly` },
-        { status: 409 },
-      );
     }
 
     try {
@@ -186,22 +103,18 @@ export class Publish extends DurableObject {
         : await this.repos.packages.createWithVersion(manifest, opts.userId);
 
       if (!result.committed) {
-        if (!state && !result.created) {
-          const fresh = await this.repos.packages.getPublishState(
-            manifest.name,
-            manifest.version,
-            opts.userId,
-          );
+        const fresh = await this.repos.packages.getPublishState(
+          manifest.name,
+          manifest.version,
+          opts.userId,
+        );
 
-          const verdict = this.validatePublishRequest(fresh, manifest);
-          if (verdict) {
-            return verdict;
-          }
+        const verdict = this.validatePublishRequest(fresh, manifest);
+        if (verdict) {
+          return verdict;
         }
 
-        logger.error('publish commit conflicted, this should not happen under the lock', {
-          created: result.created,
-        });
+        logger.error('publish commit conflicted', { created: result.created });
 
         return Response.json(
           { error: `${manifest.name}@${manifest.version} already exists` },
@@ -214,10 +127,12 @@ export class Publish extends DurableObject {
     }
 
     if (manifest.readme) {
-      const readme = manifest.readme;
-      (gfmReady ??= init(mod))
-        .then(() => this.env.readme.put(`${manifest.name}.html`, render(readme)))
-        .catch((err: unknown) => logger.error('Failed to upload readme', { err }));
+      try {
+        await (gfmReady ??= init(mod));
+        await this.env.readme.put(`${manifest.name}.html`, render(manifest.readme));
+      } catch (err) {
+        logger.error('Failed to upload readme', { err });
+      }
     }
 
     logger.info('Package published successfully');
