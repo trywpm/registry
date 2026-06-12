@@ -1,5 +1,3 @@
-import { Buffer } from 'node:buffer';
-
 const PREFIX = 'wpm_';
 const MAX_LEN = 128;
 const PAT_LENGTH = 64;
@@ -84,7 +82,7 @@ export async function getAuthTokenHash(token: string, hmacKey: string): Promise<
   const key = await getHmacKey(hmacKey);
   const sig = await crypto.subtle.sign('HMAC', key, encoder.encode(token));
 
-  return Buffer.from(sig).toString('base64url');
+  return new Uint8Array(sig).toBase64({ alphabet: 'base64url', omitPadding: true });
 }
 
 // ---------------------------------------

@@ -1,5 +1,3 @@
-import { Buffer } from 'node:buffer';
-
 const ALGO = 'AWS4-HMAC-SHA256';
 const SERVICE = 's3';
 const ENCODER = new TextEncoder();
@@ -22,7 +20,7 @@ function s3UriEncodeQuery(s: string): string {
 }
 
 function bytesToHex(buf: ArrayBuffer): string {
-  return Buffer.from(buf).toString('hex');
+  return new Uint8Array(buf).toHex();
 }
 
 type AmzDate = {
