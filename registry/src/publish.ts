@@ -2,13 +2,11 @@ import { Buffer } from 'node:buffer';
 import { DurableObject } from 'cloudflare:workers';
 
 import mod from 'gfm-wasm/wasm';
-import postgres from 'postgres';
 import { Logger } from '@wpm/logger';
 import { canUser } from '@wpm/rbac';
 import { Registry } from '@wpm/db';
 import { init, render } from 'gfm-wasm';
 
-import type { Sql } from 'postgres';
 import type { UserId } from '@wpm/types';
 import type { Package } from '@wpm/manifest';
 import type { PublishState } from '@wpm/db';
@@ -26,26 +24,14 @@ type LockState = {
 const LEASE_MS = 5 * 60 * 1000;
 const DEADLINE_MS = 60 * 1000;
 
-const gfmReady = init(mod);
+let gfmReady: ReturnType<typeof init> | undefined;
 
 export class Publish extends DurableObject {
-  private _db: Sql | undefined;
   private _repos: Registry | undefined;
   private _logger: Logger | undefined;
 
   get repos(): Registry {
-    const getDb = (): Sql => {
-      this._db ??= postgres(this.env.pg.connectionString, {
-        max: 1,
-        fetch_types: false,
-        idle_timeout: 15,
-        connect_timeout: 10,
-      });
-
-      return this._db;
-    };
-
-    this._repos ??= new Registry(getDb, this.env.cache);
+    this._repos ??= new Registry(this.env.cache, this.env.pg.connectionString);
     return this._repos;
   }
 
@@ -221,7 +207,7 @@ export class Publish extends DurableObject {
 
     if (manifest.readme) {
       const readme = manifest.readme;
-      gfmReady
+      (gfmReady ??= init(mod))
         .then(() => this.env.readme.put(`${manifest.name}.html`, render(readme)))
         .catch((err: unknown) => logger.error('Failed to upload readme', { err }));
     }
