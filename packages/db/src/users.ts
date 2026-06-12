@@ -15,7 +15,7 @@ export type UserWithToken = {
 };
 
 export class Users extends Base {
-  async getByToken(tokenHash: string) {
+  getByToken(tokenHash: string) {
     return this.cached<UserWithToken>(
       `user:by-token:${tokenHash}`,
       async () => {
@@ -37,8 +37,8 @@ export class Users extends Base {
         return row ?? null;
       },
 
-      // @todo: don't cache ephemeral tokens at all once oidc is implemented
-      { ttl: 604800, cacheNull: true }, // 7 days
+      // @todo: don't cache ephemeral tokens at all once oidc is implemented.
+      { ttl: 604800, cacheNull: true, cacheTtl: 300 }, // 7 days
     );
   }
 }
