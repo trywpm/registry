@@ -3,20 +3,33 @@ import type { Sql } from 'postgres';
 const NULL_TTL = 60; // 1 minute
 const NULL_SENTINEL = '__null__';
 
+type CacheOptions = {
+  ttl?: number;
+  force?: boolean;
+  cacheNull?: boolean;
+  cacheTtl?: number;
+};
+
 export abstract class Base {
   constructor(
-    protected readonly db: Sql,
+    private readonly getDb: () => Sql,
     protected readonly kv: KVNamespace,
   ) {}
+
+  protected get db(): Sql {
+    return this.getDb();
+  }
 
   protected async cached<T>(
     key: string,
     fn: () => Promise<T | null>,
-    options: { ttl?: number; force?: boolean; cacheNull?: boolean } = {},
+    options: CacheOptions = {},
   ): Promise<T | null> {
     if (!options.force) {
       try {
-        const raw = await this.kv.get(key);
+        const raw = options.cacheTtl
+          ? await this.kv.get(key, { cacheTtl: options.cacheTtl })
+          : await this.kv.get(key);
         if (raw != null) {
           const parsed = JSON.parse(raw);
           if (parsed === NULL_SENTINEL) {
@@ -41,6 +54,46 @@ export abstract class Base {
         }
       } else if (options.cacheNull) {
         await this.kv.put(key, JSON.stringify(NULL_SENTINEL), { expirationTtl: NULL_TTL });
+      }
+    } catch {}
+
+    return result;
+  }
+
+  protected async cachedBody<M>(
+    key: string,
+    fn: () => Promise<{ value: string; metadata: M } | null>,
+    options: CacheOptions = {},
+  ): Promise<{ value: string; metadata: M } | null> {
+    if (!options.force) {
+      try {
+        const hit = options.cacheTtl
+          ? await this.kv.getWithMetadata<M>(key, { cacheTtl: options.cacheTtl })
+          : await this.kv.getWithMetadata<M>(key);
+        if (hit.value === NULL_SENTINEL) {
+          return null;
+        }
+        if (hit.value != null && hit.metadata != null) {
+          return { value: hit.value, metadata: hit.metadata };
+        }
+      } catch {}
+    }
+
+    const result = await fn();
+
+    try {
+      if (result != null) {
+        if (!options.ttl || options.ttl >= 60) {
+          await this.kv.put(
+            key,
+            result.value,
+            options.ttl
+              ? { metadata: result.metadata, expirationTtl: options.ttl }
+              : { metadata: result.metadata },
+          );
+        }
+      } else if (options.cacheNull) {
+        await this.kv.put(key, NULL_SENTINEL, { expirationTtl: NULL_TTL });
       }
     } catch {}
 
