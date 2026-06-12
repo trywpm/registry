@@ -1,5 +1,5 @@
-import type { UserWithToken } from '@wpm/db';
 import type { RequestContext } from '@/lib/context';
+import type { UserWithToken, PackageAccess } from '@wpm/db';
 
 import { IPCidrMatcher } from '@wpm/net';
 import { canToken, canUser } from '@wpm/rbac';
@@ -66,7 +66,7 @@ export async function authenticate(ctx: RequestContext): Promise<UserWithToken |
 export async function requirePackageViewer(
   ctx: RequestContext,
   name: string,
-): Promise<Response | undefined> {
+): Promise<Response | PackageAccess> {
   const auth = await ctx.auth();
   if (auth instanceof Response) {
     return auth;
@@ -89,5 +89,5 @@ export async function requirePackageViewer(
     return notFound();
   }
 
-  return undefined;
+  return access;
 }
