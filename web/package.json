@@ -8,8 +8,8 @@
     "d1-migration": "wrangler d1 migrations apply registry_search_db --local"
   },
   "dependencies": {
-    "@clerk/clerk-js": "6.13.0",
-    "@clerk/ui": "1.14.0",
+    "@clerk/clerk-js": "6.14.0",
+    "@clerk/ui": "1.15.0",
     "@floating-ui/dom": "1.7.6",
     "@wpm/d1": "workspace:*",
     "@wpm/datetime": "workspace:*",
