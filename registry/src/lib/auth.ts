@@ -7,6 +7,27 @@ import { getAuthTokenHash, parseBearerToken } from '@wpm/auth';
 
 import { json, notFound } from '@/http';
 
+const LAST_USED_WINDOW_MS = 60 * 60 * 1000; // 1 hour
+const LAST_USED_MAX_TRACKED = 10_000;
+
+const lastUsedWrites = new Map<string, number>();
+
+function shouldRecordUsage(tokenHash: string): boolean {
+  const now = Date.now();
+  const last = lastUsedWrites.get(tokenHash);
+  if (last !== undefined && now - last < LAST_USED_WINDOW_MS) {
+    return false;
+  }
+
+  if (lastUsedWrites.size >= LAST_USED_MAX_TRACKED) {
+    lastUsedWrites.clear();
+  }
+
+  lastUsedWrites.set(tokenHash, now);
+
+  return true;
+}
+
 export async function authenticate(ctx: RequestContext): Promise<UserWithToken | Response | null> {
   // Check auth header requirements.
   const authHeader = ctx.req.headers.get('Authorization');
@@ -58,6 +79,14 @@ export async function authenticate(ctx: RequestContext): Promise<UserWithToken |
     } catch {
       return json({ error: 'invalid cidr configuration on token' }, 500);
     }
+  }
+
+  if (shouldRecordUsage(tokenHash)) {
+    ctx.waitUntil(
+      ctx.repos.tokens.updateLastUsed(tokenHash).catch((err) => {
+        ctx.logger().warn('failed to record token last_used', { err });
+      }),
+    );
   }
 
   return user;
