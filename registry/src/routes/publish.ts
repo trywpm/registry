@@ -104,26 +104,13 @@ export async function publish(
     }
   }
 
-  const digestSegment = parsedManifest.data.dist.digest
-    .slice(7)
-    .replaceAll(/[+/]|=+$/g, (m) => (m === '+' ? '-' : m === '/' ? '_' : ''));
-  const stagingKey = `staging/${digestSegment}.tar.zst`;
+  const stagingKey = `staging/${crypto.randomUUID()}.tar.zst`;
 
-  const alreadyStaged = (await ctx.env.tarball.head(stagingKey).catch(() => null)) != null;
-  if (alreadyStaged) {
-    await reader.cancel();
-  } else {
-    try {
-      await uploadToStaging(
-        ctx.env,
-        stagingKey,
-        reader.getTarballStream(),
-        parsedManifest.data.dist,
-      );
-    } catch (err) {
-      ctx.logger().warn('tarball upload rejected', { err });
-      return uploadErrorResponse(err, parsedManifest.data.dist);
-    }
+  try {
+    await uploadToStaging(ctx.env, stagingKey, reader.getTarballStream(), parsedManifest.data.dist);
+  } catch (err) {
+    ctx.logger().warn('tarball staging upload failed', { err });
+    return uploadErrorResponse(err, parsedManifest.data.dist);
   }
 
   const stub = ctx.env.publish.getByName(name);

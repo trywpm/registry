@@ -1,4 +1,3 @@
-import { Buffer } from 'node:buffer';
 import { DurableObject } from 'cloudflare:workers';
 
 import mod from 'gfm-wasm/wasm';
@@ -10,6 +9,8 @@ import { init, render } from 'gfm-wasm';
 import type { UserId } from '@wpm/types';
 import type { Package } from '@wpm/manifest';
 import type { PublishState } from '@wpm/db';
+
+import { getPresigner } from '@/lib/presigner';
 
 type PublishOptions = {
   userId: UserId;
@@ -42,9 +43,20 @@ export class Publish extends DurableObject {
       requestId: opts.requestId,
     });
 
-    return this.ctx.blockConcurrencyWhile(() =>
-      this.runPublish(manifest, stagingKey, opts, logger),
-    );
+    return this.ctx.blockConcurrencyWhile(async () => {
+      try {
+        return await this.runPublish(manifest, stagingKey, opts, logger);
+      } finally {
+        // The Postgres connection opened during runPublish is tied to this
+        // invocation's I/O context. Reusing it in a subsequent invocation can
+        // cause queries to hang (writes succeed, but responses never arrive),
+        // eventually triggering the 30s blockConcurrencyWhile reset. Close the
+        // connection here so each publish starts with a fresh connection,
+        // matching the per-request lifecycle used by the main worker's
+        // RequestContext.
+        await this._repos?.end();
+      }
+    });
   }
 
   /** Validate, promote the staged tarball to its final key, sign, and commit. */
@@ -73,19 +85,27 @@ export class Publish extends DurableObject {
 
     logger.info('Starting package publish');
 
-    const sha256 = Buffer.from(manifest.dist.digest.slice(7), 'base64'); // Remove "sha256:" prefix
     const finalKey = `${manifest.visibility}/${manifest.name}/${manifest.version}.tar.zst`;
 
     try {
-      const staged = await this.env.tarball.get(stagingKey);
-      if (!staged) {
-        logger.error('staging object missing', { stagingKey });
+      const res = await getPresigner(this.env).copy({
+        to: finalKey,
+        from: stagingKey,
+        rename: true,
+        expiresIn: 60,
+      });
+
+      if (!res.ok) {
+        logger.error('failed to promote tarball', {
+          finalKey,
+          stagingKey,
+          status: res.status,
+          statusText: res.statusText,
+        });
         return Response.json({ error: 'internal server error' }, { status: 500 });
       }
-
-      await this.env.tarball.put(finalKey, staged.body, { sha256 });
     } catch (err) {
-      logger.error('failed to promote tarball', { stagingKey, finalKey, err });
+      logger.error('failed to promote tarball', { finalKey, stagingKey, err });
       return Response.json({ error: 'internal server error' }, { status: 500 });
     }
 
@@ -122,6 +142,12 @@ export class Publish extends DurableObject {
         );
       }
     } catch (err) {
+      // Do NOT delete the promoted tarball here. If insertVersion fails, we cannot
+      // determine whether the commit actually succeeded. Deleting the tarball risks
+      // orphaning a committed version (DB row with no tarball), which is forbidden.
+      //
+      // A tarball with no committed DB row is acceptable and will be cleaned up by
+      // the reconciliation sweep.
       logger.error('Failed to publish package', { err });
       return Response.json({ error: 'internal server error' }, { status: 500 });
     }
