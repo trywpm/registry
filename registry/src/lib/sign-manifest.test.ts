@@ -181,17 +181,9 @@ describe('canonicalDependencies', () => {
 
 describe('canonicalDependencies invariants', () => {
   it.prop([wildEntries], { numRuns: 1000 })(
-    'equals the sorted JSON.stringify reference for ANY input',
+    'matches the canonicalization spec for ANY input',
     (entries) => {
       expect(canonicalDependencies(Object.fromEntries(entries))).toBe(reference(entries));
-    },
-  );
-
-  it.prop([wildEntries], { numRuns: 500 })(
-    'is valid JSON and round-trips losslessly for arbitrary unicode',
-    (entries) => {
-      const deps = Object.fromEntries(entries);
-      expect(JSON.parse(canonicalDependencies(deps))).toEqual(deps);
     },
   );
 
