@@ -1,8 +1,9 @@
 import { Buffer } from 'node:buffer';
 
-import { describe, it, expect, vi } from 'vitest';
+import { fc, it } from '@fast-check/vitest';
+import { describe, expect, vi } from 'vitest';
 
-import { signManifest } from './sign-manifest';
+import { canonicalDependencies, signManifest } from './sign-manifest';
 
 import type { Package } from '@wpm/manifest';
 
@@ -105,4 +106,105 @@ describe('signManifest payload', () => {
       },
     ]);
   });
+});
+
+// JSON-dangerous + representative characters, so the fuzz actually exercises escaping.
+const trickyChar = fc.constantFrom(
+  '"',
+  '\\',
+  '\n',
+  '\t',
+  '\r',
+  '<',
+  '>',
+  '&',
+  '/',
+  ' ',
+  ':',
+  ',',
+  '{',
+  '}',
+  '=',
+  'a',
+  '0',
+  '-',
+  'é',
+  '🔥',
+);
+const wild = fc.oneof(
+  fc.string(),
+  fc.array(trickyChar).map((cs) => cs.join('')),
+);
+// '__proto__' is excluded so the reference build below is unambiguous.
+const wildKey = wild.filter((k) => k !== '__proto__');
+const wildEntries = fc.uniqueArray(fc.tuple(wildKey, wild), { selector: ([k]) => k });
+const schemaName = fc.stringMatching(/^[a-z0-9-]+$/);
+const schemaVersion = fc.stringMatching(/^[a-z0-9.+~^<>=|* -]+$/);
+const schemaEntries = fc.uniqueArray(fc.tuple(schemaName, schemaVersion), {
+  selector: ([k]) => k,
+  maxLength: 32,
+});
+const reference = (entries: [string, string][]): string =>
+  `{${[...entries]
+    .toSorted(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
+    .map(([k, v]) => `${JSON.stringify(k)}:${JSON.stringify(v)}`)
+    .join(',')}}`;
+const goldens: [Record<string, string>, string][] = [
+  [{}, '{}'],
+  [{ woocommerce: '*' }, '{"woocommerce":"*"}'],
+  [
+    { woocommerce: '*', 'addon-pack': '2.1.0-rc.1' },
+    '{"addon-pack":"2.1.0-rc.1","woocommerce":"*"}',
+  ],
+  [{ wpa: '1.0.0', 'wp-cli': '2.0.0' }, '{"wp-cli":"2.0.0","wpa":"1.0.0"}'],
+  [{ '10': 'x', '2': 'y', '1': 'z' }, '{"1":"z","10":"x","2":"y"}'],
+];
+
+describe('canonicalDependencies', () => {
+  it.each(goldens)('serializes %o → %s', (deps, expected) => {
+    expect(canonicalDependencies(deps)).toBe(expected);
+  });
+
+  it('does NOT escape <, >, & (version ranges depend on this)', () => {
+    const out = canonicalDependencies({ a: '>=1.0.0', b: '<2.0.0', c: 'x&y' });
+    expect(out).toBe('{"a":">=1.0.0","b":"<2.0.0","c":"x&y"}');
+    expect(out).not.toMatch(/\\u00(3c|3e|26)/i);
+  });
+
+  it('JSON-escapes quotes and backslashes (round-trip-safe)', () => {
+    const deps = { 'a"b': 'c\\d' };
+    const out = canonicalDependencies(deps);
+    expect(out).toBe('{"a\\"b":"c\\\\d"}');
+    expect(JSON.parse(out)).toEqual(deps);
+  });
+});
+
+describe('canonicalDependencies invariants', () => {
+  it.prop([wildEntries], { numRuns: 1000 })(
+    'equals the sorted JSON.stringify reference for ANY input',
+    (entries) => {
+      expect(canonicalDependencies(Object.fromEntries(entries))).toBe(reference(entries));
+    },
+  );
+
+  it.prop([wildEntries], { numRuns: 500 })(
+    'is valid JSON and round-trips losslessly for arbitrary unicode',
+    (entries) => {
+      const deps = Object.fromEntries(entries);
+      expect(JSON.parse(canonicalDependencies(deps))).toEqual(deps);
+    },
+  );
+
+  it.prop([wildEntries], { numRuns: 500 })('is independent of key insertion order', (entries) => {
+    const forward = canonicalDependencies(Object.fromEntries(entries));
+    const reversed = canonicalDependencies(Object.fromEntries([...entries].toReversed()));
+    expect(reversed).toBe(forward);
+  });
+
+  it.prop([schemaEntries], { numRuns: 500 })(
+    'emits zero escape sequences for schema-valid inputs',
+    (entries) => {
+      expect(canonicalDependencies(Object.fromEntries(entries))).not.toContain('\\');
+    },
+  );
 });
