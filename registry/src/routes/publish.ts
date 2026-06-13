@@ -59,6 +59,22 @@ export async function publish(
     return json({ error: 'missing token scope to publish package' }, 403);
   }
 
+  const access = await ctx.repos.packages.getAccess(name, user.userId);
+  if (access) {
+    if (!access.role) {
+      return json({ error: 'not found' }, 404);
+    }
+    if (!canUser(access.role, 'publish', 'package')) {
+      return json({ error: 'user is not authorized to publish package' }, 403);
+    }
+    if (access.status !== 'active') {
+      return json({ error: `${name} is not accepting new versions` }, 403);
+    }
+    if (await ctx.repos.packages.versionExists(access.id, version)) {
+      return json({ error: `${name}@${version} already exists` }, 409);
+    }
+  }
+
   const reader = new PackageStreamReader(ctx.req.body);
   const reject = async (error: string, status: 400 | 403 | 404 | 409) => {
     await reader.cancel();
@@ -82,20 +98,7 @@ export async function publish(
     return reject('content-length does not match the framed payload size', 400);
   }
 
-  const access = await ctx.repos.packages.getAccess(name, user.userId);
   if (access) {
-    if (!access.role) {
-      return reject('not found', 404);
-    }
-    if (!canUser(access.role, 'publish', 'package')) {
-      return reject('user is not authorized to publish package', 403);
-    }
-    if (access.status !== 'active') {
-      return reject(`${name} is not accepting new versions`, 403);
-    }
-    if (await ctx.repos.packages.versionExists(access.id, version)) {
-      return reject(`${name}@${version} already exists`, 409);
-    }
     if (access.type !== parsedManifest.data.type) {
       return reject(`package type mismatch, expected ${access.type}`, 400);
     }
