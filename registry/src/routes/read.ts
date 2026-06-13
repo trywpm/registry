@@ -1,8 +1,8 @@
 import type { RequestContext } from '@/lib/context';
 
-import { Presigner } from '@wpm/storage';
 import { isValidPackageName, isValidSemver } from '@wpm/manifest/validator';
 
+import { getPresigner } from '@/lib/presigner';
 import { requirePackageViewer } from '@/lib/auth';
 import { json, notFound, TEXT_TYPE } from '@/http';
 
@@ -98,8 +98,6 @@ export async function redirectTag(
   });
 }
 
-let presigner: Presigner | undefined;
-
 export async function serveTarball(
   ctx: RequestContext,
   name: string,
@@ -122,15 +120,7 @@ export async function serveTarball(
     return access;
   }
 
-  presigner ??= new Presigner({
-    region: ctx.env.AWS_REGION,
-    bucket: ctx.env.S3_BUCKET,
-    endpoint: ctx.env.AWS_ENDPOINT_URL,
-    accessKeyId: ctx.env.AWS_ACCESS_KEY_ID,
-    secretAccessKey: ctx.env.AWS_SECRET_ACCESS_KEY,
-  });
-
-  const url = await presigner.get({
+  const url = await getPresigner(ctx.env).get({
     // This endpoint sits behind a top-level Cloudflare Snippet proxy.
     // Public packages are served directly at the edge and never reach here.
     //
