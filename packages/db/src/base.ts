@@ -2,6 +2,7 @@ import type { Sql } from 'postgres';
 
 const NULL_TTL = 60; // 1 minute
 const NULL_SENTINEL = '__null__';
+const isNullSentinel = (v: unknown): boolean => v === NULL_SENTINEL;
 
 type CacheOptions = {
   ttl?: number;
@@ -27,12 +28,11 @@ export abstract class Base {
   ): Promise<T | null> {
     if (!options.force) {
       try {
-        const raw = options.cacheTtl
-          ? await this.kv.get(key, { cacheTtl: options.cacheTtl })
-          : await this.kv.get(key);
-        if (raw != null) {
-          const parsed = JSON.parse(raw);
-          if (parsed === NULL_SENTINEL) {
+        const parsed = options.cacheTtl
+          ? await this.kv.get<T>(key, { type: 'json', cacheTtl: options.cacheTtl })
+          : await this.kv.get<T>(key, { type: 'json' });
+        if (parsed != null) {
+          if (isNullSentinel(parsed)) {
             return null;
           }
 
