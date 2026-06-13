@@ -32,14 +32,6 @@
     {
       "binding": "readme",
       "bucket_name": "wpm-readme-storage"
-    },
-    {
-      "binding": "manifest",
-      "bucket_name": "wpm-manifest-storage"
-    },
-    {
-      "binding": "tarball",
-      "bucket_name": "wpm-tarball-storage"
     }
   ],
   "kv_namespaces": [
