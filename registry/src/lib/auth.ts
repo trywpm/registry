@@ -45,9 +45,9 @@ export async function authenticate(ctx: RequestContext): Promise<UserWithToken |
 
   // Check CIDR restrictions.
   if (user.tokenCidrs && user.tokenCidrs.length > 0) {
-    const ip = ctx.req.headers.get('True-Client-IP');
+    const ip = ctx.req.headers.get('CF-Connecting-IP');
     if (!ip) {
-      return json({ error: 'unable to determine client ip' }, 500);
+      return json({ error: 'ip allowlist enforced but client ip is unavailable' }, 403);
     }
 
     try {
