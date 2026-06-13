@@ -206,6 +206,12 @@ importers:
       '@aws-sdk/s3-request-presigner':
         specifier: 3.1057.0
         version: 3.1057.0
+      '@wpm/exception':
+        specifier: workspace:*
+        version: link:../exception
+      '@wpm/util':
+        specifier: workspace:*
+        version: link:../util
     devDependencies:
       '@cloudflare/workers-types':
         specifier: 'catalog:'
