@@ -25,6 +25,11 @@ export class Registry {
       connect_timeout: 10,
     }));
 
+  async end(): Promise<void> {
+    await this.#sql?.end({ timeout: 5 });
+    this.#sql = undefined;
+  }
+
   get users() {
     this._users ??= new Users(this.db, this.kv);
     return this._users;
