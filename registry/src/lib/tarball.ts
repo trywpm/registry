@@ -1,6 +1,6 @@
-import { Buffer } from 'node:buffer';
-
 import type { Package } from '@wpm/manifest';
+
+import { getPresigner } from '@/lib/presigner';
 
 export async function uploadToStaging(
   env: Cloudflare.Env,
@@ -8,13 +8,21 @@ export async function uploadToStaging(
   tarballStream: ReadableStream,
   dist: Package['dist'],
 ): Promise<void> {
-  const fls = new FixedLengthStream(dist.packedSize);
-  await Promise.all([
-    tarballStream.pipeTo(fls.writable),
-    env.tarball.put(stagingKey, fls.readable, {
-      sha256: Buffer.from(dist.digest.slice(7), 'base64'), // Remove "sha256:" prefix
-    }),
-  ]);
+  const sha256 = dist.digest.slice(7);
+
+  const res = await getPresigner(env).upload({
+    key: stagingKey,
+    retries: 0,
+    expiresIn: 60,
+    verifySha256: sha256,
+    contentLength: dist.packedSize,
+    contentType: 'application/octet-stream',
+    body: () => tarballStream,
+  });
+
+  if (!res.ok) {
+    throw new Error(`staging upload failed: ${res.status} ${res.statusText}`);
+  }
 }
 
 export function uploadErrorResponse(err: unknown, dist: Package['dist']): Response {
