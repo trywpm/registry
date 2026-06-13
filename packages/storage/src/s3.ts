@@ -1,3 +1,8 @@
+import { createHash } from 'node:crypto';
+
+import { fetchWithRetry } from '@wpm/util';
+import { ChecksumMismatchError } from '@wpm/exception';
+
 const ALGO = 'AWS4-HMAC-SHA256';
 const SERVICE = 's3';
 const ENCODER = new TextEncoder();
@@ -112,7 +117,23 @@ export type PutResult = {
   readonly headers: Readonly<Record<string, string>>;
 };
 
-type Method = 'GET' | 'PUT';
+export type UploadArgs = PutArgs & {
+  readonly body: () => BodyInit | Promise<BodyInit>;
+  readonly retries?: number;
+  /** In-process sha256 verification of the body. */
+  readonly verifySha256?: string;
+};
+
+export type CopyArgs = {
+  readonly from: string;
+  readonly to: string;
+  readonly expiresIn: number;
+  readonly retries?: number;
+  /** Used for zero copy move in Tigris; ignored by plain S3. */
+  readonly rename?: boolean;
+};
+
+type Method = 'GET' | 'PUT' | 'DELETE';
 
 type SignArgs = {
   readonly key: string;
@@ -278,7 +299,7 @@ export class Presigner {
    *   verbatim on the actual PUT for the signature — and any digest check
    *   — to validate.
    */
-  async put(args: PutArgs): Promise<PutResult> {
+  private buildPutHeaders(args: PutArgs): Record<string, string> {
     const headers: Record<string, string> = {};
     if (args.contentType !== undefined) {
       headers['content-type'] = args.contentType;
@@ -297,6 +318,12 @@ export class Presigner {
       headers['x-amz-sdk-checksum-algorithm'] = 'SHA256';
     }
 
+    return headers;
+  }
+
+  async put(args: PutArgs): Promise<PutResult> {
+    const headers = this.buildPutHeaders(args);
+
     const r = await this.sign({
       key: args.key,
       method: 'PUT',
@@ -305,6 +332,102 @@ export class Presigner {
     });
 
     return { url: r.url, headers: { ...headers, host: this.host } };
+  }
+
+  /**
+   * Upload is a convenience wrapper around put that also sends the body
+   * and optionally verifies the sha256 digest in-process.
+   */
+  async upload(args: UploadArgs): Promise<Response> {
+    const headers = this.buildPutHeaders(args);
+    let hash: ReturnType<typeof createHash> | undefined;
+
+    const res = await fetchWithRetry(
+      async () => {
+        const r = await this.sign({
+          key: args.key,
+          method: 'PUT',
+          headers,
+          expiresIn: args.expiresIn,
+        });
+
+        let body = await args.body();
+        if (args.verifySha256 !== undefined && body instanceof ReadableStream) {
+          hash = createHash('sha256');
+          const h = hash;
+          body = body.pipeThrough(
+            new TransformStream<Uint8Array, Uint8Array>({
+              transform(chunk, controller) {
+                h.update(chunk);
+                controller.enqueue(chunk);
+              },
+            }),
+          );
+        }
+
+        return { url: r.url, init: { method: 'PUT', headers, body } };
+      },
+      { retries: args.retries },
+    );
+
+    // fetch resolves only after the body is fully sent ⇒ the hash is complete.
+    if (res.ok && hash !== undefined && hash.digest('base64') !== args.verifySha256) {
+      throw new ChecksumMismatchError(args.key);
+    }
+
+    return res;
+  }
+
+  /**
+   * Copy the object.
+   *
+   * Pass rename to true if the copy should be a zero-copy move
+   * (source removed) in Tigris; plain S3 ignores it and performs a byte copy.
+   */
+  async copy(args: CopyArgs): Promise<Response> {
+    const headers: Record<string, string> = {
+      'x-amz-copy-source': `${this.bucket}/${s3UriEncodePath(args.from)}`,
+    };
+    if (args.rename === true) {
+      headers['x-tigris-rename'] = 'true';
+    }
+
+    const res = await fetchWithRetry(
+      async () => {
+        const r = await this.sign({
+          key: args.to,
+          method: 'PUT',
+          headers,
+          expiresIn: args.expiresIn,
+        });
+        return { url: r.url, init: { method: 'PUT', headers } };
+      },
+      { retries: args.retries },
+    );
+
+    // CopyObject can return 200 with an <Error> body on slow S3 copies. Tigris
+    // rename is instant and returns cleanly, but surface the S3 case as failure.
+    if (res.ok) {
+      const text = await res.text();
+      if (text.includes('<Error')) {
+        return new Response(text, { status: 502 });
+      }
+
+      return new Response(null, { status: 200 });
+    }
+
+    return res;
+  }
+
+  /** Delete the object at `key`. */
+  async del(key: string, expiresIn: number, retries?: number): Promise<Response> {
+    return fetchWithRetry(
+      async () => {
+        const r = await this.sign({ key, method: 'DELETE', headers: null, expiresIn });
+        return { url: r.url, init: { method: 'DELETE' } };
+      },
+      { retries },
+    );
   }
 
   // test only helper. Not exported from module.

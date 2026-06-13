@@ -1,7 +1,9 @@
 import { Buffer } from 'node:buffer';
+import { createHash } from 'node:crypto';
 
 import { fc, it } from '@fast-check/vitest';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+import { ChecksumMismatchError } from '@wpm/exception';
 import { describe, expect, beforeAll, afterAll, afterEach, vi } from 'vitest';
 import { S3Client, GetObjectCommand, PutObjectCommand } from '@aws-sdk/client-s3';
 
@@ -48,6 +50,14 @@ function paramOf(url: string, name: string): string {
 function sigOf(url: string): string {
   return paramOf(url, 'X-Amz-Signature');
 }
+
+/** A fetch mock that drains the (tapped) request body so an inline hash runs. */
+const drainingFetch = async (_input: unknown, init?: RequestInit): Promise<Response> => {
+  if (init?.body) {
+    await new Response(init.body).arrayBuffer();
+  }
+  return new Response(null, { status: 200 });
+};
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -951,4 +961,139 @@ describe('Property: random PUT scenarios produce valid url+headers', () => {
       }
     },
   );
+});
+
+describe('CopyObject and Tigris rename', () => {
+  const p = new Presigner(CFG);
+
+  it('PUTs to the destination key and signs x-amz-copy-source', async () => {
+    let url = '';
+    let method: string | undefined;
+    let headers = new Headers();
+    vi.spyOn(globalThis, 'fetch').mockImplementation(async (input, init) => {
+      if (typeof input === 'string') {
+        url = input;
+      }
+      method = init?.method;
+      headers = new Headers(init?.headers);
+      return new Response('<CopyObjectResult></CopyObjectResult>', { status: 200 });
+    });
+
+    const res = await p.copy({
+      from: 'staging/abc.tar.zst',
+      to: 'public/pkg/1.0.0.tar.zst',
+      expiresIn: 60,
+    });
+
+    expect(res.ok).toBe(true);
+    expect(method).toBe('PUT');
+    expect(headers.get('x-amz-copy-source')).toBe(`${BUCKET}/staging/abc.tar.zst`);
+    expect(headers.get('x-tigris-rename')).toBeNull();
+    expect(new URL(url).pathname).toBe(`/${BUCKET}/public/pkg/1.0.0.tar.zst`);
+    expect(paramOf(url, 'X-Amz-SignedHeaders').split(';')).toContain('x-amz-copy-source');
+  });
+
+  it('rename:true sends and signs x-tigris-rename', async () => {
+    let url = '';
+    let headers = new Headers();
+    vi.spyOn(globalThis, 'fetch').mockImplementation(async (input, init) => {
+      if (typeof input === 'string') {
+        url = input;
+      }
+      headers = new Headers(init?.headers);
+      return new Response('', { status: 200 });
+    });
+
+    await p.copy({ from: 'staging/x', to: 'final/x', rename: true, expiresIn: 60 });
+
+    expect(headers.get('x-tigris-rename')).toBe('true');
+    const signed = paramOf(url, 'X-Amz-SignedHeaders').split(';');
+    expect(signed).toContain('x-tigris-rename');
+    expect(signed).toContain('x-amz-copy-source');
+  });
+
+  it('retries on 5xx then succeeds', async () => {
+    let calls = 0;
+    vi.spyOn(globalThis, 'fetch').mockImplementation(async () => {
+      calls += 1;
+      return new Response('', { status: calls === 1 ? 503 : 200 });
+    });
+
+    const res = await p.copy({ from: 'a', to: 'b', expiresIn: 60, retries: 1 });
+
+    expect(calls).toBe(2);
+    expect(res.ok).toBe(true);
+  });
+
+  it('surfaces a 200-with-<Error> body as 502', async () => {
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      new Response('<Error><Code>SlowDown</Code></Error>', { status: 200 }),
+    );
+
+    const res = await p.copy({ from: 'a', to: 'b', expiresIn: 60, retries: 0 });
+
+    expect(res.status).toBe(502);
+  });
+});
+
+describe('DeleteObject', () => {
+  const p = new Presigner(CFG);
+
+  it('sends a DELETE to the key', async () => {
+    let url = '';
+    let method: string | undefined;
+    vi.spyOn(globalThis, 'fetch').mockImplementation(async (input, init) => {
+      if (typeof input === 'string') {
+        url = input;
+      }
+      method = init?.method;
+      return new Response(null, { status: 204 });
+    });
+
+    const res = await p.del('public/pkg/1.0.0.tar.zst', 60);
+
+    expect(res.ok).toBe(true);
+    expect(method).toBe('DELETE');
+    expect(new URL(url).pathname).toBe(`/${BUCKET}/public/pkg/1.0.0.tar.zst`);
+  });
+});
+
+describe('upload with in-process checksum verification', () => {
+  const p = new Presigner(CFG);
+  const data = new TextEncoder().encode('the quick brown fox');
+  const digest = createHash('sha256').update(data).digest('base64');
+  const makeBody = (): ReadableStream<Uint8Array> =>
+    new ReadableStream({
+      start(c) {
+        c.enqueue(data);
+        c.close();
+      },
+    });
+
+  it('passes when the streamed bytes match verifySha256', async () => {
+    vi.spyOn(globalThis, 'fetch').mockImplementation(drainingFetch);
+
+    const res = await p.upload({
+      key: 'staging/x',
+      verifySha256: digest,
+      expiresIn: 60,
+      retries: 0,
+      body: makeBody,
+    });
+    expect(res.ok).toBe(true);
+  });
+
+  it('throws ChecksumMismatchError on a mismatch', async () => {
+    vi.spyOn(globalThis, 'fetch').mockImplementation(drainingFetch);
+
+    await expect(
+      p.upload({
+        key: 'staging/x',
+        verifySha256: `${'A'.repeat(43)}=`,
+        expiresIn: 60,
+        retries: 0,
+        body: makeBody,
+      }),
+    ).rejects.toThrow(ChecksumMismatchError);
+  });
 });
