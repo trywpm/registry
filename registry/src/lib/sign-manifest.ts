@@ -9,13 +9,16 @@ const MAX_PAYLOAD_BYTES = 4096;
 
 let kms: KmsClient | undefined;
 
-/** RFC 8785 (JCS) serialization of the dependencies map. */
-function canonicalDependencies(dependencies: Record<string, string>): string {
-  const entries = Object.keys(dependencies)
-    .toSorted()
-    .map((name) => `"${name}":"${dependencies[name]}"`);
-
-  return `{${entries.join(',')}}`;
+/**
+ * RFC 8785 (JCS)-compatible serialization of the dependencies map.
+ *
+ * This output is part of a cross-language signing contract: the resulting bytes
+ * are hashed into the signature payload and must be reproduced exactly by all
+ * implementations. Keys are serialized in UTF-16 code unit order and values are
+ * JSON-escaped.
+ */
+export function canonicalDependencies(dependencies: Record<string, string>): string {
+  return JSON.stringify(dependencies, Object.keys(dependencies).toSorted());
 }
 
 /**
