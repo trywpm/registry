@@ -22,6 +22,7 @@ export type PublishCommitResult = {
 };
 
 export type ManifestMeta = {
+  t: PackageType;
   v: Package['visibility'];
   lm: string; // pre-formatted last-modified.
 };
@@ -128,7 +129,7 @@ export class Packages extends Base {
             _wpm: row._wpm,
             created: row.created,
           }),
-          metadata: { v: row.visibility, lm: new Date(row.modified).toUTCString() },
+          metadata: { v: row.visibility, lm: new Date(row.modified).toUTCString(), t: row.type },
         };
       },
       { cacheNull: true, cacheTtl: 600 },
@@ -136,12 +137,15 @@ export class Packages extends Base {
   }
 
   getPackageDocument(name: string) {
-    return this.cachedBody<{ v: Package['visibility'] }>(
+    return this.cachedBody<{ v: Package['visibility']; t: PackageType }>(
       `pkg:doc:${name}`,
       async () => {
-        const [row] = await this.db<[{ visibility: Package['visibility']; body: string }?]>`
+        const [row] = await this.db<
+          [{ visibility: Package['visibility']; type: PackageType; body: string }?]
+        >`
           select
             p."visibility",
+            p."type",
             json_build_object(
               'name', p."name",
               'dist-tags', coalesce(
@@ -171,7 +175,7 @@ export class Packages extends Base {
           where p."name" = ${name} and p."status" != 'deleted'
         `;
 
-        return row ? { value: row.body, metadata: { v: row.visibility } } : null;
+        return row ? { value: row.body, metadata: { v: row.visibility, t: row.type } } : null;
       },
       { ttl: 86400, cacheNull: true, cacheTtl: 300 },
     );
