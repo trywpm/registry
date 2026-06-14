@@ -1,5 +1,5 @@
 {
-  "$schema": "http://json-schema.org/draft-07/schema",
+  "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "Schema for wpm configuration file",
   "type": "object",
   "properties": {
@@ -16,7 +16,7 @@
     },
     "type": {
       "type": "string",
-      "enum": ["theme", "plugin", "mu-plugin"],
+      "enum": ["theme", "plugin"],
       "description": "The type of package in the wp-content directory."
     },
     "description": {
@@ -67,13 +67,11 @@
       "maxItems": 5,
       "description": "Tags that help categorize the package."
     },
-    "team": {
-      "type": "array",
-      "items": {
-        "type": "string"
-      },
-      "maxItems": 100,
-      "description": "The team members responsible for the package."
+    "author": {
+      "type": "string",
+      "minLength": 2,
+      "maxLength": 164,
+      "description": "The author of the package."
     },
     "dependencies": {
       "type": "object",
@@ -129,15 +127,14 @@
   },
   "required": ["name"],
   "if": {
-    "not": {
-      "properties": {
-        "private": {
-          "const": true
-        }
+    "properties": {
+      "private": {
+        "const": true
       }
-    }
+    },
+    "required": ["private"]
   },
-  "then": {
+  "else": {
     "required": ["type", "version"]
   }
 }
