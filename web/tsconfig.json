@@ -12,6 +12,7 @@
   "include": ["src/**/*", "worker-types.d.ts"],
   "references": [
     { "path": "../packages/d1" },
+    { "path": "../packages/db" },
     { "path": "../packages/util" },
     { "path": "../packages/datetime" },
     { "path": "../packages/manifest" }

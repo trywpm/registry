@@ -13,6 +13,7 @@
     "@floating-ui/dom": "1.7.6",
     "@wpm/d1": "workspace:*",
     "@wpm/datetime": "workspace:*",
+    "@wpm/db": "workspace:*",
     "@wpm/manifest": "workspace:*",
     "@wpm/util": "workspace:*",
     "class-variance-authority": "0.7.1",

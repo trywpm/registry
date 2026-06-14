@@ -313,6 +313,9 @@ importers:
       '@wpm/datetime':
         specifier: workspace:*
         version: link:../packages/datetime
+      '@wpm/db':
+        specifier: workspace:*
+        version: link:../packages/db
       '@wpm/manifest':
         specifier: workspace:*
         version: link:../packages/manifest
