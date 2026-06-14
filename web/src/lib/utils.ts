@@ -33,7 +33,7 @@ export function humanSize(bytesNum: number, precision = 4) {
 
 export async function getCachedReadme(c: Context, key: string) {
   const cache = await caches.open('r2-cache');
-  const cacheKey = new Request(`https://r2-cache/${key}`);
+  const cacheKey = `https://r2-cache/${key}`;
 
   let response = await cache.match(cacheKey);
   if (response) {
@@ -83,18 +83,32 @@ export const getCanonicalUrl = (
   url: string | URL,
   queryParamsToPreserve: (typeof ALLOWED_QUERY_PARAMS)[number][] = [],
 ): string => {
+  if (queryParamsToPreserve.length === 0) {
+    if (typeof url !== 'string') {
+      return `${url.origin}${url.pathname}`;
+    }
+
+    let end = url.length;
+    const q = url.indexOf('?');
+    if (q !== -1) {
+      end = q;
+    }
+    const h = url.indexOf('#');
+    if (h !== -1 && h < end) {
+      end = h;
+    }
+
+    return url.slice(0, end);
+  }
+
   const newUrl = typeof url === 'string' ? new URL(url) : url;
   const canonical = new URL(newUrl.pathname, newUrl.origin);
-
-  if (queryParamsToPreserve.length > 0) {
-    queryParamsToPreserve.forEach((param) => {
-      if (newUrl.searchParams.has(param)) {
-        canonical.searchParams.set(param, newUrl.searchParams.get(param) ?? '');
-      }
-    });
-
-    canonical.searchParams.sort();
-  }
+  queryParamsToPreserve.forEach((param) => {
+    if (newUrl.searchParams.has(param)) {
+      canonical.searchParams.set(param, newUrl.searchParams.get(param) ?? '');
+    }
+  });
+  canonical.searchParams.sort();
 
   return canonical.toString();
 };
