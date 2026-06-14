@@ -1,11 +1,11 @@
 import type { Context } from 'hono';
 
 import {
-  ImgHandler,
+  imgHandler,
   EmbedsState,
   EmbedHandler,
-  LinksHandler,
-  ElementHandler,
+  linksHandler,
+  elementHandler,
   ShortcodeHandler,
   ScreenshotHandler,
   EnqueuedEmbedAsset,
@@ -47,23 +47,20 @@ export const PackagePage = async (c: Context) => {
 
   const manifest: Package & { created: string } = JSON.parse(result.value);
 
-  const embedsState = new EmbedsState();
-  const ssHandler = new ScreenshotHandler(manifest.name);
-
-  const rewriter = new HTMLRewriter()
-    .on('img', ssHandler)
-    .on('a', ssHandler)
-    .on('p', new ShortcodeHandler(embedsState))
-    .on('a[href]', new EmbedHandler(embedsState))
-    .on('*', new ElementHandler())
-    .on('img', new ImgHandler())
-    .on('a', new LinksHandler())
-    .on('*', new EnqueuedEmbedAsset(embedsState));
-
   const ogImage = `https://usercontent.wpm.so/og/${manifest.name}`;
 
   let readmeHtml = null;
   if (readme.body) {
+    const embedsState = new EmbedsState();
+    const rewriter = new HTMLRewriter()
+      .on('img, a', new ScreenshotHandler(manifest.name))
+      .on('p', new ShortcodeHandler(embedsState))
+      .on('a[href]', new EmbedHandler(embedsState))
+      .on('*', elementHandler)
+      .on('img', imgHandler)
+      .on('a', linksHandler)
+      .on('*', new EnqueuedEmbedAsset(embedsState));
+
     const transformedResponse = rewriter.transform(readme);
     readmeHtml = await transformedResponse.text();
   }
