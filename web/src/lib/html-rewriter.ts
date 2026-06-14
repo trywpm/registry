@@ -99,6 +99,10 @@ export class ShortcodeHandler {
   }
 
   text(chunk: Text) {
+    if (chunk.text.indexOf('[') === -1) {
+      return;
+    }
+
     const t = chunk.text.trim();
     if (!t.startsWith('[')) {
       return;
@@ -227,3 +231,7 @@ export class ScreenshotHandler {
     }
   }
 }
+
+export const imgHandler = new ImgHandler();
+export const linksHandler = new LinksHandler();
+export const elementHandler = new ElementHandler();
