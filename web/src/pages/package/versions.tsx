@@ -9,6 +9,19 @@ import { PackageHeader } from '@/components/package-header';
 import { PackageSidebar } from '@/components/package-sidebar';
 import { Card, CardTitle, CardHeader, CardContent, CardDescription } from '@/components/card';
 
+type Requires = { wp?: string; php?: string };
+
+const reqText = (req: Requires | undefined): string => {
+  const parts: string[] = [];
+  if (req?.wp) {
+    parts.push(`WP ${req.wp}`);
+  }
+  if (req?.php) {
+    parts.push(`PHP ${req.php}`);
+  }
+  return parts.join(' · ');
+};
+
 export const VersionsPage = async (c: Context) => {
   const name = c.req.param('name');
 
@@ -16,34 +29,32 @@ export const VersionsPage = async (c: Context) => {
     return c.notFound();
   }
 
-  const [versionsRes, manifestRes] = await Promise.all([
-    fetch(`https://registry.wpm.so/${name}`),
-    fetch(`https://registry.wpm.so/${name}/latest`),
-  ]);
+  const repos = c.get('repos');
 
-  if (!manifestRes.ok) {
+  const doc = await repos.packages.getPackageDocument(name);
+  if (!doc || doc.metadata.v !== 'public') {
     return c.notFound();
   }
 
-  const manifest = await manifestRes.json<
-    Package & {
-      created: string;
-    }
-  >();
+  const pkg: {
+    'dist-tags': Record<string, string>;
+    versions: Record<string, Requires>;
+  } = JSON.parse(doc.value);
 
-  manifest.requires ??= {};
-  manifest.dependencies ??= {};
-
-  const pkg = await versionsRes.json<{
-    versions?: string[];
-  }>();
-
-  if (!pkg.versions) {
-    return new Response(null, { status: 404 });
+  const latest = pkg['dist-tags'].latest;
+  if (!latest) {
+    return c.notFound();
   }
 
+  const result = await repos.packages.getManifest(name, latest);
+  if (!result) {
+    return c.notFound();
+  }
+
+  const manifest: Package & { created: string } = JSON.parse(result.value);
+
   const ogImage = `https://usercontent.wpm.so/og/${manifest.name}`;
-  const versions = pkg.versions.filter((v) => v !== manifest.version);
+  const versions = Object.keys(pkg.versions).filter((v) => v !== latest);
 
   return c.html(
     <BaseLayout
@@ -62,7 +73,7 @@ export const VersionsPage = async (c: Context) => {
                 type={manifest.type}
                 version={manifest.version}
                 tags={manifest.tags ?? []}
-                visibility={manifest.visibility}
+                visibility={doc.metadata.v}
                 description={manifest.description || 'No description provided.'}
                 created={manifest.created}
               />
@@ -79,27 +90,27 @@ export const VersionsPage = async (c: Context) => {
                   <CardContent>
                     <div class="space-y-3">
                       <div class="flex items-center justify-between p-4 border rounded-lg">
-                        <div class="flex items-center gap-3">
-                          <div>
-                            <div class="flex items-center gap-2 mb-1">
-                              <span class="font-mono font-semibold">{manifest.version}</span>
-                              <Badge variant="default">Latest</Badge>
-                            </div>
-                          </div>
+                        <div class="flex items-center gap-2">
+                          <span class="font-mono font-semibold">{manifest.version}</span>
+                          <Badge variant="default">Latest</Badge>
                         </div>
+                        {reqText(pkg.versions[latest]) ? (
+                          <span class="font-mono text-sm text-muted-foreground">
+                            {reqText(pkg.versions[latest])}
+                          </span>
+                        ) : null}
                       </div>
                       {versions.map((version) => (
                         <div
                           class="flex items-center justify-between p-4 border rounded-lg"
                           key={version}
                         >
-                          <div class="flex items-center gap-3">
-                            <div>
-                              <div class="flex items-center gap-2 mb-1">
-                                <span class="font-mono font-semibold">{version}</span>
-                              </div>
-                            </div>
-                          </div>
+                          <span class="font-mono font-semibold">{version}</span>
+                          {reqText(pkg.versions[version]) ? (
+                            <span class="font-mono text-sm text-muted-foreground">
+                              {reqText(pkg.versions[version])}
+                            </span>
+                          ) : null}
                         </div>
                       ))}
                     </div>

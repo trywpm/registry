@@ -11,28 +11,25 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 
 export const DependenciesPage = async (c: Context) => {
   const name = c.req.param('name');
-
   if (!name) {
     return c.notFound();
   }
 
-  const req = await fetch(`https://registry.wpm.so/${name}/latest`);
-  if (!req.ok) {
-    return new Response(null, { status: req.status });
+  const repos = c.get('repos');
+
+  const tag = await repos.packages.getTagVersion(name, 'latest');
+  if (!tag || tag.visibility !== 'public') {
+    return c.notFound();
   }
 
-  const manifest = await req.json<
-    Package & {
-      created: string;
-    }
-  >();
-
-  if (!manifest.name) {
-    return new Response(null, { status: 404 });
+  const result = await repos.packages.getManifest(name, tag.version);
+  if (!result) {
+    return c.notFound();
   }
 
-  manifest.requires ??= {};
-  manifest.dependencies ??= {};
+  const manifest: Package & { created: string } = JSON.parse(result.value);
+  const requires = manifest.requires ?? {};
+  const dependencies = manifest.dependencies ?? {};
 
   const ogImage = `https://usercontent.wpm.so/og/${manifest.name}`;
 
@@ -53,7 +50,7 @@ export const DependenciesPage = async (c: Context) => {
                 type={manifest.type}
                 version={manifest.version}
                 tags={manifest.tags ?? []}
-                visibility={manifest.visibility}
+                visibility={tag.visibility}
                 description={manifest.description || 'No description provided.'}
                 created={manifest.created}
               />
@@ -68,9 +65,9 @@ export const DependenciesPage = async (c: Context) => {
                   </CardHeader>
 
                   <CardContent className="space-y-3">
-                    {Object.keys(manifest.requires).length === 0 ? null : (
+                    {Object.keys(requires).length === 0 ? null : (
                       <div class="space-y-3">
-                        {Object.entries(manifest.requires).map((dep) => (
+                        {Object.entries(requires).map((dep) => (
                           <div
                             class="flex items-center justify-between p-3 border rounded-lg"
                             key={dep[0]}
@@ -84,13 +81,13 @@ export const DependenciesPage = async (c: Context) => {
                         ))}
                       </div>
                     )}
-                    {Object.keys(manifest.dependencies).length === 0 ? (
+                    {Object.keys(dependencies).length === 0 ? (
                       <p class="text-muted-foreground text-center py-8">
                         No dependencies found for this package.
                       </p>
                     ) : (
                       <div class="space-y-3">
-                        {Object.entries(manifest.dependencies).map((dep) => (
+                        {Object.entries(dependencies).map((dep) => (
                           <div
                             class="flex items-center justify-between p-3 border rounded-lg"
                             key={dep[0]}

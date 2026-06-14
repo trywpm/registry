@@ -30,20 +30,23 @@ export const PackagePage = async (c: Context) => {
     return c.notFound();
   }
 
-  const [readme, res] = await Promise.all([
+  const repos = c.get('repos');
+
+  const [readme, tag] = await Promise.all([
     getCachedReadme(c, `${name}.html`),
-    fetch(`https://registry.wpm.so/${name}/latest`),
+    repos.packages.getTagVersion(name, 'latest'),
   ]);
 
-  if (!res.ok) {
+  if (!tag || tag.visibility !== 'public') {
     return c.notFound();
   }
 
-  const manifest = await res.json<
-    Package & {
-      created: string;
-    }
-  >();
+  const result = await repos.packages.getManifest(name, tag.version);
+  if (!result) {
+    return c.notFound();
+  }
+
+  const manifest: Package & { created: string } = JSON.parse(result.value);
 
   const embedsState = new EmbedsState();
   const ssHandler = new ScreenshotHandler(manifest.name);
@@ -92,7 +95,7 @@ export const PackagePage = async (c: Context) => {
                 type={manifest.type}
                 version={manifest.version}
                 tags={manifest.tags ?? []}
-                visibility={manifest.visibility}
+                visibility={tag.visibility}
                 description={manifest.description || 'No description provided.'}
                 created={manifest.created}
               />
