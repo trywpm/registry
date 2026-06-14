@@ -75,6 +75,11 @@ export class Packages extends Base {
               version: string;
               created: Date;
               modified: Date;
+              description: string | null;
+              tags: string[] | null;
+              license: string | null;
+              homepage: string | null;
+              author: string | null;
               requires: Package['requires'] | null;
               dependencies: Package['dependencies'] | null;
               dist: Package['dist'];
@@ -89,6 +94,11 @@ export class Packages extends Base {
             pv."version",
             pv."created",
             pv."modified",
+            pv."description",
+            to_jsonb(pv."tags") as "tags",
+            pv."license",
+            pv."homepage",
+            pv."author",
             pv."requires",
             pv."dependencies",
             pv."dist",
@@ -107,6 +117,11 @@ export class Packages extends Base {
             name: row.name,
             type: row.type,
             version: row.version,
+            description: row.description ?? undefined,
+            tags: row.tags ?? undefined,
+            license: row.license ?? undefined,
+            homepage: row.homepage ?? undefined,
+            author: row.author ?? undefined,
             requires: row.requires ?? undefined,
             dependencies: row.dependencies ?? undefined,
             dist: row.dist,
@@ -131,19 +146,23 @@ export class Packages extends Base {
               'name', p."name",
               'dist-tags', coalesce(
                 (
-                  select jsonb_object_agg(pdt."tag", pdt."version")
+                  select json_object_agg(pdt."tag", pdt."version")
                   from "package_dist_tag" pdt
                   where pdt."package_id" = p."id"
                 ),
-                '{}'::jsonb
+                '{}'::json
               ),
               'versions', coalesce(
                 (
-                  select jsonb_object_agg(pv."version", coalesce(pv."requires", '{}'::jsonb))
+                  select json_object_agg(
+                    pv."version",
+                    coalesce(pv."requires", '{}'::jsonb)
+                    order by pv."created" desc
+                  )
                   from "package_version" pv
                   where pv."package_id" = p."id"
                 ),
-                '{}'::jsonb
+                '{}'::json
               ),
               'created', p."created",
               'modified', p."modified"
