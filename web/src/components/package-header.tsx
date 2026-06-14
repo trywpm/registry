@@ -22,6 +22,8 @@ export function PackageHeader({
   visibility,
   description,
 }: Props) {
+  const createdDate = new Date(created);
+
   return (
     <div class="space-y-4">
       {/* Header Row */}
@@ -38,9 +40,9 @@ export function PackageHeader({
           </div>
           <p
             class="text-gray-600 dark:text-gray-400 mt-1"
-            title={new Date(created).toLocaleString()}
+            title={createdDate.toLocaleString()}
           >
-            {version} &#8226; {visibility} &#8226; Published {readableTimeDiff(new Date(created))}
+            {version} &#8226; {visibility} &#8226; Published {readableTimeDiff(createdDate)}
           </p>
         </div>
       </div>
