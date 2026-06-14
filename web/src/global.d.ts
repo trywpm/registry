@@ -1,3 +1,7 @@
+type AppEnv = {
+  Bindings: Cloudflare.Env;
+};
+
 type WpmScrollLockState = {
   styleTag: HTMLStyleElement | null;
   activeContainers: Set<HTMLElement>;
