@@ -32,16 +32,15 @@ export const PackagePage = async (c: Context) => {
 
   const repos = c.get('repos');
 
-  const [readme, tag] = await Promise.all([
-    getCachedReadme(c, `${name}.html`),
-    repos.packages.getTagVersion(name, 'latest'),
-  ]);
-
+  const tag = await repos.packages.getTagVersion(name, 'latest');
   if (!tag || tag.visibility !== 'public') {
     return c.notFound();
   }
 
-  const result = await repos.packages.getManifest(name, tag.version);
+  const [readme, result] = await Promise.all([
+    getCachedReadme(c, `${name}.html`),
+    repos.packages.getManifest(name, tag.version),
+  ]);
   if (!result) {
     return c.notFound();
   }
