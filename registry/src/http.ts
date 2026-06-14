@@ -1,3 +1,5 @@
+import { cache } from '@/lib/cache';
+
 const NOT_FOUND_BODY = JSON.stringify({ error: 'not found' });
 
 export const JSON_TYPE = { 'Content-Type': 'application/json' };
@@ -12,7 +14,16 @@ export function json(body: unknown, status: number, headers?: Record<string, str
 }
 
 export const notFound = (): Response =>
-  new Response(NOT_FOUND_BODY, { status: 404, headers: JSON_TYPE });
+  new Response(NOT_FOUND_BODY, {
+    status: 404,
+    headers: { ...JSON_TYPE, 'Cache-Control': 'no-store' },
+  });
+
+export const notFoundCacheable = (name: string): Response =>
+  new Response(NOT_FOUND_BODY, {
+    status: 404,
+    headers: { ...JSON_TYPE, ...cache.notFound(name) },
+  });
 
 export function decodeSegment(segment: string): string {
   if (!segment.includes('%')) {

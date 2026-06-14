@@ -2,9 +2,10 @@ import type { RequestContext } from '@/lib/context';
 
 import { isValidPackageName, isValidSemver } from '@wpm/manifest/validator';
 
+import { cache } from '@/lib/cache';
 import { getPresigner } from '@/lib/presigner';
 import { requirePackageViewer } from '@/lib/auth';
-import { json, notFound, TEXT_TYPE } from '@/http';
+import { json, notFound, notFoundCacheable, TEXT_TYPE } from '@/http';
 
 export async function whoami(ctx: RequestContext): Promise<Response> {
   const auth = await ctx.auth();
@@ -26,7 +27,7 @@ export async function servePackageDoc(ctx: RequestContext, name: string): Promis
 
   const result = await ctx.repos.packages.getPackageDocument(name);
   if (!result) {
-    return notFound();
+    return notFoundCacheable(name);
   }
 
   if (result.metadata.v !== 'public') {
@@ -39,7 +40,9 @@ export async function servePackageDoc(ctx: RequestContext, name: string): Promis
   return new Response(result.value, {
     headers: {
       'Content-Type': 'application/json',
-      'Cache-Control': result.metadata.v === 'public' ? 'public, max-age=60' : 'no-store',
+      ...(result.metadata.v === 'public'
+        ? cache.public(name, result.metadata.t, true)
+        : cache.private),
     },
   });
 }
@@ -51,7 +54,7 @@ export async function serveManifest(
 ): Promise<Response> {
   const result = await ctx.repos.packages.getManifest(name, version);
   if (!result) {
-    return notFound();
+    return notFoundCacheable(name);
   }
 
   if (result.metadata.v !== 'public') {
@@ -63,8 +66,7 @@ export async function serveManifest(
 
   const headers: Record<string, string> = {
     'Last-Modified': result.metadata.lm,
-    'Cache-Control':
-      result.metadata.v === 'public' ? 'public, max-age=31536000, immutable' : 'no-store',
+    ...(result.metadata.v === 'public' ? cache.public(name, result.metadata.t) : cache.private),
   };
 
   if (ctx.req.headers.get('If-Modified-Since') === result.metadata.lm) {
@@ -82,7 +84,7 @@ export async function redirectTag(
 ): Promise<Response> {
   const result = await ctx.repos.packages.getTagVersion(name, tag);
   if (!result) {
-    return notFound();
+    return notFoundCacheable(name);
   }
 
   if (result.visibility !== 'public') {
