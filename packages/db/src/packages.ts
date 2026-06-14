@@ -132,7 +132,7 @@ export class Packages extends Base {
           metadata: { v: row.visibility, lm: new Date(row.modified).toUTCString(), t: row.type },
         };
       },
-      { cacheNull: true, cacheTtl: 600 },
+      { ttl: 604800, cacheNull: true, cacheTtl: 600 },
     );
   }
 
