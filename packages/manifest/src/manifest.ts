@@ -193,8 +193,8 @@ const AuthorField = z.pipe(
   ),
 );
 
-const PackageTypeEnum = z.enum(['theme', 'plugin', 'mu-plugin'], {
-  error: 'type must be one of theme, plugin, or mu-plugin',
+const PackageTypeEnum = z.enum(['theme', 'plugin'], {
+  error: 'type must be one of theme or plugin',
 });
 
 const PackageVisibilityEnum = z.enum(['public', 'private'], {

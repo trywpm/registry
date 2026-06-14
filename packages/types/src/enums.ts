@@ -1,4 +1,4 @@
-export const PACKAGE_TYPE = ['plugin', 'theme', 'mu-plugin'] as const;
+export const PACKAGE_TYPE = ['plugin', 'theme'] as const;
 export const PACKAGE_STATUS = ['active', 'deprecated', 'deleted'] as const;
 export const PACKAGE_VISIBILITY = ['public', 'private', 'restricted'] as const;
 

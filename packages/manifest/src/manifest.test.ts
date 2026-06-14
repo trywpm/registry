@@ -579,7 +579,8 @@ describe('PackageSchema (field-level)', () => {
     expectValid('plugin', (p) => {
       p.type = 'plugin';
     });
-    expectValid('mu-plugin', (p) => {
+    expectInvalid('mu-plugin', (p) => {
+      // @ts-expect-error -- mu-plugin is no longer a valid package type
       p.type = 'mu-plugin';
     });
     expectInvalid('library', (p) => {
