@@ -131,7 +131,7 @@ export async function serveTarball(
     //
     // In either case, we generate a signed URL and let the Cloudflare
     // layer handle the final response flow.
-    key: `${access.visibility}/${name}/${version}.tar.zst`,
+    key: `${access.visibility}-packages/${name}/${version}.tar.zst`,
     expiresIn: 3600,
   });
 

@@ -85,7 +85,7 @@ export class Publish extends DurableObject {
 
     logger.info('Starting package publish');
 
-    const finalKey = `${manifest.visibility}/${manifest.name}/${manifest.version}.tar.zst`;
+    const finalKey = `${manifest.visibility}-packages/${manifest.name}/${manifest.version}.tar.zst`;
 
     try {
       const res = await getPresigner(this.env).copy({
