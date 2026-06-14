@@ -11,7 +11,7 @@ import { WaitlistPage } from '@/pages/waitlist';
 import { PrivacyPolicyPage } from '@/pages/privacy';
 import { TermsOfServicePage } from '@/pages/terms';
 
-const homeRoute = new Hono();
+const homeRoute = new Hono<AppEnv>();
 
 homeRoute.get('/', (c) => {
   return HomePage(c);

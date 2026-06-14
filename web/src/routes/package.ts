@@ -4,7 +4,7 @@ import { PackagePage } from '@/pages/package';
 import { VersionsPage } from '@/pages/package/versions';
 import { DependenciesPage } from '@/pages/package/dependencies';
 
-const packageRoute = new Hono();
+const packageRoute = new Hono<AppEnv>();
 
 packageRoute.get('/:name', (c) => {
   return PackagePage(c);
