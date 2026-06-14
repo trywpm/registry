@@ -80,13 +80,13 @@ export default defineConfig(({ mode }) => ({
   },
   builder: {
     buildApp: async (builder) => {
-      // Build client assets first, so we can get the
-      // manifest and asset paths for the wpm_web worker.
+      // Build client assets first, so we can get the manifest and asset paths
+      // for the worker.
       await builder.build(builder.environments.client);
 
-      // `wpm_web` is coming from Cloudflare plugin.
-      // Build wpm_web worker, which depends on the client manifest.
-      await builder.build(builder.environments.wpm_web);
+      // `wpm_so` is coming from Cloudflare plugin.
+      // Build wpm_so worker, which depends on the client manifest.
+      await builder.build(builder.environments.wpm_so);
     },
   },
   environments: {
