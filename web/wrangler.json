@@ -18,6 +18,9 @@
       "enabled": true
     }
   },
+  "placement": {
+    "host": "us-east-5.pg.psdb.cloud:5432"
+  },
   "r2_buckets": [
     {
       "binding": "readme",
