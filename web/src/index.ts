@@ -1,4 +1,5 @@
 import { Hono } from 'hono';
+import { Registry } from '@wpm/db';
 import { trimTrailingSlash } from 'hono/trailing-slash';
 
 import { NotFound } from '@/pages/404';
@@ -7,12 +8,7 @@ import { ServerError } from '@/pages/500';
 import homeRoute from '@/routes/home';
 import packageRoute from '@/routes/package';
 
-const app = new Hono<{
-  Bindings: Cloudflare.Env;
-  Variables: {
-    cspNonce: string;
-  };
-}>({ strict: true });
+const app = new Hono<AppEnv>({ strict: true });
 
 app.use('*', trimTrailingSlash({ alwaysRedirect: true }));
 app.use('*', async (c, next) => {
@@ -34,6 +30,9 @@ app.use('*', async (c, next) => {
 
   c.set('cspNonce', nonce);
   c.header('Content-Security-Policy', csp);
+
+  // DB repos instance.
+  c.set('repos', new Registry(c.env.cache, c.env.pg.connectionString));
 
   await next();
 });
