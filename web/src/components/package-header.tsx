@@ -38,10 +38,7 @@ export function PackageHeader({
               {type}
             </Badge>
           </div>
-          <p
-            class="text-gray-600 dark:text-gray-400 mt-1"
-            title={createdDate.toLocaleString()}
-          >
+          <p class="text-gray-600 dark:text-gray-400 mt-1" title={createdDate.toLocaleString()}>
             {version} &#8226; {visibility} &#8226; Published {readableTimeDiff(createdDate)}
           </p>
         </div>
