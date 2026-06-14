@@ -21,5 +21,6 @@ export function ServerError(c: Context, err: Error) {
         </div>
       </main>
     </BaseLayout>,
+    500,
   );
 }

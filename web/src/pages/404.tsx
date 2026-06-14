@@ -19,5 +19,6 @@ export function NotFound(c: Context) {
         </div>
       </main>
     </BaseLayout>,
+    404,
   );
 }
