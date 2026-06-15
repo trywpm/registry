@@ -1,9 +1,11 @@
 import type { RequestContext } from '@/lib/context';
 
 import { canToken, canUser } from '@wpm/rbac';
+import { updateSearchIndex } from '@wpm/d1/search';
 import { isValidPackageName, isValidSemver } from '@wpm/manifest/validator';
 
 import { json, notFound } from '@/http';
+import { bustPackageCache } from '@/lib/cache';
 import { uploadToStaging, uploadErrorResponse } from '@/lib/tarball';
 import { MAX_UPLOAD_SIZE, PackageStreamReader } from '@/lib/package-stream-reader';
 
@@ -117,8 +119,24 @@ export async function publish(
   }
 
   const stub = ctx.env.publish.getByName(name);
-  return stub.publish(parsedManifest.data, stagingKey, {
+  const res = await stub.publish(parsedManifest.data, stagingKey, {
     userId: user.userId,
     requestId: ctx.requestId,
   });
+
+  if (res.status === 201) {
+    const m = parsedManifest.data;
+
+    ctx.waitUntil(
+      updateSearchIndex(ctx.env.registry_search, m).catch((err: unknown) =>
+        ctx.logger().error('search index update failed', { err, name: m.name }),
+      ),
+    );
+
+    if (m.visibility === 'public') {
+      ctx.waitUntil(bustPackageCache(ctx, m.name));
+    }
+  }
+
+  return res;
 }
