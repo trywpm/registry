@@ -270,7 +270,7 @@ export class KmsClient {
       requestHeaders['x-amz-security-token'] = this.sessionToken;
     }
 
-    if (process.env.APP_ENV !== 'development' && this.protocol === 'http:') {
+    if (this.protocol === 'http:' && process.env.APP_ENV !== 'development') {
       throw new Error('KmsClient: In production, only HTTPS is allowed');
     }
 
