@@ -41,6 +41,7 @@ export async function bustPackageCache(ctx: RequestContext, name: string): Promi
   }
 
   const result = await purgeCacheByTags(
+    // @ts-expect-error cloudflare env are only present in prod.
     { zoneId: ctx.env.CLOUDFLARE_ZONE_ID, apiToken: ctx.env.CLOUDFLARE_API_TOKEN },
     [`pkg:${name}`],
   );
