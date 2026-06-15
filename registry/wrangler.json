@@ -2,7 +2,7 @@
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "registry-wpm-so",
   "main": "src/index.ts",
-  "compatibility_date": "2026-01-23",
+  "compatibility_date": "2026-06-15",
   "compatibility_flags": ["nodejs_compat"],
   "keep_names": false,
   "minify": true,
