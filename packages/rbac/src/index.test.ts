@@ -11,6 +11,7 @@ describe('canUser (RBAC)', () => {
       ['team', 'delete'],
       ['team', 'manage_members'],
       ['package', 'view'],
+      ['package', 'edit'],
       ['package', 'delete'],
       ['package', 'publish'],
       ['package', 'deprecate'],
@@ -26,6 +27,7 @@ describe('canUser (RBAC)', () => {
       ['team', 'edit'],
       ['team', 'manage_members'],
       ['package', 'view'],
+      ['package', 'edit'],
       ['package', 'publish'],
       ['package', 'deprecate'],
       ['package', 'manage_members'],
@@ -284,11 +286,11 @@ describe('Strictness: Exhaustive Negative Space', () => {
   const expectedGrants: Record<Role, Record<Resource, Action[]>> = {
     admin: {
       team: ['view', 'edit', 'delete', 'manage_members'],
-      package: ['view', 'delete', 'publish', 'deprecate', 'manage_members'],
+      package: ['view', 'edit', 'delete', 'publish', 'deprecate', 'manage_members'],
     },
     maintainer: {
       team: ['view', 'edit', 'manage_members'],
-      package: ['view', 'publish', 'deprecate', 'manage_members'],
+      package: ['view', 'edit', 'publish', 'deprecate', 'manage_members'],
     },
     viewer: {
       team: ['view'],

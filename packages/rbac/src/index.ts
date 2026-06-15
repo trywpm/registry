@@ -17,6 +17,7 @@ const resourceRolePermissions: Record<
   package: {
     admin: {
       view: true,
+      edit: true,
       delete: true,
       publish: true,
       deprecate: true,
@@ -24,6 +25,7 @@ const resourceRolePermissions: Record<
     },
     maintainer: {
       view: true,
+      edit: true,
       publish: true,
       deprecate: true,
       manage_members: true,
