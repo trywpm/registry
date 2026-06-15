@@ -19,6 +19,7 @@
     "@wpm/rbac": "workspace:*",
     "@wpm/storage": "workspace:*",
     "@wpm/types": "workspace:*",
+    "@wpm/util": "workspace:*",
     "gfm-wasm": "1.0.1",
     "postgres": "catalog:"
   },

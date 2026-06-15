@@ -273,6 +273,9 @@ importers:
       '@wpm/types':
         specifier: workspace:*
         version: link:../packages/types
+      '@wpm/util':
+        specifier: workspace:*
+        version: link:../packages/util
       gfm-wasm:
         specifier: 1.0.1
         version: 1.0.1
