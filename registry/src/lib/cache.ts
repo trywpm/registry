@@ -1,4 +1,7 @@
+import type { RequestContext } from '@/lib/context';
 import type { PackageType } from '@wpm/types';
+
+import { purgeCacheByTags } from '@wpm/util';
 
 const PUBLIC = 'public, max-age=86400, s-maxage=604800, must-revalidate';
 
@@ -31,3 +34,22 @@ export const cache = {
     };
   },
 };
+
+export async function bustPackageCache(ctx: RequestContext, name: string): Promise<void> {
+  if (ctx.env.APP_ENV === 'development') {
+    return;
+  }
+
+  const result = await purgeCacheByTags(
+    { zoneId: ctx.env.CLOUDFLARE_ZONE_ID, apiToken: ctx.env.CLOUDFLARE_API_TOKEN },
+    [`pkg:${name}`],
+  );
+
+  if (!result.ok) {
+    ctx.logger().error('edge cache purge failed', {
+      name,
+      body: result.body,
+      status: result.status,
+    });
+  }
+}
