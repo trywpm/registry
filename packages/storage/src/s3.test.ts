@@ -801,6 +801,22 @@ describe('Endpoint parsing', () => {
   });
 });
 
+describe('Endpoint defaulting', () => {
+  it('derives the regional AWS host when no endpoint is given', () => {
+    const p = new Presigner({ ...CFG, endpoint: undefined, region: 'us-east-1' });
+    expect(p.host).toBe('s3.us-east-1.amazonaws.com');
+  });
+
+  it('treats an empty endpoint as absent', () => {
+    const p = new Presigner({ ...CFG, endpoint: '', region: 'eu-west-1' });
+    expect(p.host).toBe('s3.eu-west-1.amazonaws.com');
+  });
+
+  it('throws when neither endpoint nor region is given', () => {
+    expect(() => new Presigner({ ...CFG, endpoint: undefined, region: undefined })).toThrow();
+  });
+});
+
 describe('Region defaulting', () => {
   it("defaults to 'auto' when not provided", async () => {
     const p = new Presigner({ ...CFG });

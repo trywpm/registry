@@ -90,7 +90,7 @@ function buildCanonicalHeaders(headerMap: Map<string, string>): CanonicalHeaders
 export type PresignerConfig = {
   readonly region?: string;
   readonly bucket: string;
-  readonly endpoint: string;
+  readonly endpoint?: string;
   readonly accessKeyId: string;
   readonly secretAccessKey: string;
 
@@ -168,16 +168,15 @@ export class Presigner {
   constructor(cfg: PresignerConfig) {
     if (
       cfg.bucket.length === 0 ||
-      cfg.endpoint.length === 0 ||
       cfg.accessKeyId.length === 0 ||
       cfg.secretAccessKey.length === 0
     ) {
       throw new Error(
-        'Presigner: region, bucket, endpoint, accessKeyId, and secretAccessKey are required and must be non-empty strings',
+        'Presigner: bucket, accessKeyId, and secretAccessKey are required and must be non-empty strings',
       );
     }
 
-    if (cfg.endpoint.endsWith('/')) {
+    if (cfg.endpoint !== undefined && cfg.endpoint.endsWith('/')) {
       throw new Error('Presigner: endpoint must not have a trailing slash');
     }
 
@@ -188,13 +187,20 @@ export class Presigner {
     this.accessKeyId = cfg.accessKeyId;
     this.secretAccessKey = cfg.secretAccessKey;
 
-    const e = new URL(cfg.endpoint);
-    if (e.protocol !== 'https:' && e.protocol !== 'http:') {
-      throw new Error('Presigner: endpoint must have http or https scheme');
+    if (cfg.endpoint) {
+      const e = new URL(cfg.endpoint);
+      if (e.protocol !== 'https:' && e.protocol !== 'http:') {
+        throw new Error('Presigner: endpoint must have http or https scheme');
+      }
+      this.host = e.host;
+      this.protocol = e.protocol;
+    } else {
+      if (!cfg.region) {
+        throw new Error('Presigner: region is required when no endpoint is given');
+      }
+      this.host = `s3.${cfg.region}.amazonaws.com`;
+      this.protocol = 'https:';
     }
-
-    this.host = e.host;
-    this.protocol = e.protocol;
   }
 
   private getDaily(ymd: string): DailyCache | Promise<DailyCache> {
