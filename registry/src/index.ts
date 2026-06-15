@@ -2,6 +2,7 @@ import { UserError } from '@wpm/exception';
 import { isValidPackageName, isValidSemver, isValidTagName } from '@wpm/manifest/validator';
 
 import { publish } from '@/routes/publish';
+import { distTag } from '@/routes/dist-tag';
 import { scheduler } from '@/scheduler';
 import { RequestContext } from '@/lib/context';
 import { json, notFound, decodeSegment, JSON_TYPE, HOME_BODY } from '@/http';
@@ -41,34 +42,53 @@ function route(ctx: RequestContext): Promise<Response> | Response {
     return method === 'GET' ? new Response(HOME_BODY, { headers: JSON_TYPE }) : notFound();
   }
 
+  let slash = url.indexOf('/', start + 1);
+  if (slash >= end) {
+    slash = -1; // a '/' inside the query string is not a path separator
+  }
+  const first = url.slice(start + 1, slash === -1 ? end : slash);
+
+  // '-' is never a valid package name, so `/-/` is a collision-free meta namespace.
+  if (first === '-') {
+    return meta(ctx, slash === -1 ? '' : url.slice(slash + 1, end));
+  }
+
   if (method !== 'GET' && method !== 'PUT') {
     return notFound();
   }
 
-  const slash = url.indexOf('/', start + 1);
-
-  // If only a single segment, it's `/:package` route.
   if (slash === -1) {
-    return method === 'GET' ? servePackageDoc(ctx, url.slice(start + 1, end)) : notFound();
+    return method === 'GET' ? servePackageDoc(ctx, first) : notFound();
   }
 
-  // Otherwise, parse the path as /:package/:selector (two non-empty segments).
-  // The meta routes like /-/whoami route naturally fits this shape because '-'
-  //  is never a valid package name. All parsing is constrained to `end`, ensuring
-  // that query string contents cannot influence path matching.
   if (slash >= end - 1) {
     return notFound();
   }
 
-  // Reject paths with more than two segments.
   const third = url.indexOf('/', slash + 1);
   if (third !== -1 && third < end) {
     return notFound();
   }
 
-  const name = url.slice(start + 1, slash); // first segment.
-  const selector = decodeSegment(url.slice(slash + 1, end)); // second segment.
-  return method === 'GET' ? handleGet(ctx, name, selector) : publish(ctx, name, selector);
+  const selector = decodeSegment(url.slice(slash + 1, end));
+  return method === 'GET' ? handleGet(ctx, first, selector) : publish(ctx, first, selector);
+}
+
+/** Handles requests to the `/-/` meta namespace. */
+function meta(ctx: RequestContext, subpath: string): Promise<Response> | Response {
+  const parts = subpath.split('/');
+
+  if (parts[0] === 'whoami' && parts.length === 1) {
+    return ctx.req.method === 'GET' ? whoami(ctx) : notFound();
+  }
+
+  if (parts[0] === 'dist-tags' && parts.length === 3) {
+    const pkg = parts[1];
+    const tag = parts[2];
+    return pkg && tag ? distTag(ctx, pkg, decodeSegment(tag)) : notFound();
+  }
+
+  return notFound();
 }
 
 function handleGet(
@@ -76,22 +96,12 @@ function handleGet(
   name: string,
   selector: string,
 ): Promise<Response> | Response {
-  if (name === '-') {
-    return selector === 'whoami' ? whoami(ctx) : notFound();
-  }
-
   if (!isValidPackageName(name)) {
     return notFound();
   }
 
-  const c0 = selector.charCodeAt(0);
-  // first char is not 0-9.
-  if (c0 < 48 || c0 > 57) {
-    return isValidTagName(selector) ? redirectTag(ctx, name, selector) : notFound();
-  }
-
   if (selector.endsWith('.tar.zst')) {
-    // '.tar.zst'.length === 8
+    // '.tar.zst' is 8 characters.
     return serveTarball(ctx, name, selector.slice(0, -8));
   }
 
