@@ -445,9 +445,10 @@ export class Packages extends Base {
         insert into
           "package_dist_tag" ("tag", "package_id", "version")
         select
-          ${manifest.tag}, "package_id", "version"
+          t."tag", v."package_id", v."version"
         from
-          ins_ver
+          ins_ver v
+          cross join (select distinct unnest(array['latest', ${manifest.tag}]::text[]) as "tag") t
         on conflict ("tag", "package_id") do update
         set
           "version" = excluded."version"
@@ -480,5 +481,45 @@ export class Packages extends Base {
     }
 
     return row;
+  }
+
+  async setDistTag(
+    name: string,
+    packageId: PackageId,
+    tag: string,
+    version: string,
+  ): Promise<boolean> {
+    const [row] = await this.db<[{ package_id: PackageId }?]>`
+      insert into "package_dist_tag" ("tag", "package_id", "version")
+      select ${tag}, ${packageId}, ${version}
+      from "package_version" pv
+      where pv."package_id" = ${packageId} and pv."version" = ${version}
+      on conflict ("tag", "package_id") do update set "version" = excluded."version"
+      returning "package_id"
+    `;
+
+    if (!row) {
+      return false;
+    }
+
+    await this.invalidate([`pkg:tag:${name}:${tag}`, `pkg:doc:${name}`]).catch(() => {});
+
+    return true;
+  }
+
+  async removeDistTag(name: string, packageId: PackageId, tag: string): Promise<boolean> {
+    const [row] = await this.db<[{ tag: string }?]>`
+      delete from "package_dist_tag"
+      where "package_id" = ${packageId} and "tag" = ${tag} and "tag" <> 'latest'
+      returning "tag"
+    `;
+
+    if (!row) {
+      return false;
+    }
+
+    await this.invalidate([`pkg:tag:${name}:${tag}`, `pkg:doc:${name}`]).catch(() => {});
+
+    return true;
   }
 }
