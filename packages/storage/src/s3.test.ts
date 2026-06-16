@@ -1112,4 +1112,37 @@ describe('upload with in-process checksum verification', () => {
       }),
     ).rejects.toThrow(ChecksumMismatchError);
   });
+
+  it('frames the body with FixedLengthStream when contentLength is set', async () => {
+    const declared: number[] = [];
+    class FakeFixedLengthStream {
+      readable: ReadableStream;
+      writable: WritableStream;
+      constructor(length: number) {
+        declared.push(length);
+        const ts = new TransformStream();
+        this.readable = ts.readable;
+        this.writable = ts.writable;
+      }
+    }
+
+    vi.stubGlobal('FixedLengthStream', FakeFixedLengthStream);
+    vi.spyOn(globalThis, 'fetch').mockImplementation(drainingFetch);
+
+    try {
+      const res = await p.upload({
+        key: 'staging/x',
+        verifySha256: digest,
+        contentLength: data.byteLength,
+        expiresIn: 60,
+        retries: 0,
+        body: makeBody,
+      });
+
+      expect(res.ok).toBe(true);
+      expect(declared).toEqual([data.byteLength]);
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
 });
