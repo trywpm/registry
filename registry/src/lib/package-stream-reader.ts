@@ -125,9 +125,6 @@ export class PackageStreamReader {
 
     this.#reader.releaseLock();
 
-    const { readable, writable } = new TransformStream();
-    this.#stream.pipeTo(writable).catch(() => {});
-
-    return readable;
+    return this.#stream;
   }
 }
