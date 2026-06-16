@@ -1,5 +1,7 @@
 import type { Package } from '@wpm/manifest';
 
+import { ChecksumMismatchError } from '@wpm/exception';
+
 import { getPresigner } from '@/lib/presigner';
 
 export async function uploadToStaging(
@@ -8,21 +10,26 @@ export async function uploadToStaging(
   tarballStream: ReadableStream,
   dist: Package['dist'],
 ): Promise<void> {
-  const sha256 = dist.digest.slice(7);
-
   const res = await getPresigner(env).upload({
     key: stagingKey,
     retries: 0,
     expiresIn: 60,
-    verifySha256: sha256,
+    sha256: dist.digest.slice(7),
     contentLength: dist.packedSize,
     contentType: 'application/octet-stream',
     body: () => tarballStream,
   });
 
-  if (!res.ok) {
-    throw new Error(`staging upload failed: ${res.status} ${res.statusText}`);
+  if (res.ok) {
+    return;
   }
+
+  const body = await res.text();
+  if (body.includes('BadDigest') || body.includes('InvalidDigest')) {
+    throw new ChecksumMismatchError(stagingKey);
+  }
+
+  throw new Error(`staging upload failed: ${res.status} ${body}`);
 }
 
 export function uploadErrorResponse(err: unknown, dist: Package['dist']): Response {
