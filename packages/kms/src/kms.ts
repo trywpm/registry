@@ -75,6 +75,8 @@ export type KmsConfig = {
   readonly endpoint?: string;
   readonly maxRetries?: number;
   readonly retryBaseDelayMs?: number;
+  /** Abort each attempt after this many ms. */
+  readonly requestTimeoutMs?: number;
 
   // used in tests only
   readonly clock?: () => number;
@@ -147,6 +149,7 @@ export class KmsClient {
   private readonly sessionToken: string | null;
   private readonly maxRetries: number;
   private readonly retryBaseDelayMs: number;
+  private readonly requestTimeoutMs: number | null;
   private readonly clock: (() => number) | null;
 
   private cache: DailyCache | null = null;
@@ -172,6 +175,7 @@ export class KmsClient {
     this.sessionToken = cfg.sessionToken ?? null;
     this.maxRetries = cfg.maxRetries ?? 3;
     this.retryBaseDelayMs = cfg.retryBaseDelayMs ?? 100;
+    this.requestTimeoutMs = cfg.requestTimeoutMs ?? null;
     this.clock = cfg.clock ?? null;
 
     if (cfg.endpoint !== undefined) {
@@ -307,7 +311,12 @@ export class KmsClient {
     for (;;) {
       let res: Response;
       try {
-        res = await fetch(url, { method: 'POST', headers, body });
+        res = await fetch(url, {
+          method: 'POST',
+          headers,
+          body,
+          signal: this.requestTimeoutMs ? AbortSignal.timeout(this.requestTimeoutMs) : undefined,
+        });
       } catch (err) {
         if (attempt < this.maxRetries) {
           await sleep(

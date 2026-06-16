@@ -129,6 +129,8 @@ export type CopyArgs = {
   readonly to: string;
   readonly expiresIn: number;
   readonly retries?: number;
+  /** Abort each attempt after this many ms. */
+  readonly timeoutMs?: number;
   /** Used for zero copy move in Tigris; ignored by plain S3. */
   readonly rename?: boolean;
 };
@@ -421,7 +423,14 @@ export class Presigner {
           headers,
           expiresIn: args.expiresIn,
         });
-        return { url: r.url, init: { method: 'PUT', headers } };
+        return {
+          url: r.url,
+          init: {
+            method: 'PUT',
+            headers,
+            signal: args.timeoutMs ? AbortSignal.timeout(args.timeoutMs) : undefined,
+          },
+        };
       },
       { retries: args.retries },
     );

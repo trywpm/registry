@@ -23,6 +23,7 @@ export class Registry {
       fetch_types: false,
       idle_timeout: 15,
       connect_timeout: 10,
+      connection: { statement_timeout: 8_000 },
     }));
 
   async end(): Promise<void> {

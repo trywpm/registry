@@ -53,6 +53,8 @@ export async function signManifest(env: Cloudflare.Env, manifest: Package): Prom
     accessKeyId: env.AWS_ACCESS_KEY_ID,
     secretAccessKey: env.AWS_SECRET_ACCESS_KEY,
     endpoint: env.AWS_ENDPOINT_URL ? env.AWS_ENDPOINT_URL : undefined,
+    maxRetries: 2,
+    requestTimeoutMs: 5_000,
   });
 
   const res = await kms.sign({

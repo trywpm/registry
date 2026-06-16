@@ -93,6 +93,8 @@ export class Publish extends DurableObject {
         from: stagingKey,
         rename: true,
         expiresIn: 60,
+        retries: 1,
+        timeoutMs: 10_000,
       });
 
       if (!res.ok) {
