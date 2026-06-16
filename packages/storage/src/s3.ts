@@ -371,6 +371,21 @@ export class Presigner {
           );
         }
 
+        // A plain stream body is sent using chunked transfer encoding without a
+        // Content-Length header. S3 rejects presigned PUT requests in this case
+        // because Content-Length is part of the signed headers. As a result, larger
+        // uploads fail with HTTP 403. FixedLengthStream restores the known content
+        // length, ensuring the request includes a valid Content-Length header.
+        if (
+          args.contentLength !== undefined &&
+          body instanceof ReadableStream &&
+          typeof FixedLengthStream !== 'undefined'
+        ) {
+          const fixed = new FixedLengthStream(args.contentLength);
+          body.pipeTo(fixed.writable).catch(() => {});
+          body = fixed.readable;
+        }
+
         return { url: r.url, init: { method: 'PUT', headers, body } };
       },
       { retries: args.retries },
