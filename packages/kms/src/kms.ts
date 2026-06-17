@@ -1,6 +1,4 @@
 /* cspell:words RSASSA */
-import { Buffer } from 'node:buffer';
-
 const ALGO = 'AWS4-HMAC-SHA256';
 const SERVICE = 'kms';
 const TERMINATOR = 'aws4_request';
@@ -17,13 +15,13 @@ const RETRYABLE_ERRORS = new Set([
 ]);
 
 function bytesToHex(buf: ArrayBuffer): string {
-  return Buffer.from(buf).toString('hex');
+  return new Uint8Array(buf).toHex();
 }
 function bytesToB64(buf: Uint8Array): string {
-  return Buffer.from(buf).toString('base64');
+  return buf.toBase64();
 }
 function b64ToBytes(s: string): Uint8Array {
-  return new Uint8Array(Buffer.from(s, 'base64'));
+  return Uint8Array.fromBase64(s);
 }
 
 async function hmacRaw(keyData: BufferSource, msg: string): Promise<ArrayBuffer> {

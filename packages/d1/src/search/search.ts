@@ -1,5 +1,3 @@
-import { Buffer } from 'node:buffer';
-
 import type { Package } from '@wpm/manifest';
 
 const CACHE_VERSION = 'v1';
@@ -190,15 +188,18 @@ function prepareFtsQuery(q: string): string {
     .join(' ');
 }
 
+const CURSOR_ENCODER = new TextEncoder();
+const CURSOR_DECODER = new TextDecoder();
+
 function encodeCursor(value: string | number, id: number) {
   const str = JSON.stringify({ v: value, i: id });
-  return Buffer.from(str, 'utf-8').toString('base64url');
+  return CURSOR_ENCODER.encode(str).toBase64({ alphabet: 'base64url', omitPadding: true });
 }
 
 function decodeCursor(cursor: string) {
   try {
-    const decodedStr = Buffer.from(cursor, 'base64url').toString('utf-8');
-    const parsed = JSON.parse(decodedStr);
+    const bytes = Uint8Array.fromBase64(cursor, { alphabet: 'base64url' });
+    const parsed = JSON.parse(CURSOR_DECODER.decode(bytes));
     return { value: parsed.v, id: Number(parsed.i) };
   } catch {
     return null;

@@ -1,11 +1,9 @@
-import crypto from 'node:crypto';
-import { Buffer } from 'node:buffer';
-
 import { KmsClient } from '@wpm/kms';
 
 import type { Package } from '@wpm/manifest';
 
 const MAX_PAYLOAD_BYTES = 4096;
+const ENCODER = new TextEncoder();
 
 let kms: KmsClient | undefined;
 
@@ -27,23 +25,24 @@ export function canonicalDependencies(dependencies: Record<string, string>): str
  *   name:version:digest                user-facing, when dependencies are absent or {}
  *   name:version:digest:deps_digest    when dependencies are present
  */
-function signaturePayload(manifest: Package) {
+async function signaturePayload(manifest: Package): Promise<Uint8Array> {
   const parts = [manifest.name, manifest.version, manifest.dist.digest];
 
   const deps = manifest.dependencies;
   if (deps && Object.keys(deps).length > 0) {
-    const canonical = Buffer.from(canonicalDependencies(deps));
-    const hash = crypto.createHash('sha256').update(canonical).digest();
-    parts.push(hash.toString('base64'));
+    const canonical = ENCODER.encode(canonicalDependencies(deps));
+    const hash = await crypto.subtle.digest('SHA-256', canonical);
+    parts.push(new Uint8Array(hash).toBase64());
   }
 
   const payload = parts.join(':');
+  const bytes = ENCODER.encode(payload);
 
-  if (Buffer.byteLength(payload) >= MAX_PAYLOAD_BYTES) {
+  if (bytes.byteLength >= MAX_PAYLOAD_BYTES) {
     throw new Error('signature payload exceeds the KMS raw message limit');
   }
 
-  return Buffer.from(payload);
+  return bytes;
 }
 
 /** Sign the manifest with KMS and attach the signature to it. */
@@ -59,14 +58,14 @@ export async function signManifest(env: Cloudflare.Env, manifest: Package): Prom
 
   const res = await kms.sign({
     KeyId: env.SIG_KEY_ID,
-    Message: signaturePayload(manifest),
+    Message: await signaturePayload(manifest),
     MessageType: 'RAW',
     SigningAlgorithm: 'ECDSA_SHA_256',
   });
 
   manifest.dist.signatures = [
     {
-      sig: Buffer.from(res.Signature).toString('base64'),
+      sig: res.Signature.toBase64(),
       keyid: env.SIG_KEY_SPKI_FINGERPRINT, // SPKI fingerprint used to identify the public key for signature verification.
     },
   ];
