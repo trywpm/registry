@@ -1,9 +1,7 @@
 import { Buffer } from 'node:buffer';
-import { createHash } from 'node:crypto';
 
 import { fc, it } from '@fast-check/vitest';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
-import { ChecksumMismatchError } from '@wpm/exception';
 import { describe, expect, beforeAll, afterAll, afterEach, vi } from 'vitest';
 import { S3Client, GetObjectCommand, PutObjectCommand } from '@aws-sdk/client-s3';
 
@@ -1074,10 +1072,9 @@ describe('DeleteObject', () => {
   });
 });
 
-describe('upload with in-process checksum verification', () => {
+describe('upload with Content-Length framing', () => {
   const p = new Presigner(CFG);
   const data = new TextEncoder().encode('the quick brown fox');
-  const digest = createHash('sha256').update(data).digest('base64');
   const makeBody = (): ReadableStream<Uint8Array> =>
     new ReadableStream({
       start(c) {
@@ -1085,33 +1082,6 @@ describe('upload with in-process checksum verification', () => {
         c.close();
       },
     });
-
-  it('passes when the streamed bytes match verifySha256', async () => {
-    vi.spyOn(globalThis, 'fetch').mockImplementation(drainingFetch);
-
-    const res = await p.upload({
-      key: 'staging/x',
-      verifySha256: digest,
-      expiresIn: 60,
-      retries: 0,
-      body: makeBody,
-    });
-    expect(res.ok).toBe(true);
-  });
-
-  it('throws ChecksumMismatchError on a mismatch', async () => {
-    vi.spyOn(globalThis, 'fetch').mockImplementation(drainingFetch);
-
-    await expect(
-      p.upload({
-        key: 'staging/x',
-        verifySha256: `${'A'.repeat(43)}=`,
-        expiresIn: 60,
-        retries: 0,
-        body: makeBody,
-      }),
-    ).rejects.toThrow(ChecksumMismatchError);
-  });
 
   it('frames the body with FixedLengthStream when contentLength is set', async () => {
     const declared: number[] = [];
@@ -1132,7 +1102,6 @@ describe('upload with in-process checksum verification', () => {
     try {
       const res = await p.upload({
         key: 'staging/x',
-        verifySha256: digest,
         contentLength: data.byteLength,
         expiresIn: 60,
         retries: 0,

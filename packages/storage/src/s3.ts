@@ -1,7 +1,4 @@
-import { createHash } from 'node:crypto';
-
 import { fetchWithRetry } from '@wpm/util';
-import { ChecksumMismatchError } from '@wpm/exception';
 
 const ALGO = 'AWS4-HMAC-SHA256';
 const SERVICE = 's3';
@@ -120,8 +117,6 @@ export type PutResult = {
 export type UploadArgs = PutArgs & {
   readonly body: () => BodyInit | Promise<BodyInit>;
   readonly retries?: number;
-  /** In-process sha256 verification of the body. */
-  readonly verifySha256?: string;
 };
 
 export type CopyArgs = {
@@ -348,9 +343,8 @@ export class Presigner {
    */
   async upload(args: UploadArgs): Promise<Response> {
     const headers = this.buildPutHeaders(args);
-    let hash: ReturnType<typeof createHash> | undefined;
 
-    const res = await fetchWithRetry(
+    return fetchWithRetry(
       async () => {
         const r = await this.sign({
           key: args.key,
@@ -360,18 +354,6 @@ export class Presigner {
         });
 
         let body = await args.body();
-        if (args.verifySha256 !== undefined && body instanceof ReadableStream) {
-          hash = createHash('sha256');
-          const h = hash;
-          body = body.pipeThrough(
-            new TransformStream<Uint8Array, Uint8Array>({
-              transform(chunk, controller) {
-                h.update(chunk);
-                controller.enqueue(chunk);
-              },
-            }),
-          );
-        }
 
         // A plain stream body is sent using chunked transfer encoding without a
         // Content-Length header. S3 rejects presigned PUT requests in this case
@@ -392,13 +374,6 @@ export class Presigner {
       },
       { retries: args.retries },
     );
-
-    // fetch resolves only after the body is fully sent ⇒ the hash is complete.
-    if (res.ok && hash !== undefined && hash.digest('base64') !== args.verifySha256) {
-      throw new ChecksumMismatchError(args.key);
-    }
-
-    return res;
   }
 
   /**
