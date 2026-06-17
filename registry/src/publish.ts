@@ -1,10 +1,8 @@
 import { DurableObject } from 'cloudflare:workers';
 
-import mod from 'gfm-wasm/wasm';
 import { Logger } from '@wpm/logger';
 import { canUser } from '@wpm/rbac';
 import { Registry } from '@wpm/db';
-import { init, render } from 'gfm-wasm';
 
 import type { UserId } from '@wpm/types';
 import type { Package } from '@wpm/manifest';
@@ -17,7 +15,7 @@ type PublishOptions = {
   requestId: string;
 };
 
-let gfmReady: ReturnType<typeof init> | undefined;
+let gfmReady: Promise<unknown> | undefined;
 
 export class Publish extends DurableObject {
   private _repos: Registry | undefined;
@@ -156,6 +154,10 @@ export class Publish extends DurableObject {
 
     if (manifest.readme) {
       try {
+        const [{ default: mod }, { init, render }] = await Promise.all([
+          import('gfm-wasm/wasm'),
+          import('gfm-wasm'),
+        ]);
         await (gfmReady ??= init(mod));
         await this.env.readme.put(`${manifest.name}.html`, render(manifest.readme));
       } catch (err) {
