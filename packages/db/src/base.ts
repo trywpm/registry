@@ -13,11 +13,11 @@ type CacheOptions = {
 
 export abstract class Base {
   constructor(
-    private readonly getDb: () => Sql,
+    private readonly getDb: () => Promise<Sql>,
     protected readonly kv: KVNamespace,
   ) {}
 
-  protected get db(): Sql {
+  protected sql(): Promise<Sql> {
     return this.getDb();
   }
 

@@ -1,10 +1,12 @@
-import type { Sql } from 'postgres';
-
-import postgres from 'postgres';
+import type { Sql, Options } from 'postgres';
 
 import { Users } from './users';
 import { Tokens } from './tokens';
 import { Packages } from './packages';
+
+type PostgresFactory = (url: string, options: Options<Record<string, never>>) => Sql;
+
+let pgPromise: Promise<PostgresFactory> | undefined;
 
 export class Registry {
   #sql: Sql | undefined;
@@ -17,14 +19,22 @@ export class Registry {
     private readonly kv: KVNamespace,
     private readonly conStr: string,
   ) {}
-  private readonly db = (): Sql =>
-    (this.#sql ??= postgres(this.conStr, {
+  private readonly db = async (): Promise<Sql> => {
+    const postgres = await (pgPromise ??= import('postgres').then((m) => {
+      const factory = (m as { default?: PostgresFactory }).default;
+      if (!factory) {
+        throw new Error('postgres: missing default export');
+      }
+      return factory;
+    }));
+    return (this.#sql ??= postgres(this.conStr, {
       max: 1,
       fetch_types: false,
       idle_timeout: 15,
       connect_timeout: 10,
       connection: { statement_timeout: 8_000 },
     }));
+  };
 
   async end(): Promise<void> {
     await this.#sql?.end({ timeout: 5 });

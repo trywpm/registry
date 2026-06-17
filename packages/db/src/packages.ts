@@ -49,7 +49,8 @@ export class Packages extends Base {
     return this.cached<PackageAccess>(
       `pkg:access:${name}:${userId}`,
       async () => {
-        const [row] = await this.db<[PackageAccess?]>`
+        const sql = await this.sql();
+        const [row] = await sql<[PackageAccess?]>`
           select p.id, p.type, p.status, p.visibility, pa.role
           from "package" p
           left join "package_access" pa
@@ -67,7 +68,8 @@ export class Packages extends Base {
     return this.cachedBody<ManifestMeta>(
       `pkg:manifest:${name}:${version}`,
       async () => {
-        const [row] = await this.db<
+        const sql = await this.sql();
+        const [row] = await sql<
           [
             {
               visibility: Package['visibility'];
@@ -140,7 +142,8 @@ export class Packages extends Base {
     return this.cachedBody<{ v: Package['visibility']; t: PackageType }>(
       `pkg:doc:${name}`,
       async () => {
-        const [row] = await this.db<
+        const sql = await this.sql();
+        const [row] = await sql<
           [{ visibility: Package['visibility']; type: PackageType; body: string }?]
         >`
           select
@@ -185,7 +188,8 @@ export class Packages extends Base {
     const hit = await this.cachedBody<{ v: Package['visibility'] }>(
       `pkg:tag:${name}:${tag}`,
       async () => {
-        const [row] = await this.db<[TagResult?]>`
+        const sql = await this.sql();
+        const [row] = await sql<[TagResult?]>`
           select p."visibility", pdt."version"
           from "package_dist_tag" pdt
           join "package" p on p."id" = pdt."package_id"
@@ -204,7 +208,8 @@ export class Packages extends Base {
     const page = await this.cached<DependentsPage>(
       `pkg:dependents:${depName}:${after ?? 0}`,
       async () => {
-        const rows = await this.db<Dependent[]>`
+        const sql = await this.sql();
+        const rows = await sql<Dependent[]>`
           select p."id", p."name"
           from (
             select "package_id"
@@ -235,7 +240,8 @@ export class Packages extends Base {
     const count = await this.cached<number>(
       `pkg:dependents:count:${depName}`,
       async () => {
-        const [row] = await this.db<[{ count: number }]>`
+        const sql = await this.sql();
+        const [row] = await sql<[{ count: number }]>`
           select count(*)::int as "count"
           from "package_dependent"
           where "dep_name" = ${depName}
@@ -254,7 +260,8 @@ export class Packages extends Base {
     version: string,
     userId: UserId,
   ): Promise<PublishState | null> {
-    const [row] = await this.db<[PublishState?]>`
+    const sql = await this.sql();
+    const [row] = await sql<[PublishState?]>`
       select
         p.id, p.type, p.status, p.visibility, pa.role,
         exists (
@@ -276,7 +283,7 @@ export class Packages extends Base {
     userId: UserId,
     packageId: PackageId,
   ): Promise<PublishCommitResult> {
-    const sql = this.db;
+    const sql = await this.sql();
 
     const [row] = await sql<[{ committed: boolean }]>`
       with ins_ver as (
@@ -372,7 +379,7 @@ export class Packages extends Base {
   }
 
   async createWithVersion(manifest: Package, userId: UserId): Promise<PublishCommitResult> {
-    const sql = this.db;
+    const sql = await this.sql();
 
     const [row] = await sql<[{ committed: boolean; created: boolean }]>`
       with ins_pkg as (
@@ -477,7 +484,8 @@ export class Packages extends Base {
     tag: string,
     version: string,
   ): Promise<boolean> {
-    const [row] = await this.db<[{ package_id: PackageId }?]>`
+    const sql = await this.sql();
+    const [row] = await sql<[{ package_id: PackageId }?]>`
       insert into "package_dist_tag" ("tag", "package_id", "version")
       select ${tag}, ${packageId}, ${version}
       from "package_version" pv
@@ -496,7 +504,8 @@ export class Packages extends Base {
   }
 
   async removeDistTag(name: string, packageId: PackageId, tag: string): Promise<boolean> {
-    const [row] = await this.db<[{ tag: string }?]>`
+    const sql = await this.sql();
+    const [row] = await sql<[{ tag: string }?]>`
       delete from "package_dist_tag"
       where "package_id" = ${packageId} and "tag" = ${tag} and "tag" <> 'latest'
       returning "tag"
