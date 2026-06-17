@@ -5,7 +5,7 @@ import { isIP } from 'node:net';
  * Case-insensitive (e.g., ::fFfF:) to prevent bypasses or parsing failures.
  */
 export function normalizeIP(ip: string): string {
-  if (ip.length >= 7 && ip.substring(0, 7).toLowerCase() === '::ffff:') {
+  if (ip.length >= 7 && ip.substring(0, 7).toLowerCase() === '::ffff:' && ip.includes('.')) {
     return ip.substring(7);
   }
 

@@ -32,7 +32,7 @@ function ipv6ToBigInt(ip: string): bigint {
 }
 
 function stripMappedPrefix(s: string): string {
-  if (s.length >= 7 && s.substring(0, 7).toLowerCase() === '::ffff:') {
+  if (s.length >= 7 && s.substring(0, 7).toLowerCase() === '::ffff:' && s.includes('.')) {
     return s.substring(7);
   }
 
@@ -154,6 +154,12 @@ describe('normalizeIP', () => {
 
   it('strips even when the embedded IPv4 is invalid (caller is responsible for validation)', () => {
     expect(normalizeIP('::ffff:not.an.ip')).toBe('not.an.ip');
+  });
+
+  it('does not strip ::ffff: when the tail is hex groups, not a dotted IPv4', () => {
+    expect(normalizeIP('::ffff:0:0:1:0:0')).toBe('::ffff:0:0:1:0:0');
+    expect(normalizeIP('::ffff:ffff:ffff')).toBe('::ffff:ffff:ffff');
+    expect(normalizeIP('::ffff:1:2:3:4:5')).toBe('::ffff:1:2:3:4:5');
   });
 });
 
@@ -512,6 +518,13 @@ describe('IPCidrMatcher.contains — IPv6', () => {
     expect(m.contains('2001:db8:0::0:1')).toBe(true);
     expect(m.contains('2001:0db8::0001')).toBe(true);
     expect(m.contains('2001:db8:0:0:0:0:0:1')).toBe(true);
+  });
+
+  it('REGRESSION: ::ffff:-prefixed address with a hex tail is not mistaken for IPv4-mapped', () => {
+    const m = new IPCidrMatcher(['0:0:ffff:0:0:1:0:0/128']);
+    expect(m.contains('0:0:ffff:0:0:1:0:0')).toBe(true);
+    expect(m.contains('::ffff:0:0:1:0:0')).toBe(true);
+    expect(m.contains('::ffff:0:0:2:0:0')).toBe(false);
   });
 
   it('matches /0 against any IPv6 address', () => {
