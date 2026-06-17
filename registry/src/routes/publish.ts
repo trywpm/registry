@@ -61,18 +61,18 @@ export async function publish(
     return json({ error: 'missing token scope to publish package' }, 403);
   }
 
-  const access = await ctx.repos.packages.getAccess(name, user.userId);
-  if (access) {
-    if (!access.role) {
+  const state = await ctx.repos.packages.getPublishState(name, version, user.userId);
+  if (state) {
+    if (!state.role) {
       return json({ error: 'not found' }, 404);
     }
-    if (!canUser(access.role, 'publish', 'package')) {
+    if (!canUser(state.role, 'publish', 'package')) {
       return json({ error: 'user is not authorized to publish package' }, 403);
     }
-    if (access.status !== 'active') {
+    if (state.status !== 'active') {
       return json({ error: `${name} is not accepting new versions` }, 403);
     }
-    if (await ctx.repos.packages.versionExists(access.id, version)) {
+    if (state.versionExists) {
       return json({ error: `${name}@${version} already exists` }, 409);
     }
   }
@@ -100,12 +100,12 @@ export async function publish(
     return reject('content-length does not match the framed payload size', 400);
   }
 
-  if (access) {
-    if (access.type !== parsedManifest.data.type) {
-      return reject(`package type mismatch, expected ${access.type}`, 400);
+  if (state) {
+    if (state.type !== parsedManifest.data.type) {
+      return reject(`package type mismatch, expected ${state.type}`, 400);
     }
-    if (access.visibility !== parsedManifest.data.visibility) {
-      return reject(`package visibility mismatch, expected ${access.visibility}`, 400);
+    if (state.visibility !== parsedManifest.data.visibility) {
+      return reject(`package visibility mismatch, expected ${state.visibility}`, 400);
     }
   }
 
