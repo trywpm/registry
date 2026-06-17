@@ -20,9 +20,13 @@
     "SIG_KEY_SPKI_FINGERPRINT": "sha256:9/oofuyiEytGPeRG82jpV3ki7DVwG4AheqeqoFmTz5k"
   },
   "observability": {
-    "enabled": true,
+    "logs": {
+      "enabled": true,
+      "destinations": ["newrelic-logs"]
+    },
     "traces": {
-      "enabled": true
+      "enabled": true,
+      "destinations": ["newrelic-traces"]
     }
   },
   "placement": {

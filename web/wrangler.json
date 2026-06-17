@@ -13,9 +13,13 @@
     "inspector_port": 9229
   },
   "observability": {
-    "enabled": true,
+    "logs": {
+      "enabled": true,
+      "destinations": ["newrelic-logs"]
+    },
     "traces": {
-      "enabled": true
+      "enabled": true,
+      "destinations": ["newrelic-traces"]
     }
   },
   "placement": {
