@@ -249,18 +249,6 @@ export class Packages extends Base {
     return count ?? 0;
   }
 
-  async versionExists(packageId: PackageId, version: string): Promise<boolean> {
-    const [row] = await this.db<[{ exists: boolean }]>`
-      select exists (
-        select 1
-        from "package_version"
-        where "package_id" = ${packageId} and "version" = ${version}
-      ) as "exists"
-    `;
-
-    return row.exists;
-  }
-
   async getPublishState(
     name: string,
     version: string,
