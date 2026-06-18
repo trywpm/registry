@@ -1,4 +1,5 @@
 import type { Context } from 'hono';
+import type { Prerender } from '@/prerender';
 
 import { BaseLayout } from '@/layouts/base';
 import { Spinner } from '@/components/spinner';
@@ -43,3 +44,5 @@ export const WaitlistPage = (c: Context) => {
     </BaseLayout>,
   );
 };
+
+export const prerender: Prerender = { path: '/waitlist', render: WaitlistPage };

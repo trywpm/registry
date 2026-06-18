@@ -6,7 +6,8 @@
   "compatibility_flags": ["nodejs_compat"],
   "assets": {
     "binding": "assets",
-    "directory": "src/public"
+    "directory": "src/public",
+    "html_handling": "drop-trailing-slash"
   },
   "dev": {
     "port": 3000,

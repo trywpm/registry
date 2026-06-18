@@ -5,6 +5,7 @@ import type { Context } from 'hono';
 import type { Child } from 'hono/jsx';
 
 import { getAssetUrl } from '@/lib/utils';
+import { THEME_INIT_SCRIPT } from '@/lib/csp';
 
 import { Navbar } from '@/components/navbar';
 import { Footer } from '@/components/footer';
@@ -48,10 +49,8 @@ export const BaseLayout = ({
     clerkUi: false,
   },
 }: LayoutProps) => {
+  // Unset on pre-rendered pages (inline script is hash-allow-listed instead); the nonce attr is then omitted.
   const cspNonce = c.get('cspNonce');
-  if (!cspNonce) {
-    throw new Error('CSP nonce is missing in context');
-  }
 
   const defaultOgImage = 'https://wpm.so/og.png';
   const finalOgImage = ogImage ?? defaultOgImage;
@@ -77,11 +76,7 @@ export const BaseLayout = ({
 
           <script
             nonce={cspNonce}
-            dangerouslySetInnerHTML={{
-              __html: `
-                const getTheme=()=>"undefined" !== typeof localStorage&&localStorage.getItem("theme")?localStorage.getItem("theme"):window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light";"dark"===getTheme()?document.documentElement.classList.add("dark"):document.documentElement.classList.remove("dark");
-              `,
-            }}
+            dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }}
           />
 
           {/* Preloads */}

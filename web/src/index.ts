@@ -1,6 +1,7 @@
 import { Hono } from 'hono';
 import { Registry } from '@wpm/db';
 
+import { cspWithNonce } from '@/lib/csp';
 import { NotFound } from '@/pages/404';
 import { ServerError } from '@/pages/500';
 
@@ -8,21 +9,6 @@ import homeRoute from '@/routes/home';
 import packageRoute from '@/routes/package';
 
 const app = new Hono<AppEnv>({ strict: true });
-
-const CSP_PREFIX = `${[
-  `base-uri 'self'`,
-  `default-src 'none'`,
-  `object-src 'none'`,
-  `form-action 'self'`,
-  `font-src 'self' https:`,
-  `frame-ancestors 'none'`,
-  `worker-src 'self' blob:`,
-  `img-src 'self' data: https:`,
-  `style-src 'self' 'unsafe-inline'`,
-  `connect-src 'self' ${import.meta.env.VITE_CLERK_DOMAIN}`,
-  `frame-src 'self' https://www.youtube-nocookie.com https://videopress.com https://challenges.cloudflare.com`,
-].join('; ')}; script-src 'nonce-`;
-const CSP_SUFFIX = `' 'self' ${import.meta.env.VITE_CLERK_DOMAIN} https://challenges.cloudflare.com`;
 
 app.use('*', async (c, next) => {
   if (
@@ -43,7 +29,7 @@ app.use('*', async (c, next) => {
   const nonce = crypto.randomUUID();
 
   c.set('cspNonce', nonce);
-  c.header('Content-Security-Policy', CSP_PREFIX + nonce + CSP_SUFFIX);
+  c.header('Content-Security-Policy', cspWithNonce(nonce));
 
   // DB repos instance.
   c.set('repos', new Registry(c.env.cache, c.env.pg.connectionString));

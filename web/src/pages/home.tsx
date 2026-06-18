@@ -1,4 +1,5 @@
 import type { Context } from 'hono';
+import type { Prerender } from '@/prerender';
 
 import { BaseLayout } from '@/layouts/base';
 import { getCanonicalUrl } from '@/lib/utils';
@@ -119,3 +120,5 @@ export const HomePage = (c: Context) => {
     </BaseLayout>,
   );
 };
+
+export const prerender: Prerender = { path: '/', render: HomePage };

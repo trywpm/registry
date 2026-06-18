@@ -16,9 +16,63 @@ class InstallCommandCta extends HTMLElement {
   private handleSelectChangeBound = this.handleSelectChange.bind(this);
 
   connectedCallback(): void {
+    // Correct the pre-rendered default OS to the visitor's, synchronously before <wpm-select> reads data-default-value.
+    this.applyDetectedOS();
+
     void customElements.whenDefined(WPM_SELECT_TAG).then(() => {
       this.init();
     });
+  }
+
+  private detectOS(): string {
+    const uaData = (navigator as Navigator & { userAgentData?: { platform?: string } }).userAgentData;
+    const haystack = `${uaData?.platform || navigator.platform || ''} ${navigator.userAgent || ''}`;
+
+    if (/win/i.test(haystack)) {
+      return 'windows';
+    }
+    if (/linux|x11/i.test(haystack) && !/android/i.test(haystack)) {
+      return 'linux';
+    }
+    return 'macos';
+  }
+
+  private applyDetectedOS(): void {
+    let commands: Record<string, string>;
+    try {
+      commands = JSON.parse(this.getAttribute('data-commands') || '{}');
+    } catch {
+      return;
+    }
+
+    const os = this.detectOS();
+    if (!commands[os]) {
+      return;
+    }
+
+    const prefixNode = this.querySelector('[data-target="prompt-prefix"]');
+    const codeNode = this.querySelector('[data-target="command-text"]');
+    if (codeNode) {
+      codeNode.textContent = commands[os];
+    }
+    if (prefixNode) {
+      prefixNode.textContent = os === 'windows' ? '>' : '$';
+    }
+
+    const select = this.querySelector(WPM_SELECT_TAG);
+    if (!select) {
+      return;
+    }
+    // <wpm-select> picks this up when it initializes and sets the active item.
+    select.setAttribute('data-default-value', os);
+    // Reflect the label immediately so there is no flash of the baked default.
+    const valueNode = select.querySelector('[data-slot="select-value"]');
+    const itemText = select.querySelector(
+      `[data-slot="select-item"][data-value="${os}"] [data-slot="select-item-text"]`,
+    );
+    if (valueNode && itemText?.textContent) {
+      valueNode.textContent = itemText.textContent.trim();
+    }
   }
 
   disconnectedCallback(): void {

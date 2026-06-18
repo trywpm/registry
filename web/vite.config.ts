@@ -6,6 +6,8 @@ import { defineConfig } from 'vite-plus';
 import tailwindcss from '@tailwindcss/vite';
 import { cloudflare } from '@cloudflare/vite-plugin';
 
+import { prerender, emitStaticPages } from './plugins/prerender';
+
 const webComponents: Record<string, string> = {};
 for await (const file of glob(join(__dirname, 'src/components/**/*.island.ts'))) {
   const name = basename(file, '.island.ts');
@@ -56,6 +58,7 @@ export default defineConfig(({ mode }) => ({
   plugins: [
     tailwindcss(),
     mode === 'test' ? undefined : cloudflare(),
+    mode === 'test' ? undefined : prerender(),
     injectClientManifest(mode),
     {
       name: 'full-reload',
@@ -80,13 +83,10 @@ export default defineConfig(({ mode }) => ({
   },
   builder: {
     buildApp: async (builder) => {
-      // Build client assets first, so we can get the manifest and asset paths
-      // for the worker.
       await builder.build(builder.environments.client);
-
-      // `wpm_so` is coming from Cloudflare plugin.
-      // Build wpm_so worker, which depends on the client manifest.
       await builder.build(builder.environments.wpm_so);
+      await builder.build(builder.environments.prerender);
+      await emitStaticPages(__dirname);
     },
   },
   environments: {

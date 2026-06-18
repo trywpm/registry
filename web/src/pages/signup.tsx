@@ -1,4 +1,5 @@
 import type { Context } from 'hono';
+import type { Prerender } from '@/prerender';
 
 import { BaseLayout } from '@/layouts/base';
 import { Spinner } from '@/components/spinner';
@@ -33,3 +34,5 @@ export const SignUpPage = (c: Context) => {
     </BaseLayout>,
   );
 };
+
+export const prerender: Prerender = { path: '/signup', render: SignUpPage };
