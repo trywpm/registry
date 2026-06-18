@@ -19,8 +19,7 @@ export class Users extends Base {
     return this.cached<UserWithToken>(
       `user:by-token:${tokenHash}`,
       async () => {
-        const sql = await this.sql();
-        const [row] = await sql<[UserWithToken?]>`
+        const [row] = await this.db<[UserWithToken?]>`
           SELECT
             u.id AS "userId",
             u.email,
