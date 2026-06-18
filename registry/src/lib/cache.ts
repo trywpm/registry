@@ -33,6 +33,13 @@ export const cache = {
       'Cache-Control': 'public, max-age=300',
     };
   },
+
+  distTag(name: string): Record<string, string> {
+    return {
+      'Cache-Tag': `pkg:${name}`,
+      'Cache-Control': 'public, max-age=300, s-maxage=86400',
+    };
+  },
 };
 
 export async function bustPackageCache(ctx: RequestContext, name: string): Promise<void> {

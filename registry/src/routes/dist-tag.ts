@@ -5,6 +5,7 @@ import { canToken, canUser } from '@wpm/rbac';
 import { isValidPackageName, isValidTagName, isValidSemver } from '@wpm/manifest/validator';
 
 import { json, notFound } from '@/http';
+import { bustPackageCache } from '@/lib/cache';
 
 // A dist-tag request body is just `{ version }`; cap it well above that.
 const MAX_BODY_BYTES = 1024;
@@ -61,6 +62,7 @@ async function setTag(ctx: RequestContext, name: string, tag: string): Promise<R
     return json({ error: `${name}@${version} does not exist` }, 404);
   }
 
+  ctx.waitUntil(bustPackageCache(ctx, name));
   return new Response(null, { status: 204 });
 }
 
@@ -84,6 +86,7 @@ async function removeTag(ctx: RequestContext, name: string, tag: string): Promis
     return notFound();
   }
 
+  ctx.waitUntil(bustPackageCache(ctx, name));
   return new Response(null, { status: 204 });
 }
 

@@ -96,7 +96,10 @@ export async function redirectTag(
 
   return new Response(null, {
     status: 302,
-    headers: { Location: `/${name}/${result.version}`, 'Cache-Control': 'no-store' },
+    headers: {
+      Location: `/${name}/${result.version}`,
+      ...(result.visibility === 'public' ? cache.distTag(name) : { 'Cache-Control': 'no-store' }),
+    },
   });
 }
 
