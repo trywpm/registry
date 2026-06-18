@@ -1,56 +1,16 @@
 import { Hono } from 'hono';
 
-import { HomePage } from '@/pages/home';
-import { DocsPage } from '@/pages/docs';
-import { LoginPage } from '@/pages/login';
-import { SearchPage } from '@/pages/search';
-import { SignUpPage } from '@/pages/signup';
-import { ThemesPage } from '@/pages/themes';
-import { PluginsPage } from '@/pages/plugins';
-import { WaitlistPage } from '@/pages/waitlist';
-import { PrivacyPolicyPage } from '@/pages/privacy';
-import { TermsOfServicePage } from '@/pages/terms';
-
 const homeRoute = new Hono<AppEnv>();
 
-homeRoute.get('/', (c) => {
-  return HomePage(c);
-});
-
-homeRoute.get('/plugins', (c) => {
-  return PluginsPage(c);
-});
-
-homeRoute.get('/themes', (c) => {
-  return ThemesPage(c);
-});
-
-homeRoute.get('/docs', (c) => {
-  return DocsPage(c);
-});
-
-homeRoute.get('/privacy', (c) => {
-  return PrivacyPolicyPage(c);
-});
-
-homeRoute.get('/terms', (c) => {
-  return TermsOfServicePage(c);
-});
-
-homeRoute.get('/search', (c) => {
-  return SearchPage(c);
-});
-
-homeRoute.get('/waitlist', (c) => {
-  return WaitlistPage(c);
-});
-
-homeRoute.get('/login', (c) => {
-  return LoginPage(c);
-});
-
-homeRoute.get('/signup', (c) => {
-  return SignUpPage(c);
-});
+homeRoute.get('/', async (c) => (await import('@/pages/home')).HomePage(c));
+homeRoute.get('/plugins', async (c) => (await import('@/pages/plugins')).PluginsPage(c));
+homeRoute.get('/themes', async (c) => (await import('@/pages/themes')).ThemesPage(c));
+homeRoute.get('/docs', async (c) => (await import('@/pages/docs')).DocsPage(c));
+homeRoute.get('/privacy', async (c) => (await import('@/pages/privacy')).PrivacyPolicyPage(c));
+homeRoute.get('/terms', async (c) => (await import('@/pages/terms')).TermsOfServicePage(c));
+homeRoute.get('/search', async (c) => (await import('@/pages/search')).SearchPage(c));
+homeRoute.get('/waitlist', async (c) => (await import('@/pages/waitlist')).WaitlistPage(c));
+homeRoute.get('/login', async (c) => (await import('@/pages/login')).LoginPage(c));
+homeRoute.get('/signup', async (c) => (await import('@/pages/signup')).SignUpPage(c));
 
 export default homeRoute;

@@ -1,21 +1,13 @@
 import { Hono } from 'hono';
 
-import { PackagePage } from '@/pages/package';
-import { VersionsPage } from '@/pages/package/versions';
-import { DependenciesPage } from '@/pages/package/dependencies';
-
 const packageRoute = new Hono<AppEnv>();
 
-packageRoute.get('/:name', (c) => {
-  return PackagePage(c);
-});
-
-packageRoute.get('/:name/versions', (c) => {
-  return VersionsPage(c);
-});
-
-packageRoute.get('/:name/dependencies', (c) => {
-  return DependenciesPage(c);
-});
+packageRoute.get('/:name', async (c) => (await import('@/pages/package')).PackagePage(c));
+packageRoute.get('/:name/versions', async (c) =>
+  (await import('@/pages/package/versions')).VersionsPage(c),
+);
+packageRoute.get('/:name/dependencies', async (c) =>
+  (await import('@/pages/package/dependencies')).DependenciesPage(c),
+);
 
 export default packageRoute;
