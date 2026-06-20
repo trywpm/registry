@@ -15,6 +15,6 @@
     "@cloudflare/workers-types": "catalog:",
     "@fast-check/vitest": "catalog:",
     "@types/node": "catalog:",
-    "vitest": "catalog:"
+    "vite-plus": "catalog:"
   }
 }

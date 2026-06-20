@@ -6,6 +6,6 @@
     ".": "./src/index.ts"
   },
   "devDependencies": {
-    "vitest": "catalog:"
+    "vite-plus": "catalog:"
   }
 }

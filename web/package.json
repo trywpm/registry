@@ -34,7 +34,7 @@
     "tailwindcss": "4.3.0",
     "typescript": "catalog:",
     "vite": "catalog:",
-    "vitest": "catalog:",
+    "vite-plus": "catalog:",
     "wrangler": "catalog:"
   }
 }

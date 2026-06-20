@@ -8,6 +8,6 @@
     }
   },
   "devDependencies": {
-    "vitest": "catalog:"
+    "vite-plus": "catalog:"
   }
 }

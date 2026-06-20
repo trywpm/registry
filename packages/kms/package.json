@@ -11,6 +11,6 @@
   "devDependencies": {
     "@fast-check/vitest": "catalog:",
     "@types/node": "catalog:",
-    "vitest": "catalog:"
+    "vite-plus": "catalog:"
   }
 }

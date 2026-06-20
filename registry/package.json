@@ -27,7 +27,7 @@
     "@fast-check/vitest": "catalog:",
     "@types/node": "catalog:",
     "typescript": "catalog:",
-    "vitest": "catalog:",
+    "vite-plus": "catalog:",
     "wrangler": "catalog:"
   }
 }

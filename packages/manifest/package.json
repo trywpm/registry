@@ -15,6 +15,6 @@
     "@fast-check/vitest": "catalog:",
     "@types/bun": "catalog:",
     "@types/node": "catalog:",
-    "vitest": "catalog:"
+    "vite-plus": "catalog:"
   }
 }
