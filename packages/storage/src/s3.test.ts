@@ -2,8 +2,8 @@ import { Buffer } from 'node:buffer';
 
 import { fc, it } from '@fast-check/vitest';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
-import { describe, expect, beforeAll, afterAll, afterEach, vi } from 'vitest';
 import { S3Client, GetObjectCommand, PutObjectCommand } from '@aws-sdk/client-s3';
+import { describe, expect, beforeAll, afterAll, afterEach, vi } from 'vite-plus/test';
 
 import { Presigner } from './s3';
 

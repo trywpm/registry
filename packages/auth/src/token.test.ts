@@ -1,9 +1,9 @@
 import { createHmac } from 'node:crypto';
 
 import { fc, it } from '@fast-check/vitest';
-import { afterEach, beforeAll, beforeEach, describe, expect, vi } from 'vitest';
+import { afterEach, beforeAll, beforeEach, describe, expect, vi } from 'vite-plus/test';
 
-import type { MockInstance } from 'vitest';
+import type { MockInstance } from 'vite-plus/test';
 
 import { generateWpmAuthToken, getAuthTokenHash, parseBearerToken, randString } from './token';
 

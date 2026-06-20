@@ -1,7 +1,7 @@
 import type { Role, Action, Resource, Permission } from '.';
 
 import { canUser, canToken } from '.';
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect } from 'vite-plus/test';
 
 describe('canUser (RBAC)', () => {
   describe('Admin Role', () => {

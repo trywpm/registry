@@ -1,7 +1,7 @@
 import { Buffer } from 'node:buffer';
 import { createHash } from 'node:crypto';
 
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect } from 'vite-plus/test';
 
 import {
   DigestSchema,

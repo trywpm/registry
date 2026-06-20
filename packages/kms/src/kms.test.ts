@@ -3,7 +3,7 @@ import { Readable } from 'node:stream';
 
 import { fc, it } from '@fast-check/vitest';
 import { KMSClient, SignCommand } from '@aws-sdk/client-kms';
-import { describe, expect, beforeAll, afterAll, beforeEach, afterEach, vi } from 'vitest';
+import { describe, expect, beforeAll, afterAll, beforeEach, afterEach, vi } from 'vite-plus/test';
 
 import { KmsClient, KmsError } from './kms';
 

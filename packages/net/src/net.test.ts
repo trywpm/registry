@@ -1,8 +1,7 @@
-import { isIP } from 'node:net';
-
-import { describe, expect } from 'vitest';
 import { fc, it } from '@fast-check/vitest';
-import { normalizeIP, isValidCidr, IPCidrMatcher } from './net';
+import { describe, expect } from 'vite-plus/test';
+
+import { isIP, normalizeIP, isValidCidr, IPCidrMatcher } from './net';
 
 function ipv4ToBigInt(ip: string): bigint {
   const [a, b, c, d] = ip.split('.').map((s) => BigInt(parseInt(s, 10)));

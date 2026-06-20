@@ -1,7 +1,7 @@
 import { Buffer } from 'node:buffer';
 
 import { fc, it } from '@fast-check/vitest';
-import { describe, expect, vi } from 'vitest';
+import { describe, expect, vi } from 'vite-plus/test';
 
 import { canonicalDependencies, signManifest } from './sign-manifest';
 
