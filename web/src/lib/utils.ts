@@ -1,16 +1,8 @@
-import { clsx } from 'clsx';
-import { twMerge } from 'tailwind-merge';
-
 import type { Context } from 'hono';
-import type { ClassValue } from 'clsx';
 
 import manifest from 'virtual:client-manifest';
 
 export const ALLOWED_QUERY_PARAMS = ['q', 'sort', 'page'] as const;
-
-export function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs));
-}
 
 export function humanSize(bytesNum: number, precision = 4) {
   if (bytesNum === 0) {
@@ -112,3 +104,5 @@ export const getCanonicalUrl = (
 
   return canonical.toString();
 };
+
+export { cn } from 'cnfast';

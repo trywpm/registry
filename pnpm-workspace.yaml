@@ -43,3 +43,4 @@ minimumReleaseAgeStrict: strict
 minimumReleaseAgeExclude:
   - '@voidzero-dev/*'
   - vite-plus@0.2.1
+  - cnfast@0.0.6
