@@ -131,12 +131,7 @@ export function Navbar({ hasHero = false }: { hasHero?: boolean }) {
           <div
             data-mobile-menu
             data-state="closed"
-            className={cn(
-              'invisible opacity-0 pointer-events-none',
-              'fixed inset-0 z-60 bg-background md:hidden',
-              'transition-opacity duration-300 ease-in-out',
-              'data-[state=open]:visible data-[state=open]:opacity-100 data-[state=open]:pointer-events-auto',
-            )}
+            className="invisible opacity-0 pointer-events-none fixed inset-0 z-60 bg-background md:hidden transition-opacity duration-300 ease-in-out data-[state=open]:visible data-[state=open]:opacity-100 data-[state=open]:pointer-events-auto"
           >
             <div className="container flex items-center justify-end h-(--header-height)">
               <Hamburger />

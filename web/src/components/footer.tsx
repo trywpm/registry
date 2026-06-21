@@ -33,11 +33,7 @@ const socialLinks = [
 export function Footer({ hasHero = false }: { hasHero?: boolean }) {
   return (
     <footer
-      className={cn(
-        'bg-background',
-        'border-t border-border/50',
-        hasHero && 'border-t-transparent',
-      )}
+      className={cn('bg-background border-t border-border/50', hasHero && 'border-t-transparent')}
     >
       <div className="container">
         <div className="py-8">

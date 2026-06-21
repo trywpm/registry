@@ -14,10 +14,16 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 
 import type { Child } from 'hono/jsx';
 
-const VisualWrapper = ({ children, className }: { children: Child; className?: string }) => (
-  <div
-    className={cn('mt-auto flex w-full items-end justify-center overflow-hidden px-4', className)}
-  >
+type Feature = {
+  icon: typeof Zap;
+  title: string;
+  description: string;
+  visual: Child;
+  colSpan?: string;
+};
+
+const VisualWrapper = ({ children }: { children: Child }) => (
+  <div className="mt-auto flex w-full items-end justify-center overflow-hidden px-4">
     {children}
   </div>
 );
@@ -57,7 +63,7 @@ const GlobalRegistryVisual = () => (
   </VisualWrapper>
 );
 
-const PackageManagerVisual = () => (
+const TerminalVisual = ({ command }: { command: string }) => (
   <VisualWrapper>
     <div className="flex h-full w-full flex-col rounded-t-lg border-x border-t border-border/80 bg-zinc-50 dark:bg-zinc-950 transition-colors">
       <div className="flex items-center gap-1.5 border-b rounded-t-lg border-border bg-white dark:bg-zinc-900/50 px-4 py-2">
@@ -70,7 +76,7 @@ const PackageManagerVisual = () => (
         <div className="flex items-center gap-2">
           <span className="text-emerald-600 dark:text-emerald-500 font-bold">➜</span>
           <span className="text-blue-500 dark:text-blue-400 font-medium">~</span>
-          <span className="font-medium text-foreground">wpm install jetpack@latest</span>
+          <span className="font-medium text-foreground">{command}</span>
         </div>
 
         <div className="text-muted-foreground">wpm install v0.1.9</div>
@@ -119,43 +125,6 @@ const RegistryVisual = () => (
   </VisualWrapper>
 );
 
-const OfflineVisual = () => (
-  <VisualWrapper>
-    <div className="flex h-full w-full flex-col rounded-t-lg border-x border-t border-border/80 bg-zinc-50 dark:bg-zinc-950 transition-colors">
-      <div className="flex items-center gap-1.5 border-b rounded-t-lg border-border bg-white dark:bg-zinc-900/50 px-4 py-2">
-        <div className="size-2.5 rounded-full bg-red-500/20 dark:bg-red-500/30" />
-        <div className="size-2.5 rounded-full bg-yellow-500/20 dark:bg-yellow-500/30" />
-        <div className="size-2.5 rounded-full bg-green-500/20 dark:bg-green-500/30" />
-      </div>
-
-      <div className="flex-1 p-4 font-mono text-[10px] leading-relaxed text-zinc-700 dark:text-zinc-300">
-        <div className="flex items-center gap-2">
-          <span className="text-emerald-600 dark:text-emerald-500 font-bold">➜</span>
-          <span className="text-blue-500 dark:text-blue-400 font-medium">~</span>
-          <span className="font-medium text-foreground">wpm install</span>
-        </div>
-
-        <div className="text-muted-foreground">wpm install v0.1.9</div>
-
-        <div className="my-2 space-y-0.5">
-          <div className="flex gap-2">
-            <span className="font-bold text-emerald-600 dark:text-emerald-500">+</span>
-            <span>jetpack 15.3.1</span>
-          </div>
-        </div>
-
-        <div className="font-bold text-emerald-600 dark:text-emerald-400">1 package installed</div>
-
-        <div className="flex items-center gap-2">
-          <span className="text-emerald-600 dark:text-emerald-500 font-bold">➜</span>
-          <span className="text-blue-500 dark:text-blue-400 font-medium">~</span>
-          <span className="h-4 w-2 animate-pulse bg-zinc-400/50 dark:bg-zinc-500/50" />
-        </div>
-      </div>
-    </div>
-  </VisualWrapper>
-);
-
 const SecurityVisual = () => (
   <VisualWrapper>
     <div className="w-full h-full pb-4 flex flex-col justify-end">
@@ -191,7 +160,34 @@ const SecurityVisual = () => (
   </VisualWrapper>
 );
 
-const registryFeatures = {
+const FEATURE_CARD_CLASS =
+  'group relative gap-4 flex flex-col overflow-hidden border-b-0 shadow-none pb-0 bg-linear-to-b from-muted/20 to-transparent';
+
+function FeatureCard({ feature, className }: { feature: Feature; className?: string }) {
+  const Icon = feature.icon;
+
+  return (
+    <Card className={cn(FEATURE_CARD_CLASS, className)}>
+      <CardHeader className="flex flex-row items-center">
+        <div className="flex items-center justify-center text-primary">
+          <Icon className="size-5" />
+        </div>
+
+        <CardTitle>{feature.title}</CardTitle>
+      </CardHeader>
+
+      <CardContent>
+        <CardDescription>{feature.description}</CardDescription>
+      </CardContent>
+
+      {feature.visual}
+
+      <div className="pointer-events-none absolute -inset-x-px bottom-0 h-24 bg-linear-to-t from-background via-background/10 to-transparent z-0 rounded-b-2xl" />
+    </Card>
+  );
+}
+
+const registryFeature: Feature = {
   icon: Zap,
   title: 'Globally Distributed Registry',
   description:
@@ -200,39 +196,16 @@ const registryFeatures = {
 };
 
 export function FeatureRegistry({ className }: { className?: string }) {
-  return (
-    <Card
-      className={cn(
-        'group relative gap-4 flex flex-col overflow-hidden border-b-0 shadow-none pb-0 bg-linear-to-b from-muted/20 to-transparent',
-        className,
-      )}
-    >
-      <CardHeader className="flex flex-row items-center">
-        <div className="flex items-center justify-center text-primary">
-          <registryFeatures.icon className="size-5" />
-        </div>
-
-        <CardTitle>{registryFeatures.title}</CardTitle>
-      </CardHeader>
-
-      <CardContent>
-        <CardDescription>{registryFeatures.description}</CardDescription>
-      </CardContent>
-
-      {registryFeatures.visual}
-
-      <div className="pointer-events-none absolute -inset-x-px bottom-0 h-24 bg-linear-to-t from-background via-background/10 to-transparent z-0 rounded-b-2xl"></div>
-    </Card>
-  );
+  return <FeatureCard feature={registryFeature} className={className} />;
 }
 
-const cliFeatures = [
+const cliFeatures: Feature[] = [
   {
     icon: Terminal,
     title: 'Package Manager',
     description:
       'Manage WordPress plugins and themes from the command line with speed, simplicity, and reliability.',
-    visual: <PackageManagerVisual />,
+    visual: <TerminalVisual command="wpm install jetpack@latest" />,
     colSpan: 'md:col-span-1',
   },
   {
@@ -240,7 +213,7 @@ const cliFeatures = [
     title: 'Offline-Ready Workflows',
     description:
       'Installed packages are cached locally, allowing installs and builds to proceed even without network access.',
-    visual: <OfflineVisual />,
+    visual: <TerminalVisual command="wpm install" />,
     colSpan: 'md:col-span-1',
   },
 ];
@@ -249,37 +222,13 @@ export function FeatureCLI({ className }: { className?: string }) {
   return (
     <div className={cn('grid grid-cols-1 gap-6 md:grid-cols-2', className)}>
       {cliFeatures.map((feature, index) => (
-        <>
-          <Card
-            key={index}
-            className={cn(
-              'group relative gap-4 flex flex-col overflow-hidden border-b-0 shadow-none pb-0 bg-linear-to-b from-muted/20 to-transparent',
-              feature.colSpan,
-            )}
-          >
-            <CardHeader className="flex flex-row items-center">
-              <div className="flex items-center justify-center text-primary">
-                <feature.icon className="size-5" />
-              </div>
-
-              <CardTitle>{feature.title}</CardTitle>
-            </CardHeader>
-
-            <CardContent>
-              <CardDescription>{feature.description}</CardDescription>
-            </CardContent>
-
-            {feature.visual}
-
-            <div className="pointer-events-none absolute -inset-x-px bottom-0 h-24 bg-linear-to-t from-background via-background/10 to-transparent z-0 rounded-b-2xl"></div>
-          </Card>
-        </>
+        <FeatureCard key={index} feature={feature} className={feature.colSpan} />
       ))}
     </div>
   );
 }
 
-const opsFeatures = [
+const opsFeatures: Feature[] = [
   {
     icon: Shield,
     title: 'Private & Public Packages',
@@ -302,29 +251,7 @@ export function FeatureOps({ className }: { className?: string }) {
   return (
     <div className={cn('grid grid-cols-1 gap-6 md:grid-cols-2', className)}>
       {opsFeatures.map((feature, index) => (
-        <Card
-          key={index}
-          className={cn(
-            'group relative gap-4 flex flex-col overflow-hidden border-b-0 shadow-none pb-0 bg-linear-to-b from-muted/20 to-transparent',
-            feature.colSpan,
-          )}
-        >
-          <CardHeader className="flex flex-row items-center">
-            <div className="flex items-center justify-center text-primary">
-              <feature.icon className="size-5" />
-            </div>
-
-            <CardTitle>{feature.title}</CardTitle>
-          </CardHeader>
-
-          <CardContent>
-            <CardDescription>{feature.description}</CardDescription>
-          </CardContent>
-
-          {feature.visual}
-
-          <div className="pointer-events-none absolute -inset-x-px bottom-0 h-24 bg-linear-to-t from-background via-background/10 to-transparent z-0 rounded-b-2xl"></div>
-        </Card>
+        <FeatureCard key={index} feature={feature} className={feature.colSpan} />
       ))}
     </div>
   );
