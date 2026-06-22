@@ -32,6 +32,30 @@ type LayoutProps = {
   };
 };
 
+const HOMEPAGE_JSON_LD = serialize({
+  '@context': 'https://schema.org',
+  '@id': 'https://wpm.so/#website',
+  '@type': 'WebSite',
+  name: 'wpm',
+  url: 'https://wpm.so/',
+  description: 'Discover, install, and manage WordPress packages like never before.',
+  publisher: {
+    '@type': 'Organization',
+    name: 'wpm',
+    url: 'https://wpm.so/',
+    logo: {
+      '@type': 'ImageObject',
+      url: 'https://wpm.so/favicon.svg',
+    },
+  },
+  sameAs: ['https://twitter.com/trywpm'],
+  potentialAction: {
+    '@type': 'SearchAction',
+    target: 'https://wpm.so/search?q={search_term_string}',
+    'query-input': 'required name=search_term_string',
+  },
+});
+
 export const BaseLayout = ({
   c,
   ogImage,
@@ -58,6 +82,7 @@ export const BaseLayout = ({
 
   const ogImgAlt = originalTitle.replace(' - wpm', '');
   const title = homepage ? originalTitle : `${originalTitle} - wpm`;
+  const styleHref = getAssetUrl('/src/assets/css/style.css');
 
   return (
     <>
@@ -85,7 +110,7 @@ export const BaseLayout = ({
           />
 
           {/* Preloads */}
-          <link rel="preload" href={getAssetUrl('/src/assets/css/style.css')} as="style" />
+          <link rel="preload" href={styleHref} as="style" />
           <link
             rel="preload"
             href="/fonts/sora-semibold.woff2"
@@ -153,7 +178,7 @@ export const BaseLayout = ({
           <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
 
           {/* Stylesheets & Vendor Scripts */}
-          <link rel="stylesheet" href={getAssetUrl('/src/assets/css/style.css')} />
+          <link rel="stylesheet" href={styleHref} />
 
           {loadVendorScripts.htmx && (
             <>
@@ -182,32 +207,7 @@ export const BaseLayout = ({
           {homepage && (
             <script
               type="application/ld+json"
-              dangerouslySetInnerHTML={{
-                __html: serialize({
-                  '@context': 'https://schema.org',
-                  '@id': 'https://wpm.so/#website',
-                  '@type': 'WebSite',
-                  name: 'wpm',
-                  url: 'https://wpm.so/',
-                  description:
-                    'Discover, install, and manage WordPress packages like never before.',
-                  publisher: {
-                    '@type': 'Organization',
-                    name: 'wpm',
-                    url: 'https://wpm.so/',
-                    logo: {
-                      '@type': 'ImageObject',
-                      url: 'https://wpm.so/favicon.svg',
-                    },
-                  },
-                  sameAs: ['https://twitter.com/trywpm'],
-                  potentialAction: {
-                    '@type': 'SearchAction',
-                    target: 'https://wpm.so/search?q={search_term_string}',
-                    'query-input': 'required name=search_term_string',
-                  },
-                }),
-              }}
+              dangerouslySetInnerHTML={{ __html: HOMEPAGE_JSON_LD }}
             />
           )}
 

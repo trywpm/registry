@@ -17,26 +17,30 @@ const osLabels: Record<OS, string> = {
   windows: 'Windows',
 };
 
+const LINUX_UA = /Linux/i;
+const WINDOWS_UA = /Win/i;
+const COMMANDS_JSON = JSON.stringify(commands);
+
 export function getOSFromUserAgent(userAgent?: string | null): OS {
   if (!userAgent) {
     return 'macos';
   }
-  if (/Win/i.test(userAgent)) {
+  if (WINDOWS_UA.test(userAgent)) {
     return 'windows';
   }
-  if (/Linux/i.test(userAgent)) {
+  if (LINUX_UA.test(userAgent)) {
     return 'linux';
   }
   return 'macos';
 }
 
 export function InstallCommandCta({ defaultOS = 'macos' }: { defaultOS?: OS }) {
-  const defaultCommand = commands[defaultOS];
   const defaultLabel = osLabels[defaultOS];
+  const defaultCommand = commands[defaultOS];
 
   return (
     <Island name="install-command-cta">
-      <wpm-install-command-cta data-commands={JSON.stringify(commands)}>
+      <wpm-install-command-cta data-commands={COMMANDS_JSON}>
         <div className="hidden md:flex items-center gap-3 p-2 rounded-lg backdrop-blur-sm bg-secondary/50">
           <Select defaultValue={defaultOS}>
             <SelectTrigger

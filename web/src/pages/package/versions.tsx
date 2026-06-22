@@ -55,6 +55,7 @@ export const VersionsPage = async (c: Context) => {
 
   const ogImage = `https://usercontent.wpm.so/og/${manifest.name}`;
   const versions = Object.keys(pkg.versions).filter((v) => v !== latest);
+  const latestReq = reqText(pkg.versions[latest]);
 
   return c.html(
     <BaseLayout
@@ -94,25 +95,24 @@ export const VersionsPage = async (c: Context) => {
                           <span class="font-mono font-semibold">{manifest.version}</span>
                           <Badge variant="default">Latest</Badge>
                         </div>
-                        {reqText(pkg.versions[latest]) ? (
-                          <span class="font-mono text-sm text-muted-foreground">
-                            {reqText(pkg.versions[latest])}
-                          </span>
+                        {latestReq ? (
+                          <span class="font-mono text-sm text-muted-foreground">{latestReq}</span>
                         ) : null}
                       </div>
-                      {versions.map((version) => (
-                        <div
-                          class="flex items-center justify-between p-4 border rounded-lg"
-                          key={version}
-                        >
-                          <span class="font-mono font-semibold">{version}</span>
-                          {reqText(pkg.versions[version]) ? (
-                            <span class="font-mono text-sm text-muted-foreground">
-                              {reqText(pkg.versions[version])}
-                            </span>
-                          ) : null}
-                        </div>
-                      ))}
+                      {versions.map((version) => {
+                        const req = reqText(pkg.versions[version]);
+                        return (
+                          <div
+                            class="flex items-center justify-between p-4 border rounded-lg"
+                            key={version}
+                          >
+                            <span class="font-mono font-semibold">{version}</span>
+                            {req ? (
+                              <span class="font-mono text-sm text-muted-foreground">{req}</span>
+                            ) : null}
+                          </div>
+                        );
+                      })}
                     </div>
                   </CardContent>
                 </Card>

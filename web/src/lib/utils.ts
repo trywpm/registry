@@ -52,23 +52,30 @@ export async function getCachedReadme(c: Context, key: string) {
   return response;
 }
 
+const assetUrlCache = new Map<string, string>();
 export function getAssetUrl(path: string) {
+  const cached = assetUrlCache.get(path);
+  if (cached !== undefined) {
+    return cached;
+  }
+
+  let resolved = path;
   if (!import.meta.env.DEV) {
-    if (path.startsWith('/')) {
-      path = path.slice(1);
+    const key = resolved.startsWith('/') ? resolved.slice(1) : resolved;
+
+    resolved = manifest[key].file ?? '';
+    if (!resolved) {
+      throw new Error(`Component ${key} not found in manifest`);
     }
 
-    path = manifest[path].file ?? '';
-    if (!path) {
-      throw new Error(`Component ${path} not found in manifest`);
-    }
-
-    if (!path.startsWith('/')) {
-      path = `/${path}`;
+    if (!resolved.startsWith('/')) {
+      resolved = `/${resolved}`;
     }
   }
 
-  return path;
+  assetUrlCache.set(path, resolved);
+
+  return resolved;
 }
 
 export const getCanonicalUrl = (

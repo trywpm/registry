@@ -62,71 +62,40 @@ const testimonials: Testimonial[] = [
 ];
 
 export const TestimonialCarousel = () => {
+  const cards = testimonials.map((t) => (
+    <article key={t.id} class="w-100 shrink-0 pr-6">
+      <div class="relative h-full rounded-2xl border border-b-0 border-border/60 bg-linear-to-b from-muted/20 to-transparent p-6">
+        <blockquote class="mb-4 text-sm leading-relaxed relative z-10">"{t.content}"</blockquote>
+
+        <div class="flex items-center gap-3 relative z-10">
+          <div class="h-10 w-10 shrink-0 overflow-hidden rounded-full ring-2 ring-secondary/20">
+            <img
+              src={t.author.avatar}
+              alt={t.author.name}
+              class="h-full w-full object-cover"
+              loading="lazy"
+              width="40"
+              height="40"
+            />
+          </div>
+          <div>
+            <p class="text-sm font-semibold">{t.author.name}</p>
+            <p class="text-xs text-muted-foreground">{t.author.role}</p>
+          </div>
+        </div>
+
+        <div class="pointer-events-none absolute -inset-x-px bottom-0 h-24 bg-linear-to-t from-background via-background/80 to-transparent z-0 rounded-b-2xl" />
+      </div>
+    </article>
+  ));
+
   return (
     <>
       <section class="mt-8 py-8 overflow-hidden border-t border-border/50">
         <div class="relative group flex overflow-hidden mask-[linear-gradient(to_right,transparent,black_10%,black_90%,transparent)]">
-          {/* First Marquee Strip */}
-          <div class="marquee-strip flex min-w-full shrink-0 animate-marquee">
-            {testimonials.map((t) => (
-              <article key={t.id} class="w-100 shrink-0 pr-6">
-                <div class="relative h-full rounded-2xl border border-b-0 border-border/60 bg-linear-to-b from-muted/20 to-transparent p-6">
-                  <blockquote class="mb-4 text-sm leading-relaxed relative z-10">
-                    "{t.content}"
-                  </blockquote>
-
-                  <div class="flex items-center gap-3 relative z-10">
-                    <div class="h-10 w-10 shrink-0 overflow-hidden rounded-full ring-2 ring-secondary/20">
-                      <img
-                        src={t.author.avatar}
-                        alt={t.author.name}
-                        class="h-full w-full object-cover"
-                        loading="lazy"
-                        width="40"
-                        height="40"
-                      />
-                    </div>
-                    <div>
-                      <p class="text-sm font-semibold">{t.author.name}</p>
-                      <p class="text-xs text-muted-foreground">{t.author.role}</p>
-                    </div>
-                  </div>
-
-                  <div class="pointer-events-none absolute -inset-x-px bottom-0 h-24 bg-linear-to-t from-background via-background/80 to-transparent z-0 rounded-b-2xl" />
-                </div>
-              </article>
-            ))}
-          </div>
-
-          {/* Second Marquee Strip (Clone for seamless looping) */}
+          <div class="marquee-strip flex min-w-full shrink-0 animate-marquee">{cards}</div>
           <div class="marquee-strip flex min-w-full shrink-0 animate-marquee" aria-hidden="true">
-            {testimonials.map((t) => (
-              <article key={`${t.id}-clone`} class="w-100 shrink-0 pr-6">
-                <div class="relative h-full rounded-2xl border border-b-0 border-border/60 bg-linear-to-b from-muted/20 to-transparent p-6">
-                  <blockquote class="mb-4 text-sm leading-relaxed relative z-10">
-                    "{t.content}"
-                  </blockquote>
-                  <div class="flex items-center gap-3 relative z-10">
-                    <div class="h-10 w-10 shrink-0 overflow-hidden rounded-full ring-2 ring-secondary/20">
-                      <img
-                        src={t.author.avatar}
-                        alt={t.author.name}
-                        class="h-full w-full object-cover"
-                        width="40"
-                        height="40"
-                        loading="lazy"
-                      />
-                    </div>
-                    <div>
-                      <p class="text-sm font-semibold">{t.author.name}</p>
-                      <p class="text-xs text-muted-foreground">{t.author.role}</p>
-                    </div>
-                  </div>
-
-                  <div class="pointer-events-none absolute -inset-x-px bottom-0 h-24 bg-linear-to-t from-background via-background/80 to-transparent z-0 rounded-b-2xl" />
-                </div>
-              </article>
-            ))}
+            {cards}
           </div>
         </div>
       </section>

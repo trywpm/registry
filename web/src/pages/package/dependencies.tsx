@@ -28,8 +28,8 @@ export const DependenciesPage = async (c: Context) => {
   }
 
   const manifest: Package & { created: string } = JSON.parse(result.value);
-  const requires = manifest.requires ?? {};
-  const dependencies = manifest.dependencies ?? {};
+  const requires = Object.entries(manifest.requires ?? {});
+  const dependencies = Object.entries(manifest.dependencies ?? {});
 
   const ogImage = `https://usercontent.wpm.so/og/${manifest.name}`;
 
@@ -65,9 +65,9 @@ export const DependenciesPage = async (c: Context) => {
                   </CardHeader>
 
                   <CardContent className="space-y-3">
-                    {Object.keys(requires).length === 0 ? null : (
+                    {requires.length === 0 ? null : (
                       <div class="space-y-3">
-                        {Object.entries(requires).map((dep) => (
+                        {requires.map((dep) => (
                           <div
                             class="flex items-center justify-between p-3 border rounded-lg"
                             key={dep[0]}
@@ -81,13 +81,13 @@ export const DependenciesPage = async (c: Context) => {
                         ))}
                       </div>
                     )}
-                    {Object.keys(dependencies).length === 0 ? (
+                    {dependencies.length === 0 ? (
                       <p class="text-muted-foreground text-center py-8">
                         No dependencies found for this package.
                       </p>
                     ) : (
                       <div class="space-y-3">
-                        {Object.entries(dependencies).map((dep) => (
+                        {dependencies.map((dep) => (
                           <div
                             class="flex items-center justify-between p-3 border rounded-lg"
                             key={dep[0]}
