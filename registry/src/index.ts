@@ -1,9 +1,6 @@
 import { UserError } from '@wpm/exception';
 import { isValidPackageName, isValidSemver, isValidTagName } from '@wpm/manifest/validator';
 
-import { publish } from '@/routes/publish';
-import { distTag } from '@/routes/dist-tag';
-import { scheduler } from '@/scheduler';
 import { RequestContext } from '@/lib/context';
 import { json, notFound, decodeSegment, JSON_TYPE, HOME_BODY } from '@/http';
 import { whoami, redirectTag, serveTarball, serveManifest, servePackageDoc } from '@/routes/read';
@@ -71,7 +68,9 @@ function route(ctx: RequestContext): Promise<Response> | Response {
   }
 
   const selector = decodeSegment(url.slice(slash + 1, end));
-  return method === 'GET' ? handleGet(ctx, first, selector) : publish(ctx, first, selector);
+  return method === 'GET'
+    ? handleGet(ctx, first, selector)
+    : import('@/routes/publish').then((m) => m.publish(ctx, first, selector));
 }
 
 /** Handles requests to the `/-/` meta namespace. */
@@ -85,7 +84,9 @@ function meta(ctx: RequestContext, subpath: string): Promise<Response> | Respons
   if (parts[0] === 'dist-tags' && parts.length === 3) {
     const pkg = parts[1];
     const tag = parts[2];
-    return pkg && tag ? distTag(ctx, pkg, decodeSegment(tag)) : notFound();
+    return pkg && tag
+      ? import('@/routes/dist-tag').then((m) => m.distTag(ctx, pkg, decodeSegment(tag)))
+      : notFound();
   }
 
   return notFound();
@@ -114,7 +115,8 @@ function handleGet(
 
 export default {
   fetch: handleRequest,
-  scheduled: scheduler,
+  scheduled: async (controller: ScheduledController, env: Env) =>
+    (await import('@/scheduler')).scheduler(controller, env),
 };
 
 // Durable Objects.
