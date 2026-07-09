@@ -419,3 +419,130 @@ describe('parseBearerToken', () => {
     });
   });
 });
+
+const referenceParse = (header: string): string | null => {
+  if (header.length !== 75 || !header.startsWith('Bearer ')) {
+    return null;
+  }
+  const token = header.slice(7);
+  return /^wpm_\w{64}$/.test(token) ? token : null;
+};
+
+describe('Property: parseBearerToken matches the former regex implementation', () => {
+  const EDGE_CHARS = [
+    'A',
+    'Z',
+    'a',
+    'z',
+    '0',
+    '9',
+    '_',
+    '/',
+    ':',
+    '@',
+    '[',
+    '`',
+    '{',
+    ' ',
+    'é',
+    'B',
+    'E',
+    'R',
+    'e',
+    'r',
+    'w',
+    'p',
+    'm',
+    '.',
+    '-',
+    ' ',
+    '',
+  ];
+  const edgeHeaderArb = fc
+    .array(fc.constantFrom(...EDGE_CHARS), { minLength: 75, maxLength: 75 })
+    .map((cs) => cs.join(''));
+  const nearValidHeaderArb = fc
+    .tuple(
+      fc.array(fc.constantFrom(...EDGE_CHARS), { minLength: 64, maxLength: 64 }),
+      fc.constantFrom('Bearer wpm_', 'Bearer WPM_', 'bearer wpm_', 'Bearer  pm_'),
+    )
+    .map(([body, prefix]) => prefix + body.join(''));
+
+  it.prop([chaosStringArb(120)], { numRuns: 500 })('chaotic headers', (header) => {
+    expect(parseBearerToken(header)).toBe(referenceParse(header));
+  });
+
+  it.prop([edgeHeaderArb], { numRuns: 500 })('exact-length edge headers', (header) => {
+    expect(parseBearerToken(header)).toBe(referenceParse(header));
+  });
+
+  it.prop([nearValidHeaderArb], { numRuns: 500 })('near-valid headers', (header) => {
+    expect(parseBearerToken(header)).toBe(referenceParse(header));
+  });
+});
+
+describe('getAuthTokenHash — result cache', () => {
+  it('repeated calls return the reference hash (cache hit path)', async () => {
+    const key = uniqueSecret('memo-hit');
+    const token = generateWpmAuthToken();
+    const expected = referenceHash(token.slice(PREFIX.length), key);
+    expect(await getAuthTokenHash(token, key)).toBe(expected);
+    expect(await getAuthTokenHash(token, key)).toBe(expected);
+  });
+
+  it('stays correct across eviction pressure (more than 1024 distinct tokens)', async () => {
+    const key = uniqueSecret('memo-evict');
+    const first = generateWpmAuthToken();
+    const firstHash = await getAuthTokenHash(first, key);
+    for (let i = 0; i < 1100; i++) {
+      await getAuthTokenHash(`evict_${i}`, key);
+    }
+    expect(await getAuthTokenHash(first, key)).toBe(referenceHash(first.slice(PREFIX.length), key));
+    expect(firstHash).toBe(referenceHash(first.slice(PREFIX.length), key));
+  });
+
+  it('never serves a hash computed under a previous key', async () => {
+    const token = generateWpmAuthToken();
+    const keyA = uniqueSecret('memo-rotate-a');
+    const keyB = uniqueSecret('memo-rotate-b');
+    const hashA = await getAuthTokenHash(token, keyA);
+    const hashB = await getAuthTokenHash(token, keyB);
+    expect(hashA).toBe(referenceHash(token.slice(PREFIX.length), keyA));
+    expect(hashB).toBe(referenceHash(token.slice(PREFIX.length), keyB));
+    expect(hashA).not.toBe(hashB);
+    expect(await getAuthTokenHash(token, keyA)).toBe(hashA);
+  });
+
+  it('coalesces concurrent computations of the same token into one sign call', async () => {
+    const key = uniqueSecret('memo-coalesce');
+    const token = generateWpmAuthToken();
+    const signSpy = vi.spyOn(crypto.subtle, 'sign');
+    try {
+      const [a, b, c] = await Promise.all([
+        getAuthTokenHash(token, key),
+        getAuthTokenHash(token, key),
+        getAuthTokenHash(token, key),
+      ]);
+      expect(a).toBe(referenceHash(token.slice(PREFIX.length), key));
+      expect(b).toBe(a);
+      expect(c).toBe(a);
+      expect(signSpy).toHaveBeenCalledTimes(1);
+    } finally {
+      signSpy.mockRestore();
+    }
+  });
+
+  it('does not cache a failed sign — next call retries successfully', async () => {
+    const key = uniqueSecret('memo-fail');
+    const token = generateWpmAuthToken();
+    const signSpy = vi.spyOn(crypto.subtle, 'sign').mockRejectedValueOnce(new Error('boom'));
+    try {
+      await expect(getAuthTokenHash(token, key)).rejects.toThrow('boom');
+      expect(await getAuthTokenHash(token, key)).toBe(
+        referenceHash(token.slice(PREFIX.length), key),
+      );
+    } finally {
+      signSpy.mockRestore();
+    }
+  });
+});
