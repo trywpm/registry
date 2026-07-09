@@ -307,15 +307,22 @@ export class KmsClient {
   ): Promise<SignOutput> {
     let attempt = 0;
     for (;;) {
+      const controller = this.requestTimeoutMs ? new AbortController() : undefined;
+      const timer = controller
+        ? setTimeout(() => controller.abort(), this.requestTimeoutMs ?? undefined)
+        : undefined;
+
       let res: Response;
+      let text: string;
       try {
         res = await fetch(url, {
           method: 'POST',
           headers,
           body,
-          signal: this.requestTimeoutMs ? AbortSignal.timeout(this.requestTimeoutMs) : undefined,
+          signal: controller?.signal,
         });
       } catch (err) {
+        clearTimeout(timer);
         if (attempt < this.maxRetries) {
           await sleep(
             (1 << attempt) * this.retryBaseDelayMs + Math.random() * this.retryBaseDelayMs,
@@ -326,20 +333,25 @@ export class KmsClient {
         throw err;
       }
 
-      if (res.ok) {
-        const out: {
-          KeyId: string;
-          Signature: string;
-          SigningAlgorithm: SigningAlgorithm;
-        } = await res.json();
-        return {
-          KeyId: out.KeyId,
-          Signature: b64ToBytes(out.Signature),
-          SigningAlgorithm: out.SigningAlgorithm,
-        };
+      try {
+        if (res.ok) {
+          const out: {
+            KeyId: string;
+            Signature: string;
+            SigningAlgorithm: SigningAlgorithm;
+          } = await res.json();
+          return {
+            KeyId: out.KeyId,
+            Signature: b64ToBytes(out.Signature),
+            SigningAlgorithm: out.SigningAlgorithm,
+          };
+        }
+
+        text = await res.text();
+      } finally {
+        clearTimeout(timer);
       }
 
-      const text = await res.text();
       let errType = '';
       let errMessage = text;
       try {

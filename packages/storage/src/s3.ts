@@ -390,38 +390,43 @@ export class Presigner {
       headers['x-tigris-rename'] = 'true';
     }
 
-    const res = await fetchWithRetry(
-      async () => {
-        const r = await this.sign({
-          key: args.to,
-          method: 'PUT',
-          headers,
-          expiresIn: args.expiresIn,
-        });
-        return {
-          url: r.url,
-          init: {
+    const controller = args.timeoutMs ? new AbortController() : undefined;
+    const timer = controller ? setTimeout(() => controller.abort(), args.timeoutMs) : undefined;
+
+    try {
+      const res = await fetchWithRetry(
+        async () => {
+          const r = await this.sign({
+            key: args.to,
             method: 'PUT',
             headers,
-            signal: args.timeoutMs ? AbortSignal.timeout(args.timeoutMs) : undefined,
-          },
-        };
-      },
-      { retries: args.retries },
-    );
+            expiresIn: args.expiresIn,
+          });
+          return {
+            url: r.url,
+            init: {
+              method: 'PUT',
+              headers,
+              signal: controller?.signal,
+            },
+          };
+        },
+        { retries: args.retries },
+      );
 
-    // CopyObject can return 200 with an <Error> body on slow S3 copies. Tigris
-    // rename is instant and returns cleanly, but surface the S3 case as failure.
-    if (res.ok) {
-      const text = await res.text();
-      if (text.includes('<Error')) {
-        return new Response(text, { status: 502 });
+      if (res.ok) {
+        const text = await res.text();
+        if (text.includes('<Error')) {
+          return new Response(text, { status: 502 });
+        }
+
+        return new Response(null, { status: 200 });
       }
 
-      return new Response(null, { status: 200 });
+      return res;
+    } finally {
+      clearTimeout(timer);
     }
-
-    return res;
   }
 
   /** Delete the object at `key`. */
