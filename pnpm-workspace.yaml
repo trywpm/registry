@@ -28,6 +28,7 @@ allowBuilds:
   'workerd': false
 
 'overrides':
+  '@types/node': 'catalog:'
   'vite': 'catalog:'
   'uuid@<11': '>=11.1.1'
   'ws@<8.21.0': '>=8.21.0'
@@ -40,7 +41,3 @@ packageConfigs:
 
 minimumReleaseAge: 4320
 minimumReleaseAgeStrict: strict
-minimumReleaseAgeExclude:
-  - '@voidzero-dev/*'
-  - vite-plus@0.2.1
-  - cnfast@0.0.6
