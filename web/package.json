@@ -27,7 +27,7 @@
     "zod": "catalog:"
   },
   "devDependencies": {
-    "@cloudflare/vite-plugin": "1.40.2",
+    "@cloudflare/vite-plugin": "1.42.4",
     "@tailwindcss/typography": "0.5.20",
     "@tailwindcss/vite": "4.3.0",
     "tailwindcss": "4.3.0",
