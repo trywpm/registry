@@ -12,7 +12,7 @@ catalog:
   'hono': 4.12.30
   'postgres': 3.4.9
   'typescript': 6.0.3
-  'wrangler': 4.110.0
+  'wrangler': 4.112.0
   'zod': 4.4.3
   'vite': npm:@voidzero-dev/vite-plus-core@0.2.1
   'vite-plus': 0.2.1
