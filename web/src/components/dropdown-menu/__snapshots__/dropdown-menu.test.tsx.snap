@@ -7,11 +7,11 @@ JSXFragmentNode {
       "children": [],
       "isEscaped": true,
       "key": undefined,
-      "localContexts": undefined,
       "props": {
         "src": "/src/components/dropdown-menu/dropdown-menu.island.ts",
         "type": "module",
       },
+      "suspendedContext": undefined,
       "tag": [Function],
     },
     JSXNode {
@@ -22,16 +22,15 @@ JSXFragmentNode {
           ],
           "isEscaped": true,
           "key": undefined,
-          "localContexts": undefined,
           "props": {
             "children": "Test Child",
           },
+          "suspendedContext": undefined,
           "tag": "div",
         },
       ],
       "isEscaped": true,
       "key": undefined,
-      "localContexts": undefined,
       "props": {
         "children": JSXNode {
           "children": [
@@ -39,30 +38,30 @@ JSXFragmentNode {
           ],
           "isEscaped": true,
           "key": undefined,
-          "localContexts": undefined,
           "props": {
             "children": "Test Child",
           },
+          "suspendedContext": undefined,
           "tag": "div",
         },
       },
+      "suspendedContext": undefined,
       "tag": "wpm-dropdown-menu",
     },
   ],
   "isEscaped": true,
   "key": undefined,
-  "localContexts": undefined,
   "props": {
     "children": [
       JSXFunctionNode {
         "children": [],
         "isEscaped": true,
         "key": undefined,
-        "localContexts": undefined,
         "props": {
           "src": "/src/components/dropdown-menu/dropdown-menu.island.ts",
           "type": "module",
         },
+        "suspendedContext": undefined,
         "tag": [Function],
       },
       JSXNode {
@@ -73,16 +72,15 @@ JSXFragmentNode {
             ],
             "isEscaped": true,
             "key": undefined,
-            "localContexts": undefined,
             "props": {
               "children": "Test Child",
             },
+            "suspendedContext": undefined,
             "tag": "div",
           },
         ],
         "isEscaped": true,
         "key": undefined,
-        "localContexts": undefined,
         "props": {
           "children": JSXNode {
             "children": [
@@ -90,17 +88,19 @@ JSXFragmentNode {
             ],
             "isEscaped": true,
             "key": undefined,
-            "localContexts": undefined,
             "props": {
               "children": "Test Child",
             },
+            "suspendedContext": undefined,
             "tag": "div",
           },
         },
+        "suspendedContext": undefined,
         "tag": "wpm-dropdown-menu",
       },
     ],
   },
+  "suspendedContext": undefined,
   "tag": "",
 }
 `;
@@ -114,36 +114,35 @@ JSXNode {
           "children": [],
           "isEscaped": true,
           "key": undefined,
-          "localContexts": undefined,
           "props": {
             "className": "size-4",
           },
+          "suspendedContext": undefined,
           "tag": [Function],
         },
       ],
       "isEscaped": true,
       "key": undefined,
-      "localContexts": undefined,
       "props": {
         "children": JSXFunctionNode {
           "children": [],
           "isEscaped": true,
           "key": undefined,
-          "localContexts": undefined,
           "props": {
             "className": "size-4",
           },
+          "suspendedContext": undefined,
           "tag": [Function],
         },
         "className": "pointer-events-none absolute left-2 flex size-3.5 items-center justify-center opacity-0 group-data-[state=checked]:opacity-100",
       },
+      "suspendedContext": undefined,
       "tag": "span",
     },
     "Checked & Disabled",
   ],
   "isEscaped": true,
   "key": undefined,
-  "localContexts": undefined,
   "props": {
     "aria-checked": "true",
     "aria-disabled": "true",
@@ -154,29 +153,29 @@ JSXNode {
             "children": [],
             "isEscaped": true,
             "key": undefined,
-            "localContexts": undefined,
             "props": {
               "className": "size-4",
             },
+            "suspendedContext": undefined,
             "tag": [Function],
           },
         ],
         "isEscaped": true,
         "key": undefined,
-        "localContexts": undefined,
         "props": {
           "children": JSXFunctionNode {
             "children": [],
             "isEscaped": true,
             "key": undefined,
-            "localContexts": undefined,
             "props": {
               "className": "size-4",
             },
+            "suspendedContext": undefined,
             "tag": [Function],
           },
           "className": "pointer-events-none absolute left-2 flex size-3.5 items-center justify-center opacity-0 group-data-[state=checked]:opacity-100",
         },
+        "suspendedContext": undefined,
         "tag": "span",
       },
       "Checked & Disabled",
@@ -188,6 +187,7 @@ JSXNode {
     "role": "menuitemcheckbox",
     "tabIndex": -1,
   },
+  "suspendedContext": undefined,
   "tag": "div",
 }
 `;
@@ -199,7 +199,6 @@ JSXNode {
   ],
   "isEscaped": true,
   "key": undefined,
-  "localContexts": undefined,
   "props": {
     "children": "Content",
     "className": "bg-popover text-popover-foreground data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 z-50 hidden max-h-(--wpm-dropdown-menu-content-available-height) min-w-[max(8rem,var(--wpm-dropdown-menu-trigger-width))] origin-(--wpm-dropdown-menu-content-transform-origin) overflow-x-hidden overflow-y-auto rounded-md border p-1 shadow-md custom-class",
@@ -208,6 +207,7 @@ JSXNode {
     "data-slot": "dropdown-menu-content",
     "data-state": "closed",
   },
+  "suspendedContext": undefined,
   "tag": "div",
 }
 `;
@@ -221,17 +221,16 @@ JSXNode {
       ],
       "isEscaped": true,
       "key": undefined,
-      "localContexts": undefined,
       "props": {
         "children": "Portal Content",
         "id": "portal-child",
       },
+      "suspendedContext": undefined,
       "tag": "div",
     },
   ],
   "isEscaped": true,
   "key": undefined,
-  "localContexts": undefined,
   "props": {
     "children": JSXNode {
       "children": [
@@ -239,11 +238,11 @@ JSXNode {
       ],
       "isEscaped": true,
       "key": undefined,
-      "localContexts": undefined,
       "props": {
         "children": "Portal Content",
         "id": "portal-child",
       },
+      "suspendedContext": undefined,
       "tag": "div",
     },
     "data-slot": "dropdown-menu-portal",
@@ -251,6 +250,7 @@ JSXNode {
       "display": "contents",
     },
   },
+  "suspendedContext": undefined,
   "tag": "div",
 }
 `;
@@ -264,36 +264,35 @@ JSXNode {
           "children": [],
           "isEscaped": true,
           "key": undefined,
-          "localContexts": undefined,
           "props": {
             "className": "size-2 fill-current",
           },
+          "suspendedContext": undefined,
           "tag": [Function],
         },
       ],
       "isEscaped": true,
       "key": undefined,
-      "localContexts": undefined,
       "props": {
         "children": JSXFunctionNode {
           "children": [],
           "isEscaped": true,
           "key": undefined,
-          "localContexts": undefined,
           "props": {
             "className": "size-2 fill-current",
           },
+          "suspendedContext": undefined,
           "tag": [Function],
         },
         "className": "pointer-events-none absolute left-2 flex size-3.5 items-center justify-center opacity-0 group-data-[state=checked]:opacity-100",
       },
+      "suspendedContext": undefined,
       "tag": "span",
     },
     "Checked & Disabled",
   ],
   "isEscaped": true,
   "key": undefined,
-  "localContexts": undefined,
   "props": {
     "aria-checked": "true",
     "aria-disabled": "true",
@@ -304,29 +303,29 @@ JSXNode {
             "children": [],
             "isEscaped": true,
             "key": undefined,
-            "localContexts": undefined,
             "props": {
               "className": "size-2 fill-current",
             },
+            "suspendedContext": undefined,
             "tag": [Function],
           },
         ],
         "isEscaped": true,
         "key": undefined,
-        "localContexts": undefined,
         "props": {
           "children": JSXFunctionNode {
             "children": [],
             "isEscaped": true,
             "key": undefined,
-            "localContexts": undefined,
             "props": {
               "className": "size-2 fill-current",
             },
+            "suspendedContext": undefined,
             "tag": [Function],
           },
           "className": "pointer-events-none absolute left-2 flex size-3.5 items-center justify-center opacity-0 group-data-[state=checked]:opacity-100",
         },
+        "suspendedContext": undefined,
         "tag": "span",
       },
       "Checked & Disabled",
@@ -338,6 +337,7 @@ JSXNode {
     "role": "menuitemradio",
     "tabIndex": -1,
   },
+  "suspendedContext": undefined,
   "tag": "div",
 }
 `;
@@ -350,16 +350,15 @@ JSXNode {
       "children": [],
       "isEscaped": true,
       "key": undefined,
-      "localContexts": undefined,
       "props": {
         "className": "ml-auto size-4",
       },
+      "suspendedContext": undefined,
       "tag": [Function],
     },
   ],
   "isEscaped": true,
   "key": undefined,
-  "localContexts": undefined,
   "props": {
     "children": [
       "Sub Trigger",
@@ -367,10 +366,10 @@ JSXNode {
         "children": [],
         "isEscaped": true,
         "key": undefined,
-        "localContexts": undefined,
         "props": {
           "className": "ml-auto size-4",
         },
+        "suspendedContext": undefined,
         "tag": [Function],
       },
     ],
@@ -381,6 +380,7 @@ JSXNode {
     "role": "menuitem",
     "tabIndex": -1,
   },
+  "suspendedContext": undefined,
   "tag": "div",
 }
 `;
