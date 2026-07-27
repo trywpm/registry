@@ -29,11 +29,11 @@ allowBuilds:
 
 'overrides':
   '@types/node': 'catalog:'
+  '@vitest/browser@<4.1.10': '>=4.1.10'
   'vite': 'catalog:'
   'uuid@<11': '>=11.1.1'
-  'ws@<8.21.0': '>=8.21.0'
-  'undici@<7.28.0': '>=7.28.0'
-  'esbuild@<0.28.1': '>=0.28.1'
+  'sharp@<0.35.0': '>=0.35.0'
+  'postcss@<=8.5.17 ': '>=8.5.18'
 
 packageConfigs:
   - match: ['*']
