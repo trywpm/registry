@@ -30,7 +30,7 @@
     "@cloudflare/vite-plugin": "1.45.1",
     "@tailwindcss/typography": "0.5.20",
     "@tailwindcss/vite": "4.3.2",
-    "tailwindcss": "4.3.0",
+    "tailwindcss": "4.3.3",
     "typescript": "catalog:",
     "vite": "catalog:",
     "vite-plus": "catalog:",
