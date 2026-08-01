@@ -6,7 +6,7 @@
     ".": "./src/index.ts"
   },
   "dependencies": {
-    "@aws-sdk/client-kms": "3.1090.0"
+    "@aws-sdk/client-kms": "3.1095.0"
   },
   "devDependencies": {
     "@fast-check/vitest": "catalog:",
