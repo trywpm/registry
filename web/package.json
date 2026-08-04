@@ -10,7 +10,7 @@
   "dependencies": {
     "@clerk/clerk-js": "6.25.8",
     "@clerk/ui": "1.26.0",
-    "@floating-ui/dom": "1.7.6",
+    "@floating-ui/dom": "1.8.0",
     "@wpm/d1": "workspace:*",
     "@wpm/datetime": "workspace:*",
     "@wpm/db": "workspace:*",
