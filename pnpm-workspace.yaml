@@ -14,7 +14,7 @@ catalog:
   'typescript': 6.0.3
   'wrangler': 4.114.0
   'zod': 4.4.3
-  'vite': npm:@voidzero-dev/vite-plus-core@0.2.1
+  'vite': npm:@voidzero-dev/vite-plus-core@0.2.6
   'vite-plus': 0.2.6
 
 allowBuilds:
