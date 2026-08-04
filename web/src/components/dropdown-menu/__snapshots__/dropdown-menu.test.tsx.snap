@@ -11,7 +11,6 @@ JSXFragmentNode {
         "src": "/src/components/dropdown-menu/dropdown-menu.island.ts",
         "type": "module",
       },
-      "suspendedContext": undefined,
       "tag": [Function],
     },
     JSXNode {
@@ -25,7 +24,6 @@ JSXFragmentNode {
           "props": {
             "children": "Test Child",
           },
-          "suspendedContext": undefined,
           "tag": "div",
         },
       ],
@@ -41,11 +39,9 @@ JSXFragmentNode {
           "props": {
             "children": "Test Child",
           },
-          "suspendedContext": undefined,
           "tag": "div",
         },
       },
-      "suspendedContext": undefined,
       "tag": "wpm-dropdown-menu",
     },
   ],
@@ -61,7 +57,6 @@ JSXFragmentNode {
           "src": "/src/components/dropdown-menu/dropdown-menu.island.ts",
           "type": "module",
         },
-        "suspendedContext": undefined,
         "tag": [Function],
       },
       JSXNode {
@@ -75,7 +70,6 @@ JSXFragmentNode {
             "props": {
               "children": "Test Child",
             },
-            "suspendedContext": undefined,
             "tag": "div",
           },
         ],
@@ -91,16 +85,13 @@ JSXFragmentNode {
             "props": {
               "children": "Test Child",
             },
-            "suspendedContext": undefined,
             "tag": "div",
           },
         },
-        "suspendedContext": undefined,
         "tag": "wpm-dropdown-menu",
       },
     ],
   },
-  "suspendedContext": undefined,
   "tag": "",
 }
 `;
@@ -117,7 +108,6 @@ JSXNode {
           "props": {
             "className": "size-4",
           },
-          "suspendedContext": undefined,
           "tag": [Function],
         },
       ],
@@ -131,12 +121,10 @@ JSXNode {
           "props": {
             "className": "size-4",
           },
-          "suspendedContext": undefined,
           "tag": [Function],
         },
         "className": "pointer-events-none absolute left-2 flex size-3.5 items-center justify-center opacity-0 group-data-[state=checked]:opacity-100",
       },
-      "suspendedContext": undefined,
       "tag": "span",
     },
     "Checked & Disabled",
@@ -156,7 +144,6 @@ JSXNode {
             "props": {
               "className": "size-4",
             },
-            "suspendedContext": undefined,
             "tag": [Function],
           },
         ],
@@ -170,12 +157,10 @@ JSXNode {
             "props": {
               "className": "size-4",
             },
-            "suspendedContext": undefined,
             "tag": [Function],
           },
           "className": "pointer-events-none absolute left-2 flex size-3.5 items-center justify-center opacity-0 group-data-[state=checked]:opacity-100",
         },
-        "suspendedContext": undefined,
         "tag": "span",
       },
       "Checked & Disabled",
@@ -187,7 +172,6 @@ JSXNode {
     "role": "menuitemcheckbox",
     "tabIndex": -1,
   },
-  "suspendedContext": undefined,
   "tag": "div",
 }
 `;
@@ -207,7 +191,6 @@ JSXNode {
     "data-slot": "dropdown-menu-content",
     "data-state": "closed",
   },
-  "suspendedContext": undefined,
   "tag": "div",
 }
 `;
@@ -225,7 +208,6 @@ JSXNode {
         "children": "Portal Content",
         "id": "portal-child",
       },
-      "suspendedContext": undefined,
       "tag": "div",
     },
   ],
@@ -242,7 +224,6 @@ JSXNode {
         "children": "Portal Content",
         "id": "portal-child",
       },
-      "suspendedContext": undefined,
       "tag": "div",
     },
     "data-slot": "dropdown-menu-portal",
@@ -250,7 +231,6 @@ JSXNode {
       "display": "contents",
     },
   },
-  "suspendedContext": undefined,
   "tag": "div",
 }
 `;
@@ -267,7 +247,6 @@ JSXNode {
           "props": {
             "className": "size-2 fill-current",
           },
-          "suspendedContext": undefined,
           "tag": [Function],
         },
       ],
@@ -281,12 +260,10 @@ JSXNode {
           "props": {
             "className": "size-2 fill-current",
           },
-          "suspendedContext": undefined,
           "tag": [Function],
         },
         "className": "pointer-events-none absolute left-2 flex size-3.5 items-center justify-center opacity-0 group-data-[state=checked]:opacity-100",
       },
-      "suspendedContext": undefined,
       "tag": "span",
     },
     "Checked & Disabled",
@@ -306,7 +283,6 @@ JSXNode {
             "props": {
               "className": "size-2 fill-current",
             },
-            "suspendedContext": undefined,
             "tag": [Function],
           },
         ],
@@ -320,12 +296,10 @@ JSXNode {
             "props": {
               "className": "size-2 fill-current",
             },
-            "suspendedContext": undefined,
             "tag": [Function],
           },
           "className": "pointer-events-none absolute left-2 flex size-3.5 items-center justify-center opacity-0 group-data-[state=checked]:opacity-100",
         },
-        "suspendedContext": undefined,
         "tag": "span",
       },
       "Checked & Disabled",
@@ -337,7 +311,6 @@ JSXNode {
     "role": "menuitemradio",
     "tabIndex": -1,
   },
-  "suspendedContext": undefined,
   "tag": "div",
 }
 `;
@@ -353,7 +326,6 @@ JSXNode {
       "props": {
         "className": "ml-auto size-4",
       },
-      "suspendedContext": undefined,
       "tag": [Function],
     },
   ],
@@ -369,7 +341,6 @@ JSXNode {
         "props": {
           "className": "ml-auto size-4",
         },
-        "suspendedContext": undefined,
         "tag": [Function],
       },
     ],
@@ -380,7 +351,6 @@ JSXNode {
     "role": "menuitem",
     "tabIndex": -1,
   },
-  "suspendedContext": undefined,
   "tag": "div",
 }
 `;
