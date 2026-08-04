@@ -41,3 +41,6 @@ packageConfigs:
 
 minimumReleaseAge: 4320
 minimumReleaseAgeStrict: strict
+
+minimumReleaseAgeExclude:
+  - hono@4.12.34
