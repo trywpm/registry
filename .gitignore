@@ -9,6 +9,7 @@ worker-types.d.ts
 # files
 !Makefile
 !README.md
+!LICENSE
 !.gitignore
 !bunfig.toml
 !package.json
