@@ -111,7 +111,7 @@ export class ShortcodeHandler {
     this.shortcode += t;
 
     if (this.shortcode.startsWith('[youtube') && this.shortcode.endsWith(']')) {
-      const url = this.shortcode.replace('[youtube', '').replace(']', '').trim();
+      const url = this.shortcode.slice('[youtube'.length, -1).trim();
 
       const videoId = getYoutubeID(url);
       if (videoId) {
