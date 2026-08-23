@@ -342,8 +342,8 @@ importers:
         specifier: 0.3.4
         version: 0.3.4
       lucide:
-        specifier: 1.24.0
-        version: 1.24.0
+        specifier: 1.31.0
+        version: 1.31.0
       postgres:
         specifier: 'catalog:'
         version: 3.4.9
@@ -3383,8 +3383,8 @@ packages:
   lru-cache@5.1.1:
     resolution: {integrity: sha512-KpNARQA3Iwv+jTA0utUVVbrh+Jlrr1Fv0e56GGzAFOXN7dk/FviaDW8LHmK52DlcH4WP2n6gI8vN1aesBFgo9w==}
 
-  lucide@1.24.0:
-    resolution: {integrity: sha512-oMAaeuNDc5VCnBb3IjwKYGRT56tqanUm1fyDFT5Tl8hWSZND59gztgjvXje08jKLPVAq0gHJcwZUE8GCQxzBeg==}
+  lucide@1.31.0:
+    resolution: {integrity: sha512-iPJC7py8o990ZSmvFZlS+4+bNasP+ANDkD0IeDOGgQZjTm3p85F2Ldut7leM1yhYavr1pmoPfigm9MDHyyCOrw==}
 
   lz-string@1.5.0:
     resolution: {integrity: sha512-h5bgJWpxJNswbU7qCrV0tIKQCaS3blPDrqKWx+QxzuzL1zGUzij9XCWLrSLsJPu5t+eWA/ycetzYAO5IOMcWAQ==}
@@ -7139,7 +7139,7 @@ snapshots:
     dependencies:
       yallist: 3.1.1
 
-  lucide@1.24.0: {}
+  lucide@1.31.0: {}
 
   lz-string@1.5.0: {}
 
