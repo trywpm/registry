@@ -29,12 +29,9 @@ allowBuilds:
 
 'overrides':
   '@types/node': 'catalog:'
-  '@vitest/browser@<4.1.10': '>=4.1.10'
+  'nanoid@<3.3.18': '^3.3.18'
+  'uuid@<11.1.1': '>=11.1.1'
   'vite': 'catalog:'
-  'uuid@<11': '>=11.1.1'
-  'sharp@<0.35.0': '>=0.35.0'
-  'postcss@<=8.5.22': '>=8.5.23'
-  'undici@<7.29.0': '>=7.29.0'
 
 packageConfigs:
   - match: ['*']
