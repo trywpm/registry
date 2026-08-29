@@ -1,7 +1,7 @@
 .PHONY: sw sr c fmt format test build lint help migrate-create migrate-up migrate-down env-setup
 
 SHELL := /usr/bin/env bash
-MIGRATE_CMD := migrate -database "$(DATABASE_URL)" -path migrations
+MIGRATE_CMD := migrate -database "$(DATABASE_URL)" -path migrations/postgres
 
 start: env-setup ## Start both Web and Registry in parallel
 	@$(MAKE) -j2 sw sr
@@ -36,7 +36,7 @@ env-setup: ## Setup local development environment
 
 migrate-create: ## Create a new sequenced SQL migration
 	@read -p "Enter migration name: " name; \
-	migrate create -ext sql -dir migrations -seq $$name
+	migrate create -ext sql -dir migrations/postgres -seq $$name
 
 migrate-up: ## Apply all 'up' migrations
 	@$(MIGRATE_CMD) up
