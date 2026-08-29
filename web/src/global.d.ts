@@ -1,3 +1,6 @@
+declare const __CLERK_JS_VERSION__: string;
+declare const __CLERK_UI_VERSION__: string;
+
 type AppEnv = {
   Bindings: Cloudflare.Env;
 };

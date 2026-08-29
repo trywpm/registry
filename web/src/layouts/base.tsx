@@ -32,6 +32,9 @@ type LayoutProps = {
   };
 };
 
+const CLERK_UI_SRC = `https://${import.meta.env.VITE_CLERK_DOMAIN}/npm/@clerk/ui@${__CLERK_UI_VERSION__}/dist/ui.browser.js`;
+const CLERK_JS_SRC = `https://${import.meta.env.VITE_CLERK_DOMAIN}/npm/@clerk/clerk-js@${__CLERK_JS_VERSION__}/dist/clerk.browser.js`;
+
 const HOMEPAGE_JSON_LD = serialize({
   '@context': 'https://schema.org',
   '@id': 'https://wpm.so/#website',
@@ -126,20 +129,10 @@ export const BaseLayout = ({
             crossorigin="anonymous"
           />
           {loadVendorScripts.clerkUi && (
-            <link
-              as="script"
-              rel="preload"
-              href={`https://${import.meta.env.VITE_CLERK_DOMAIN}/npm/@clerk/ui@1.7.0/dist/ui.browser.js`}
-              crossorigin="anonymous"
-            />
+            <link as="script" rel="preload" href={CLERK_UI_SRC} crossorigin="anonymous" />
           )}
           {loadVendorScripts.clerk && (
-            <link
-              as="script"
-              rel="preload"
-              href={`https://${import.meta.env.VITE_CLERK_DOMAIN}/npm/@clerk/clerk-js@6.8.0/dist/clerk.browser.js`}
-              crossorigin="anonymous"
-            />
+            <link as="script" rel="preload" href={CLERK_JS_SRC} crossorigin="anonymous" />
           )}
 
           {import.meta.env.DEV && <script type="module" src="/@vite/client"></script>}
@@ -188,18 +181,14 @@ export const BaseLayout = ({
           )}
 
           {loadVendorScripts.clerkUi && (
-            <script
-              defer
-              crossorigin="anonymous"
-              src={`https://${import.meta.env.VITE_CLERK_DOMAIN}/npm/@clerk/ui@1.7.0/dist/ui.browser.js`}
-            ></script>
+            <script defer crossorigin="anonymous" src={CLERK_UI_SRC}></script>
           )}
           {loadVendorScripts.clerk && (
             <script
               defer
               crossorigin="anonymous"
               data-clerk-publishable-key={import.meta.env.VITE_CLERK_PUBLISHABLE_KEY}
-              src={`https://${import.meta.env.VITE_CLERK_DOMAIN}/npm/@clerk/clerk-js@6.8.0/dist/clerk.browser.js`}
+              src={CLERK_JS_SRC}
             ></script>
           )}
 

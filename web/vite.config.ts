@@ -6,6 +6,9 @@ import { defineConfig } from 'vite-plus';
 import tailwindcss from '@tailwindcss/vite';
 import { cloudflare } from '@cloudflare/vite-plugin';
 
+import clerkUiPkg from './node_modules/@clerk/ui/package.json';
+import clerkJsPkg from './node_modules/@clerk/clerk-js/package.json';
+
 const webComponents: Record<string, string> = {};
 for await (const file of glob(join(__dirname, 'src/components/**/*.island.ts'))) {
   const name = basename(file, '.island.ts');
@@ -69,6 +72,10 @@ export default defineConfig(({ mode }) => ({
     alias: {
       '@': join(__dirname, 'src'),
     },
+  },
+  define: {
+    __CLERK_JS_VERSION__: JSON.stringify(clerkJsPkg.version),
+    __CLERK_UI_VERSION__: JSON.stringify(clerkUiPkg.version),
   },
   publicDir: 'src/public',
   server: {
