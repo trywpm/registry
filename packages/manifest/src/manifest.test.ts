@@ -26,7 +26,7 @@ type ParseableSchema = { safeParse: (value: unknown) => { success: boolean } };
 const accepts = (schema: ParseableSchema, value: unknown): boolean =>
   schema.safeParse(value).success;
 
-const validHash = Buffer.alloc(32).toString('base64');
+const validHash = Buffer.alloc(32).toString('hex');
 const validDigest = `sha256:${validHash}`;
 
 const buildValidPackage = (): PackageInput => ({
@@ -443,7 +443,7 @@ describe('DigestSchema', () => {
 
     it('canonical sha256 of arbitrary content', () => {
       const buf = Buffer.from('the quick brown fox');
-      const hash = createHash('sha256').update(buf).digest('base64');
+      const hash = createHash('sha256').update(buf).digest('hex');
       expect(accepts(DigestSchema, `sha256:${hash}`)).toBe(true);
     });
   });
@@ -456,33 +456,20 @@ describe('DigestSchema', () => {
       { case: 'uppercase prefix', input: `SHA256:${validHash}` },
       { case: 'whitespace before prefix', input: ` sha256:${validHash}` },
       { case: 'whitespace after hash', input: `sha256:${validHash} ` },
-      { case: 'invalid base64 chars', input: 'sha256:not-valid-base64-$%^' },
+      { case: 'invalid hex chars', input: `sha256:${'g'.repeat(64)}` },
       {
         case: 'too short (31 bytes)',
-        input: `sha256:${Buffer.alloc(31).toString('base64')}`,
+        input: `sha256:${Buffer.alloc(31).toString('hex')}`,
       },
       {
         case: 'too long (33 bytes)',
-        input: `sha256:${Buffer.alloc(33).toString('base64')}`,
+        input: `sha256:${Buffer.alloc(33).toString('hex')}`,
       },
-      { case: 'missing padding', input: `sha256:${validHash.slice(0, -1)}` },
-      { case: 'extra padding', input: `sha256:${validHash}=` },
-      // Strict canonical regex: 43rd char must be in [AEIMQUYcgkosw048],
-      // and body must use only [A-Za-z0-9+/]. base64url '_' or '-' fails both.
+      { case: 'uppercase hex', input: `sha256:${'A'.repeat(64)}` },
       {
-        case: 'base64url char (underscore) in body',
-        input: `sha256:${'A'.repeat(20)}_${'A'.repeat(22)}=`,
+        case: 'base64 digest instead of hex',
+        input: `sha256:${Buffer.alloc(32).toString('base64')}`,
       },
-      {
-        case: 'base64url char (hyphen) in body',
-        input: `sha256:${'A'.repeat(20)}-${'A'.repeat(22)}=`,
-      },
-      {
-        case: 'non-canonical 43rd char (lower 2 bits set)',
-        // 'B' = position 1 in alphabet; lower 2 bits = 01, non-canonical
-        input: `sha256:${'A'.repeat(42)}B=`,
-      },
-      { case: 'hex digest instead of base64', input: `sha256:${'a'.repeat(64)}` },
     ])('$case', ({ input }) => {
       expect(accepts(DigestSchema, input)).toBe(false);
     });

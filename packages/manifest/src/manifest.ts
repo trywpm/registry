@@ -20,7 +20,7 @@ const MAX_COMPRESSION_RATIO = 250;
 const RATIO_CHECK_THRESHOLD = 5 * 1024 * 1024; // 5 MB
 const MAX_DECOMPRESSED_SIZE = 512 * 1024 * 1024; // 512 MB
 
-const DIGEST_REGEX = /^sha256:[A-Za-z0-9+/]{42}[AEIMQUYcgkosw048]=$/;
+const DIGEST_REGEX = /^sha256:[0-9a-f]{64}$/;
 
 export const DANGEROUS_CHARS_REGEX = new RegExp(
   '((?![' +
@@ -137,12 +137,7 @@ export const DependencyVersionSchema = z
 
 export const DigestSchema = z
   .string()
-  .check(
-    z.regex(
-      DIGEST_REGEX,
-      "digest must be 'sha256:' followed by a 43-character base64-encoded hash",
-    ),
-  );
+  .check(z.regex(DIGEST_REGEX, "digest must be 'sha256:' followed hex-encoded hash"));
 
 const DescriptionField = z.string().check(
   z.trim(),

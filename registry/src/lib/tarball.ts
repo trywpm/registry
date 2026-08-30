@@ -14,7 +14,8 @@ export async function uploadToStaging(
     key: stagingKey,
     retries: 0,
     expiresIn: 60,
-    sha256: dist.digest.slice(7),
+    // digest is hex, but S3's x-amz-checksum-sha256 header wants base64
+    sha256: Uint8Array.fromHex(dist.digest.slice(7)).toBase64(),
     contentLength: dist.packedSize,
     contentType: 'application/octet-stream',
     body: () => tarballStream,

@@ -35,7 +35,7 @@ const manifest = (dependencies?: Record<string, string>): Package => ({
   _wpm: '1.0.0',
   visibility: 'public',
   dist: {
-    digest: 'sha256:47DEQpj8HBSa+/TImW+5JCeuQeRkm5NMpJWZG3hSuFU=',
+    digest: 'sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855',
     packedSize: 1024,
     unpackedSize: 4096,
     totalFiles: 3,
@@ -49,7 +49,8 @@ const signedPayload = async (m: Package): Promise<string> => {
   return new TextDecoder().decode(kmsCalls.messages.at(-1));
 };
 
-const BASE = 'my-plugin:1.4.2:sha256:47DEQpj8HBSa+/TImW+5JCeuQeRkm5NMpJWZG3hSuFU=';
+const BASE =
+  'my-plugin:1.4.2:sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855';
 
 describe('signManifest payload', () => {
   it('keeps the 3-field payload when dependencies are absent or empty', async () => {
