@@ -772,7 +772,7 @@ describe('AWS SDK v3 oracle: structural equivalence', () => {
             typeof rawBody === 'string'
               ? rawBody
               : rawBody instanceof Uint8Array
-                ? Buffer.from(rawBody).toString('utf8')
+                ? new TextDecoder().decode(rawBody)
                 : '';
           capture = {
             method: req.method,
