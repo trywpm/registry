@@ -345,7 +345,7 @@ describe('enabled()', () => {
     ({ loggerLevel, method }) => {
       const log = createLogger({ level: loggerLevel });
       const willLog = log.enabled(method);
-      (log[method])('m');
+      log[method]('m');
       expect(totalCalls()).toBe(willLog ? 1 : 0);
     },
   );
@@ -356,7 +356,7 @@ describe('level methods — threshold & console routing', () => {
     'logger@$loggerLevel .$method() routes and gates correctly',
     ({ loggerLevel, method }) => {
       const log = createLogger({ level: loggerLevel });
-      (log[method])('m');
+      log[method]('m');
 
       const shouldLog = LEVELS[method] >= LEVELS[loggerLevel];
       if (shouldLog) {

@@ -61,6 +61,7 @@ const SlotClone = forwardRef<unknown, SlotCloneProps & AnyProps>((props, forward
         const mergedProps = mergeProps(slotProps, childProps);
 
         if (singleValidChild.tag !== Fragment) {
+          // oxlint-disable-next-line react/refs
           mergedProps.ref = forwardedRef ? composeRefs(forwardedRef, childrenRef) : childrenRef;
         }
 
@@ -79,6 +80,7 @@ const SlotClone = forwardRef<unknown, SlotCloneProps & AnyProps>((props, forward
     const mergedProps = mergeProps(slotProps, childProps);
 
     if (children.tag !== Fragment) {
+      // oxlint-disable-next-line react/refs
       mergedProps.ref = forwardedRef ? composeRefs(forwardedRef, childrenRef) : childrenRef;
     }
 
