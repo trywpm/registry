@@ -16,8 +16,8 @@ catalogs:
       specifier: 1.4.0
       version: 1.4.0
     hono:
-      specifier: 4.13.5
-      version: 4.13.5
+      specifier: 4.13.7
+      version: 4.13.7
     postgres:
       specifier: 3.4.9
       version: 3.4.9
@@ -331,7 +331,7 @@ importers:
         version: 0.0.6
       hono:
         specifier: 'catalog:'
-        version: 4.13.5
+        version: 4.13.7
       htmx.org:
         specifier: 2.0.10
         version: 2.0.10
@@ -3057,8 +3057,8 @@ packages:
   hoist-non-react-statics@3.3.2:
     resolution: {integrity: sha512-/gGivxi8JPKWNm/W0jSmzcMPpfpPLc3dY/6GxhX2hQ9iGj3aDfklV4ET7NjKpSinLpJ5vafa9iiGIEZg10SfBw==}
 
-  hono@4.13.5:
-    resolution: {integrity: sha512-O6+/eCYRkzzzy0rPWwKLiGBR1nFuUPZynnwjxN1MBA62NNqbT0wQEzQyK2gSO5yDIDB336sXQleAhOHrzlYyKw==}
+  hono@4.13.7:
+    resolution: {integrity: sha512-c8/gF9ac8Y78/agExVocyLevgR+JlpNB444Py0FSX8pJoPdYUfUzRcXtYEYGwt6l19qIlVZPN5Mfsw9jFShmQQ==}
     engines: {node: '>=16.9.0'}
 
   htmx.org@2.0.10:
@@ -6866,7 +6866,7 @@ snapshots:
     dependencies:
       react-is: 16.13.1
 
-  hono@4.13.5: {}
+  hono@4.13.7: {}
 
   htmx.org@2.0.10: {}
 
