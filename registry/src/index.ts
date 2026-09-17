@@ -81,6 +81,12 @@ function meta(ctx: RequestContext, subpath: string): Promise<Response> | Respons
     return ctx.req.method === 'GET' ? whoami(ctx) : notFound();
   }
 
+  if (parts[0] === 'health' && parts.length === 1) {
+    return ctx.req.method === 'GET'
+      ? import('@/routes/health').then((m) => m.health(ctx))
+      : notFound();
+  }
+
   if (parts[0] === 'dist-tags' && parts.length === 3) {
     const pkg = parts[1];
     const tag = parts[2];
