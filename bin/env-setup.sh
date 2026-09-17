@@ -22,6 +22,9 @@ S3_BUCKET=wpm-registry
 # PAT token HMAC key
 PAT_HMAC_KEY="04fdb4b2f1e28861e16d07f6cb51e495890759519ba2a7c8791e31a35345a290"
 
+# Registry /-/health bearer key
+HEALTH_KEY="dev-health-key"
+
 # KMS signing key ID
 SIG_KEY_ID=9355ce66-56af-4c7e-abdd-7e3e0168220a
 SIG_KEY_PUBLIC_KEY="MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEAMKPDd0EjuhlUNjrANa9SjJtIREmdzNINzENicq/XKCjeKTsUrEDwa7W4uS8sqx8sdRss7IIkemkE0XSzaNWeg=="
@@ -44,6 +47,7 @@ registry_env_file="registry/.env"
 	echo "AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY"
 	echo "S3_BUCKET=$S3_BUCKET"
 	echo "PAT_HMAC_KEY=$PAT_HMAC_KEY"
+	echo "HEALTH_KEY=$HEALTH_KEY"
 	echo "SIG_KEY_ID=$SIG_KEY_ID"
 	echo "SIG_KEY_SPKI_FINGERPRINT=$SIG_KEY_SPKI_FINGERPRINT"
 } > "$registry_env_file"
