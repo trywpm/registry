@@ -26,6 +26,10 @@ export class Registry {
       connection: { statement_timeout: 8_000 },
     }));
 
+  async ping(): Promise<void> {
+    await this.db()`select 1`;
+  }
+
   async end(): Promise<void> {
     await this.#sql?.end({ timeout: 5 });
     this.#sql = undefined;
