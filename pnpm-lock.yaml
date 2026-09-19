@@ -300,11 +300,11 @@ importers:
   web:
     dependencies:
       '@clerk/clerk-js':
-        specifier: 6.30.2
-        version: 6.30.2(@solana/web3.js@1.98.4(bufferutil@4.1.0)(typescript@7.0.2)(utf-8-validate@6.0.6))(bs58@6.0.0)(bufferutil@4.1.0)(react-dom@19.2.8(react@19.2.8))(react-native@0.87.0(@babel/core@7.29.7(supports-color@10.2.2))(bufferutil@4.1.0)(react@19.2.8)(supports-color@10.2.2)(utf-8-validate@6.0.6))(react@19.2.8)(typescript@7.0.2)(utf-8-validate@6.0.6)(zod@4.4.3)
+        specifier: 6.31.1
+        version: 6.31.1(@solana/web3.js@1.98.4(bufferutil@4.1.0)(typescript@7.0.2)(utf-8-validate@6.0.6))(bs58@6.0.0)(bufferutil@4.1.0)(react-dom@19.2.8(react@19.2.8))(react-native@0.87.0(@babel/core@7.29.7(supports-color@10.2.2))(bufferutil@4.1.0)(react@19.2.8)(supports-color@10.2.2)(utf-8-validate@6.0.6))(react@19.2.8)(typescript@7.0.2)(utf-8-validate@6.0.6)(zod@4.4.3)
       '@clerk/ui':
-        specifier: 1.31.0
-        version: 1.31.0(@solana/web3.js@1.98.4(bufferutil@4.1.0)(typescript@7.0.2)(utf-8-validate@6.0.6))(bs58@6.0.0)(bufferutil@4.1.0)(react-dom@19.2.8(react@19.2.8))(react-native@0.87.0(@babel/core@7.29.7(supports-color@10.2.2))(bufferutil@4.1.0)(react@19.2.8)(supports-color@10.2.2)(utf-8-validate@6.0.6))(react@19.2.8)(supports-color@10.2.2)(typescript@7.0.2)(utf-8-validate@6.0.6)
+        specifier: 1.32.3
+        version: 1.32.3(@solana/web3.js@1.98.4(bufferutil@4.1.0)(typescript@7.0.2)(utf-8-validate@6.0.6))(bs58@6.0.0)(bufferutil@4.1.0)(react-dom@19.2.8(react@19.2.8))(react-native@0.87.0(@babel/core@7.29.7(supports-color@10.2.2))(bufferutil@4.1.0)(react@19.2.8)(supports-color@10.2.2)(utf-8-validate@6.0.6))(react@19.2.8)(supports-color@10.2.2)(typescript@7.0.2)(utf-8-validate@6.0.6)
       '@floating-ui/dom':
         specifier: 1.8.0
         version: 1.8.0
@@ -538,16 +538,16 @@ packages:
   '@blazediff/core@1.9.1':
     resolution: {integrity: sha512-ehg3jIkYKulZh+8om/O25vkvSsXXwC+skXmyA87FFx6A/45eqOkZsBltMw/TVteb0mloiGT8oGRTcjRAz66zaA==}
 
-  '@clerk/clerk-js@6.30.2':
-    resolution: {integrity: sha512-1RJsAnlsiEjGXDhutaFkOUH6JFVLcP7ElJw2asS5vq+Uaau/+A8Nz5PU+7/NdzfJRJhsY/ZpSE7wnavL3gCG4A==}
+  '@clerk/clerk-js@6.31.1':
+    resolution: {integrity: sha512-qSk35+vm0J7ZEf7dcbywBC4VjNtWgZDU4PMipgHS/PIEy9Txyddt0OFJ6U1Gzgvz69zUcUJGttP0I0KpbiSvhQ==}
     engines: {node: '>=20.9.0'}
 
-  '@clerk/localizations@4.15.8':
-    resolution: {integrity: sha512-GiQBbufOK0wYlfQVaJEOOEZ/3Sglf/YdRW7Q7gVERkyj/fwVEL8LQAoz5SVHiZTElCPReh5x7nOVSM0FzWLOIA==}
+  '@clerk/localizations@4.16.1':
+    resolution: {integrity: sha512-dYJpUu7EnQ/lIl5n02X4Q+sq0+YxYZVQwVqL4Wwq0ds759oG3WQ6735JU9vQIhCimK133daU+6rWwjeSR8x2PQ==}
     engines: {node: '>=20.9.0'}
 
-  '@clerk/shared@4.30.2':
-    resolution: {integrity: sha512-2U8jE2Gno2uRxg5b2fv5uY3zxzxAvmBzjiaOPAfoAVUgJ2Ys9kPu+6k2TaBNTkeF0ncQ/5erECIx6dPt0d8XyQ==}
+  '@clerk/shared@4.31.1':
+    resolution: {integrity: sha512-j3cDEZ/j7r5tAv4mmo2JhpFRtL1z0JghjCgvBJjZSR6Q4ZVIlwd2Bv0loM+opKReeN17H30u1/WHEBl7pZuxrw==}
     engines: {node: '>=20.9.0'}
     peerDependencies:
       react: ^18.0.0 || ~19.0.3 || ~19.1.4 || ~19.2.3 || ~19.3.0-0
@@ -558,8 +558,8 @@ packages:
       react-dom:
         optional: true
 
-  '@clerk/ui@1.31.0':
-    resolution: {integrity: sha512-1Qmn4RFoASgpfZ3rFsu0PN7cb1kTUTKQ1jgFXtRz2W1hgECh3yRefLwScz2zO5o9hLJsYeQ7C9KSSO5owCeU7g==}
+  '@clerk/ui@1.32.3':
+    resolution: {integrity: sha512-yB705ODJ8Yn7wD1SX2p8DuGktngRYAEVVx7uV4zgXzFo4ZY0s7bUh44AzLIHCnY32SriZrgie4Uoxem3z+I/RA==}
     engines: {node: '>=20.9.0'}
     peerDependencies:
       react: ^18.0.0 || ~19.0.3 || ~19.1.4 || ~19.2.3 || ~19.3.0-0
@@ -845,8 +845,8 @@ packages:
       react: '>=16.8.0'
       react-dom: '>=16.8.0'
 
-  '@floating-ui/react@0.27.12':
-    resolution: {integrity: sha512-kKlWNrpIQxF1B/a2MZvE0/uyKby4960yjO91W7nVyNKmmfNi62xU9HCjL1M1eWzx/LFj/VPSwJVbwQk9Pq/68A==}
+  '@floating-ui/react@0.27.20':
+    resolution: {integrity: sha512-CMqMy7OaXl9W0eq1Uy7L7i2Y/anPvHmFmESd2CEw0t5YvZhcVCeo4MBevAmswRllX7Y2dEidA4ozGPunLSTQpw==}
     peerDependencies:
       react: '>=17.0.0'
       react-dom: '>=17.0.0'
@@ -3168,9 +3168,8 @@ packages:
     resolution: {integrity: sha512-AC/7JofJvZGrrneWNaEnJeOLUx+JlGt7tNa0wZiRPT4MY1wmfKjt2+6O2p2uz2+skll8OZZmJMNqeke7kKbNgQ==}
     hasBin: true
 
-  js-cookie@3.0.7:
-    resolution: {integrity: sha512-z/wZZgDrkNV1eA0ULjM/F9/50Ya8fbzgKneSpoPsXSGd0KnpdtHfOZWK+GcwLk+EZbS4F9RBhU+K2RgzuDaItw==}
-    engines: {node: '>=20'}
+  js-cookie@3.0.8:
+    resolution: {integrity: sha512-yeJd4aNAdYZQjaon2bpD/Gb0B/omw7HQOsynXXcOiWVCacbBcPlgn8S/d1X6blFSaHao7ozqtW7NZW19xpCtIw==}
 
   js-tokens@4.0.0:
     resolution: {integrity: sha512-RdJUflcE3cUzKiMqQgsCu06FPu9UdIJO0beYbPhHN4k6apgJtifcoCtT9bcxOpYBtpD2kCM6Sbzg4CausW/PKQ==}
@@ -4545,10 +4544,10 @@ snapshots:
 
   '@blazediff/core@1.9.1': {}
 
-  '@clerk/clerk-js@6.30.2(@solana/web3.js@1.98.4(bufferutil@4.1.0)(typescript@7.0.2)(utf-8-validate@6.0.6))(bs58@6.0.0)(bufferutil@4.1.0)(react-dom@19.2.8(react@19.2.8))(react-native@0.87.0(@babel/core@7.29.7(supports-color@10.2.2))(bufferutil@4.1.0)(react@19.2.8)(supports-color@10.2.2)(utf-8-validate@6.0.6))(react@19.2.8)(typescript@7.0.2)(utf-8-validate@6.0.6)(zod@4.4.3)':
+  '@clerk/clerk-js@6.31.1(@solana/web3.js@1.98.4(bufferutil@4.1.0)(typescript@7.0.2)(utf-8-validate@6.0.6))(bs58@6.0.0)(bufferutil@4.1.0)(react-dom@19.2.8(react@19.2.8))(react-native@0.87.0(@babel/core@7.29.7(supports-color@10.2.2))(bufferutil@4.1.0)(react@19.2.8)(supports-color@10.2.2)(utf-8-validate@6.0.6))(react@19.2.8)(typescript@7.0.2)(utf-8-validate@6.0.6)(zod@4.4.3)':
     dependencies:
       '@base-org/account': 2.0.1(bufferutil@4.1.0)(react@19.2.8)(typescript@7.0.2)(utf-8-validate@6.0.6)(zod@4.4.3)
-      '@clerk/shared': 4.30.2(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+      '@clerk/shared': 4.31.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       '@coinbase/wallet-sdk': 4.3.7(bufferutil@4.1.0)(typescript@7.0.2)(utf-8-validate@6.0.6)(zod@4.4.3)
       '@solana/wallet-adapter-base': 0.9.27(@solana/web3.js@1.98.4(bufferutil@4.1.0)(typescript@7.0.2)(utf-8-validate@6.0.6))
       '@solana/wallet-adapter-react': 0.15.39(@solana/web3.js@1.98.4(bufferutil@4.1.0)(typescript@7.0.2)(utf-8-validate@6.0.6))(bs58@6.0.0)(bufferutil@4.1.0)(react-native@0.87.0(@babel/core@7.29.7(supports-color@10.2.2))(bufferutil@4.1.0)(react@19.2.8)(supports-color@10.2.2)(utf-8-validate@6.0.6))(react@19.2.8)(typescript@7.0.2)(utf-8-validate@6.0.6)
@@ -4580,30 +4579,30 @@ snapshots:
       - utf-8-validate
       - zod
 
-  '@clerk/localizations@4.15.8(react-dom@19.2.8(react@19.2.8))(react@19.2.8)':
+  '@clerk/localizations@4.16.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8)':
     dependencies:
-      '@clerk/shared': 4.30.2(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+      '@clerk/shared': 4.31.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
     transitivePeerDependencies:
       - react
       - react-dom
 
-  '@clerk/shared@4.30.2(react-dom@19.2.8(react@19.2.8))(react@19.2.8)':
+  '@clerk/shared@4.31.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8)':
     dependencies:
       '@tanstack/query-core': 5.101.4
       dequal: 2.0.3
       glob-to-regexp: 0.4.1
-      js-cookie: 3.0.7
+      js-cookie: 3.0.8
     optionalDependencies:
       react: 19.2.8
       react-dom: 19.2.8(react@19.2.8)
 
-  '@clerk/ui@1.31.0(@solana/web3.js@1.98.4(bufferutil@4.1.0)(typescript@7.0.2)(utf-8-validate@6.0.6))(bs58@6.0.0)(bufferutil@4.1.0)(react-dom@19.2.8(react@19.2.8))(react-native@0.87.0(@babel/core@7.29.7(supports-color@10.2.2))(bufferutil@4.1.0)(react@19.2.8)(supports-color@10.2.2)(utf-8-validate@6.0.6))(react@19.2.8)(supports-color@10.2.2)(typescript@7.0.2)(utf-8-validate@6.0.6)':
+  '@clerk/ui@1.32.3(@solana/web3.js@1.98.4(bufferutil@4.1.0)(typescript@7.0.2)(utf-8-validate@6.0.6))(bs58@6.0.0)(bufferutil@4.1.0)(react-dom@19.2.8(react@19.2.8))(react-native@0.87.0(@babel/core@7.29.7(supports-color@10.2.2))(bufferutil@4.1.0)(react@19.2.8)(supports-color@10.2.2)(utf-8-validate@6.0.6))(react@19.2.8)(supports-color@10.2.2)(typescript@7.0.2)(utf-8-validate@6.0.6)':
     dependencies:
-      '@clerk/localizations': 4.15.8(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
-      '@clerk/shared': 4.30.2(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+      '@clerk/localizations': 4.16.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+      '@clerk/shared': 4.31.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       '@emotion/cache': 11.11.0
       '@emotion/react': 11.11.1(react@19.2.8)(supports-color@10.2.2)
-      '@floating-ui/react': 0.27.12(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+      '@floating-ui/react': 0.27.20(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       '@formkit/auto-animate': 0.8.4
       '@solana/wallet-adapter-base': 0.9.27(@solana/web3.js@1.98.4(bufferutil@4.1.0)(typescript@7.0.2)(utf-8-validate@6.0.6))
       '@solana/wallet-adapter-react': 0.15.39(@solana/web3.js@1.98.4(bufferutil@4.1.0)(typescript@7.0.2)(utf-8-validate@6.0.6))(bs58@6.0.0)(bufferutil@4.1.0)(react-native@0.87.0(@babel/core@7.29.7(supports-color@10.2.2))(bufferutil@4.1.0)(react@19.2.8)(supports-color@10.2.2)(utf-8-validate@6.0.6))(react@19.2.8)(typescript@7.0.2)(utf-8-validate@6.0.6)
@@ -4852,7 +4851,7 @@ snapshots:
       react: 19.2.8
       react-dom: 19.2.8(react@19.2.8)
 
-  '@floating-ui/react@0.27.12(react-dom@19.2.8(react@19.2.8))(react@19.2.8)':
+  '@floating-ui/react@0.27.20(react-dom@19.2.8(react@19.2.8))(react@19.2.8)':
     dependencies:
       '@floating-ui/react-dom': 2.1.9(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       '@floating-ui/utils': 0.2.12
@@ -6989,7 +6988,7 @@ snapshots:
 
   jiti@2.7.0: {}
 
-  js-cookie@3.0.7: {}
+  js-cookie@3.0.8: {}
 
   js-tokens@4.0.0: {}
 
