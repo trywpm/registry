@@ -29,7 +29,7 @@ allowBuilds:
 
 'overrides':
   '@types/node': 'catalog:'
-  # 'nanoid@<3.3.18': '^3.3.18'
+  'image-size@<=2.0.2': '>=2.0.3'
   'stream-json@<=3.4.0': '>=3.5.0'
   'uuid@<11.1.1': '>=11.1.1'
   'vite': 'catalog:'
@@ -39,7 +39,6 @@ packageConfigs:
     saveExact: true
 
 minimumReleaseAge: 4320
-minimumReleaseAgeStrict: strict
 
 minimumReleaseAgeExclude:
   - hono@4.13.0
